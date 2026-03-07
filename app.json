@@ -32,13 +32,7 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router",
-      [
-        "expo-sqlite",
-        {
-          "enableFTS": false
-        }
-      ]
+      "expo-router"
     ],
     "experiments": {
       "typedRoutes": true
