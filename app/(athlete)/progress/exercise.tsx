@@ -9,6 +9,7 @@ import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { ProgressionChart } from '../../../src/presentation/components/athlete/ProgressionChart';
 import { findExerciseById } from '../../../src/shared/constants/exercises';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 type Metric = 'oneRepMax' | 'volume';
 
@@ -40,17 +41,17 @@ export default function ExerciseProgressionScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.topbar}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← Volver</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.headerSection}>
-          <Text style={styles.exerciseName}>{exercise?.name ?? 'Exercise'}</Text>
+          <Text style={styles.exerciseName}>{exercise?.name ?? Strings.fallbackExercise}</Text>
           {exercise && (
             <Text style={styles.exerciseMeta}>
-              {exercise.primaryMuscles.join(', ')} · {points.length} session{points.length !== 1 ? 's' : ''}
+              {exercise.primaryMuscles.join(', ')} · {points.length} sesión{points.length !== 1 ? 'es' : ''}
             </Text>
           )}
         </View>
@@ -60,25 +61,25 @@ export default function ExerciseProgressionScreen() {
           <View style={styles.statsRow}>
             {bestORM && (
               <StatCard
-                label="BEST 1RM"
+                label="MEJOR 1RM"
                 value={`${bestORM} kg`}
-                sub="estimated"
+                sub={Strings.labelSubEstimated}
                 accent={Colors.primary}
               />
             )}
             {ormTrend !== null && (
               <StatCard
-                label="LAST CHANGE"
+                label={Strings.labelLastChange}
                 value={`${ormTrend >= 0 ? '+' : ''}${ormTrend.toFixed(1)} kg`}
-                sub="vs prev session"
+                sub={Strings.labelSubVsPrev}
                 accent={ormTrend >= 0 ? Colors.success : Colors.error}
               />
             )}
             {bestVolume && (
               <StatCard
-                label="BEST VOLUME"
+                label={Strings.labelBestVolume}
                 value={`${Math.round(bestVolume)} kg`}
-                sub="per session"
+                sub={Strings.labelSubPerSession}
                 accent={Colors.athlete}
               />
             )}
@@ -96,7 +97,7 @@ export default function ExerciseProgressionScreen() {
                 onPress={() => setMetric(m)}
               >
                 <Text style={[styles.metricPillText, metric === m && styles.metricPillTextActive]}>
-                  {m === 'oneRepMax' ? '🏋️ Estimated 1RM' : '⚡️ Volume'}
+                  {m === 'oneRepMax' ? Strings.labelEstimated1RM : Strings.labelVolumeChart}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -118,23 +119,23 @@ export default function ExerciseProgressionScreen() {
         {/* Session log */}
         {points.length > 0 && (
           <View style={styles.logSection}>
-            <Text style={styles.logTitle}>SESSION LOG</Text>
+            <Text style={styles.logTitle}>REGISTRO DE SESIONES</Text>
             {[...points].reverse().map((point, i) => (
               <View key={`${point.sessionId}-${i}`} style={styles.logRow}>
                 <View style={styles.logDateCol}>
                   <Text style={styles.logDate}>
-                    {point.date.toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+                    {point.date.toLocaleDateString('es', { month: 'short', day: 'numeric' })}
                   </Text>
                   <Text style={styles.logYear}>{point.date.getFullYear()}</Text>
                 </View>
                 <View style={styles.logStats}>
                   {point.bestWeightKg !== undefined && (
-                    <LogStat label="Best" value={`${point.bestWeightKg} kg × ${point.bestReps}`} />
+                    <LogStat label={Strings.labelBest} value={`${point.bestWeightKg} kg × ${point.bestReps}`} />
                   )}
                   {point.estimatedOneRepMaxKg !== undefined && (
                     <LogStat label="Est. 1RM" value={`${point.estimatedOneRepMaxKg} kg`} highlight />
                   )}
-                  <LogStat label="Volume" value={`${Math.round(point.totalVolumeKg)} kg`} />
+                  <LogStat label={Strings.labelVolume} value={`${Math.round(point.totalVolumeKg)} kg`} />
                 </View>
               </View>
             ))}

@@ -9,6 +9,7 @@ import { WorkoutSession } from '../../../src/domain/entities/WorkoutSession';
 import { findExerciseById } from '../../../src/shared/constants/exercises';
 import { calculateTotalVolume } from '../../../src/domain/value-objects/Volume';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 const repo = new WorkoutLocalRepository();
 
@@ -58,7 +59,7 @@ export default function SessionDetailScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.topbar}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← Volver</Text>
         </TouchableOpacity>
       </View>
 
@@ -66,16 +67,16 @@ export default function SessionDetailScreen() {
         {/* Header card */}
         <View style={styles.headerCard}>
           <Text style={styles.sessionDate}>
-            {session.startedAt.toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {session.startedAt.toLocaleDateString('es', { weekday: 'long', month: 'long', day: 'numeric' })}
           </Text>
           <Text style={styles.sessionTime}>
             {session.startedAt.toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit' })}
           </Text>
 
           <View style={styles.statsRow}>
-            <StatBadge emoji="⏱" value={`${durationMinutes}m`} label="Duration" />
-            <StatBadge emoji="🔁" value={String(session.sets.length)} label="Sets" />
-            <StatBadge emoji="🏋️" value={String(exerciseIds.length)} label="Exercises" />
+            <StatBadge emoji="⏱" value={`${durationMinutes}m`} label={Strings.labelDuration} />
+            <StatBadge emoji="🔁" value={String(session.sets.length)} label={Strings.labelSets} />
+            <StatBadge emoji="🏋️" value={String(exerciseIds.length)} label={Strings.labelExercises} />
             <StatBadge emoji="⚡️" value={`${Math.round(totalVolumeKg)}`} label="Vol. kg" />
           </View>
 
@@ -96,7 +97,7 @@ export default function SessionDetailScreen() {
             return (
               <View key={exerciseId} style={styles.exerciseCard}>
                 <View style={styles.exerciseHeader}>
-                  <Text style={styles.exerciseName}>{exercise?.name ?? 'Unknown'}</Text>
+                  <Text style={styles.exerciseName}>{exercise?.name ?? Strings.fallbackUnknown}</Text>
                   <Text style={styles.exerciseMuscle}>{exercise?.primaryMuscles[0]}</Text>
                 </View>
 

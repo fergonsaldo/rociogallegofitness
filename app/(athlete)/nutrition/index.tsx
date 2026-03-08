@@ -81,7 +81,7 @@ export default function AthleteNutritionScreen() {
             </View>
           </View>
           <Text style={styles.dateLabel}>
-            {today.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}
+            {today.toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}
           </Text>
         </View>
 
@@ -106,7 +106,7 @@ export default function AthleteNutritionScreen() {
             <View style={styles.adherenceRow}>
               {weeklyAdherence.map((day, i) => {
                 const isToday = day.date.toDateString() === today.toDateString();
-                const dayName = day.date.toLocaleDateString('en', { weekday: 'narrow' });
+                const dayName = day.date.toLocaleDateString('es', { weekday: 'narrow' });
                 return (
                   <View key={i} style={styles.adherenceDay}>
                     <View style={[

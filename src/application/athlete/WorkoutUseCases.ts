@@ -1,3 +1,4 @@
+import { Strings } from '@/shared/constants/strings';
 import { z } from 'zod';
 import { WorkoutSession } from '@/domain/entities/WorkoutSession';
 import { ExerciseSet } from '@/domain/entities/ExerciseSet';
@@ -29,7 +30,7 @@ export async function startWorkoutSessionUseCase(
 
   const existing = await repository.getActiveSession(input.athleteId);
   if (existing) {
-    throw new Error('You already have an active workout session. Finish or abandon it first.');
+    throw new Error(Strings.errorActiveSessionExists);
   }
 
   return repository.startSession(input);
@@ -60,8 +61,8 @@ export async function logExerciseSetUseCase(
   LogSetInputSchema.parse(input);
 
   const session = await repository.getSessionById(input.sessionId);
-  if (!session) throw new Error('Session not found');
-  if (session.status !== 'active') throw new Error('Cannot log sets to a session that is not active');
+  if (!session) throw new Error(Strings.errorSessionNotFound);
+  if (session.status !== 'active') throw new Error(Strings.errorCannotLogSetsInactiveSession);
 
   // Compute set number for this exercise within the session
   const existingSets = session.sets.filter((s) => s.exerciseId === input.exerciseId);
@@ -94,8 +95,8 @@ export async function finishWorkoutSessionUseCase(
   if (!sessionId) throw new Error('sessionId is required');
 
   const session = await repository.getSessionById(sessionId);
-  if (!session) throw new Error('Session not found');
-  if (session.status !== 'active') throw new Error('Session is not active');
+  if (!session) throw new Error(Strings.errorSessionNotFound);
+  if (session.status !== 'active') throw new Error(Strings.errorSessionNotActive);
 
   const finished = await repository.finishSession(sessionId);
 
@@ -154,7 +155,7 @@ export async function abandonWorkoutSessionUseCase(
 ): Promise<void> {
   if (!sessionId) throw new Error('sessionId is required');
   const session = await repository.getSessionById(sessionId);
-  if (!session) throw new Error('Session not found');
-  if (session.status !== 'active') throw new Error('Session is not active');
+  if (!session) throw new Error(Strings.errorSessionNotFound);
+  if (session.status !== 'active') throw new Error(Strings.errorSessionNotActive);
   await repository.abandonSession(sessionId);
 }

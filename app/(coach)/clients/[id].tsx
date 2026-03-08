@@ -7,6 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { supabase } from '../../../src/infrastructure/supabase/client';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 interface Routine { id: string; name: string; assigned_at: string; }
 interface Session { id: string; started_at: string; finished_at: string | null; status: string; }
@@ -53,9 +54,9 @@ export default function ClientDetailScreen() {
   };
 
   const unassignRoutine = (routine: Routine) => {
-    Alert.alert('Unassign Routine', `Remove "${routine.name}" from ${name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: async () => {
+    Alert.alert(Strings.alertUnassignRoutineTitle, Strings.alertUnassignRoutineMessage(routine.name, name), [
+      { text: Strings.alertUnassignCancel, style: 'cancel' },
+      { text: Strings.alertUnassignConfirm, style: 'destructive', onPress: async () => {
         const { error } = await supabase.from('routine_assignments').delete()
           .eq('routine_id', routine.id).eq('athlete_id', id);
         if (!error) setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
@@ -67,7 +68,7 @@ export default function ClientDetailScreen() {
     n.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 
   const formatDuration = (start: string, end: string | null) => {
-    if (!end) return 'In progress';
+    if (!end) return Strings.labelInProgress;
     const mins = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
     return `${mins} min`;
   };
@@ -76,13 +77,13 @@ export default function ClientDetailScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.topbar}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← Volver</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.assignBtn}
           onPress={() => router.push({ pathname: '/(coach)/routines', params: { assignTo: id, assignName: name } })}
         >
-          <Text style={styles.assignBtnText}>Assign Routine</Text>
+          <Text style={styles.assignBtnText}>Asignar rutina</Text>
         </TouchableOpacity>
       </View>
 
@@ -97,12 +98,12 @@ export default function ClientDetailScreen() {
             </View>
             <Text style={styles.clientName}>{name}</Text>
             <View style={styles.statsRow}>
-              <StatPill label="Routines" value={String(routines.length)} />
-              <StatPill label="Sessions" value={String(sessions.length)} />
+              <StatPill label={Strings.labelRoutines} value={String(routines.length)} />
+              <StatPill label={Strings.labelSessions} value={String(sessions.length)} />
               <StatPill
-                label="Last workout"
+                label={Strings.labelLastWorkout}
                 value={sessions[0]
-                  ? new Date(sessions[0].started_at).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+                  ? new Date(sessions[0].started_at).toLocaleDateString('es', { month: 'short', day: 'numeric' })
                   : '—'}
               />
             </View>
@@ -110,10 +111,10 @@ export default function ClientDetailScreen() {
 
           {/* Routines */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>ASSIGNED ROUTINES</Text>
+            <Text style={styles.sectionLabel}>RUTINAS ASIGNADAS</Text>
             {routines.length === 0 ? (
               <View style={styles.emptySection}>
-                <Text style={styles.emptySectionText}>No routines assigned yet</Text>
+                <Text style={styles.emptySectionText}>Sin rutinas asignadas aún</Text>
               </View>
             ) : routines.map((r) => (
               <TouchableOpacity
@@ -124,20 +125,20 @@ export default function ClientDetailScreen() {
                 <View style={styles.routineContent}>
                   <Text style={styles.routineName}>{r.name}</Text>
                   <Text style={styles.routineDate}>
-                    Assigned {new Date(r.assigned_at).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {Strings.labelAssigned(new Date(r.assigned_at).toLocaleDateString('es', { month: 'short', day: 'numeric', year: 'numeric' }))}
                   </Text>
                 </View>
-                <Text style={styles.longPressHint}>hold to remove</Text>
+                <Text style={styles.longPressHint}>mantén para quitar</Text>
               </TouchableOpacity>
             ))}
           </View>
 
           {/* Recent sessions */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>RECENT SESSIONS</Text>
+            <Text style={styles.sectionLabel}>SESIONES RECIENTES</Text>
             {sessions.length === 0 ? (
               <View style={styles.emptySection}>
-                <Text style={styles.emptySectionText}>No sessions yet</Text>
+                <Text style={styles.emptySectionText}>Sin sesiones aún</Text>
               </View>
             ) : sessions.map((s) => (
               <View key={s.id} style={styles.sessionCard}>
@@ -149,7 +150,7 @@ export default function ClientDetailScreen() {
                 ]} />
                 <View style={styles.sessionInfo}>
                   <Text style={styles.sessionDate}>
-                    {new Date(s.started_at).toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    {new Date(s.started_at).toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </Text>
                   <Text style={styles.sessionMeta}>
                     {formatDuration(s.started_at, s.finished_at)} · {s.status}

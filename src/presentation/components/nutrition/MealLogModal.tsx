@@ -7,6 +7,7 @@ import { Meal } from '@/domain/entities/NutritionPlan';
 import { useNutritionStore } from '../../stores/nutritionStore';
 import { useAuthStore } from '../../stores/authStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
+import { Strings } from '@/shared/constants/strings';
 
 interface MealLogModalProps {
   meal: Meal;
@@ -49,9 +50,9 @@ export function MealLogModal({ meal, onClose }: MealLogModalProps) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>
-            <Text style={styles.cancel}>Cancel</Text>
+            <Text style={styles.cancel}>Cancelar</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Log Meal</Text>
+          <Text style={styles.title}>Registrar comida</Text>
           <TouchableOpacity
             style={[styles.saveBtn, isSubmitting && styles.saveBtnDisabled]}
             onPress={handleLog}
@@ -59,7 +60,7 @@ export function MealLogModal({ meal, onClose }: MealLogModalProps) {
           >
             {isSubmitting
               ? <ActivityIndicator color="#fff" size="small" />
-              : <Text style={styles.saveBtnText}>Save</Text>
+              : <Text style={styles.saveBtnText}>Guardar</Text>
             }
           </TouchableOpacity>
         </View>
@@ -67,47 +68,47 @@ export function MealLogModal({ meal, onClose }: MealLogModalProps) {
         <ScrollView style={styles.scroll}>
           {/* Meal name */}
           <View style={styles.mealNameCard}>
-            <Text style={styles.mealNameLabel}>MEAL</Text>
+            <Text style={styles.mealNameLabel}>COMIDA</Text>
             <Text style={styles.mealName}>{meal.name}</Text>
             {meal.notes && <Text style={styles.mealNotes}>{meal.notes}</Text>}
           </View>
 
           {/* Target reference */}
           <View style={styles.targetCard}>
-            <Text style={styles.targetLabel}>TARGET</Text>
+            <Text style={styles.targetLabel}>OBJETIVO</Text>
             <View style={styles.targetRow}>
-              <TargetPill label="Protein" value={`${meal.targetMacros.proteinG}g`} />
-              <TargetPill label="Carbs"   value={`${meal.targetMacros.carbsG}g`} />
-              <TargetPill label="Fat"     value={`${meal.targetMacros.fatG}g`} />
-              <TargetPill label="Cal"     value={`${meal.targetMacros.calories}kcal`} accent />
+              <TargetPill label={Strings.labelProtein} value={`${meal.targetMacros.proteinG}g`} />
+              <TargetPill label={Strings.labelCarbs}   value={`${meal.targetMacros.carbsG}g`} />
+              <TargetPill label={Strings.labelFat}     value={`${meal.targetMacros.fatG}g`} />
+              <TargetPill label={Strings.labelCal}     value={`${meal.targetMacros.calories}kcal`} accent />
             </View>
           </View>
 
           {/* Macro inputs */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>WHAT YOU ATE</Text>
+            <Text style={styles.sectionLabel}>LO QUE COMISTE</Text>
 
             <View style={styles.inputs}>
-              <MacroInput label="Protein (g)" value={protein} onChange={setProtein} color={Colors.primary} />
-              <MacroInput label="Carbs (g)"   value={carbs}   onChange={setCarbs}   color={Colors.athlete} />
-              <MacroInput label="Fat (g)"     value={fat}     onChange={setFat}     color={Colors.warning} />
+              <MacroInput label={Strings.labelProteinG} value={protein} onChange={setProtein} color={Colors.primary} />
+              <MacroInput label={Strings.labelCarbsG}   value={carbs}   onChange={setCarbs}   color={Colors.athlete} />
+              <MacroInput label={Strings.labelFatG}     value={fat}     onChange={setFat}     color={Colors.warning} />
             </View>
 
             {/* Auto-calculated calories */}
             <View style={styles.calsCard}>
-              <Text style={styles.calsLabel}>CALCULATED CALORIES</Text>
+              <Text style={styles.calsLabel}>CALORÍAS CALCULADAS</Text>
               <Text style={styles.calsValue}>{calculatedCals} kcal</Text>
             </View>
           </View>
 
           {/* Notes */}
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>NOTES (OPTIONAL)</Text>
+            <Text style={styles.sectionLabel}>NOTAS (OPCIONAL)</Text>
             <TextInput
               style={styles.notesInput}
               value={notes}
               onChangeText={setNotes}
-              placeholder="e.g. slightly bigger portion..."
+              placeholder="ej. porción un poco más grande..."
               placeholderTextColor={Colors.textMuted}
               multiline
               numberOfLines={2}

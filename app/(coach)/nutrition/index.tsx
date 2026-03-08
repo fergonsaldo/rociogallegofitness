@@ -8,6 +8,7 @@ import { useNutritionStore } from '../../../src/presentation/stores/nutritionSto
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { NutritionPlan } from '../../../src/domain/entities/NutritionPlan';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 export default function CoachNutritionScreen() {
   const router = useRouter();
@@ -19,9 +20,9 @@ export default function CoachNutritionScreen() {
   }, [user?.id]);
 
   const handleDelete = (plan: NutritionPlan) => {
-    Alert.alert('Delete Plan', `Delete "${plan.name}"? This cannot be undone.`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => deletePlan(plan.id) },
+    Alert.alert(Strings.alertDeletePlanTitle, Strings.alertDeletePlanMessage(plan.name), [
+      { text: Strings.alertDeleteCancel, style: 'cancel' },
+      { text: Strings.alertDeleteConfirm, style: 'destructive', onPress: () => deletePlan(plan.id) },
     ]);
   };
 

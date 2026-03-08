@@ -1,3 +1,4 @@
+import { Strings } from '@/shared/constants/strings';
 export type AuthErrorCode =
   | 'INVALID_CREDENTIALS'
   | 'EMAIL_ALREADY_IN_USE'
@@ -18,16 +19,16 @@ export function mapSupabaseAuthError(error: { message: string; status?: number }
   const message = error.message.toLowerCase();
 
   if (message.includes('invalid login credentials')) {
-    return new AuthError('INVALID_CREDENTIALS', 'Email or password is incorrect.');
+    return new AuthError('INVALID_CREDENTIALS', Strings.errorInvalidCredentials);
   }
 
   if (message.includes('user already registered') || message.includes('already been registered')) {
-    return new AuthError('EMAIL_ALREADY_IN_USE', 'An account with this email already exists.');
+    return new AuthError('EMAIL_ALREADY_IN_USE', Strings.errorEmailInUse);
   }
 
   if (message.includes('network') || message.includes('fetch')) {
-    return new AuthError('NETWORK_ERROR', 'No internet connection. Please try again.');
+    return new AuthError('NETWORK_ERROR', Strings.errorNetwork);
   }
 
-  return new AuthError('UNKNOWN_ERROR', 'An unexpected error occurred. Please try again.');
+  return new AuthError('UNKNOWN_ERROR', Strings.errorUnknown);
 }

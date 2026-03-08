@@ -1,3 +1,4 @@
+import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
 import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry } from '@/domain/entities/NutritionPlan';
 import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
@@ -56,7 +57,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const plans = await getCoachNutritionPlansUseCase(coachId, repo);
       set({ coachPlans: plans, coachPlansLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load plans', coachPlansLoading: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadPlans, coachPlansLoading: false });
     }
   },
 
@@ -67,7 +68,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       set((s) => ({ coachPlans: [plan, ...s.coachPlans], isSubmitting: false }));
       return plan;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to create plan', isSubmitting: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedCreatePlan, isSubmitting: false });
       return null;
     }
   },
@@ -76,7 +77,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
     try {
       await assignNutritionPlanUseCase({ planId, athleteId }, repo);
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to assign plan' });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignPlan });
     }
   },
 
@@ -85,7 +86,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       await deleteNutritionPlanUseCase(planId, repo);
       set((s) => ({ coachPlans: s.coachPlans.filter((p) => p.id !== planId) }));
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to delete plan' });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedDeletePlan });
     }
   },
 
@@ -97,7 +98,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const plan = await getAssignedNutritionPlanUseCase(athleteId, repo);
       set({ assignedPlan: plan, assignedPlanLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load plan', assignedPlanLoading: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadPlan, assignedPlanLoading: false });
     }
   },
 
@@ -109,7 +110,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const summary = await getDailyNutritionSummaryUseCase(athleteId, date, assignedPlan, repo);
       set({ dailySummary: summary, dailySummaryLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load daily summary', dailySummaryLoading: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadDailySummary, dailySummaryLoading: false });
     }
   },
 
@@ -160,7 +161,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       });
       return entry;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to log meal', isSubmitting: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLogMeal, isSubmitting: false });
       return null;
     }
   },

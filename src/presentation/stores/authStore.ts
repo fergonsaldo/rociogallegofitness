@@ -1,3 +1,4 @@
+import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
 import { User } from '@/domain/entities/User';
 import { loginUseCase, LoginInput } from '@/application/auth/LoginUseCase';
@@ -35,7 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { user } = await loginUseCase(input);
       set({ user, status: 'authenticated', error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed';
+      const message = err instanceof Error ? err.message : Strings.errorLoginFailed;
       set({ status: 'unauthenticated', error: message });
     }
   },
@@ -46,7 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { user } = await registerUseCase(input);
       set({ user, status: 'authenticated', error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed';
+      const message = err instanceof Error ? err.message : Strings.errorRegistrationFailed;
       set({ status: 'unauthenticated', error: message });
     }
   },
@@ -57,7 +58,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await logoutUseCase();
       set({ user: null, status: 'unauthenticated', error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Logout failed';
+      const message = err instanceof Error ? err.message : Strings.errorLogoutFailed;
       set({ error: message, status: 'authenticated' });
     }
   },

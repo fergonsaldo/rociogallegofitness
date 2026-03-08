@@ -37,7 +37,7 @@ export default function LoginScreen() {
         <View style={styles.header}>
           <Text style={styles.logo}>🏋️</Text>
           <Text style={styles.title}>FitCoach</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={styles.subtitle}>Inicia sesión en tu cuenta</Text>
         </View>
 
         {/* Form */}
@@ -54,7 +54,7 @@ export default function LoginScreen() {
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="you@example.com"
+              placeholder="tu@email.com"
               placeholderTextColor={Colors.textMuted}
               keyboardType="email-address"
               autoCapitalize="none"
@@ -63,7 +63,7 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>PASSWORD</Text>
+            <Text style={styles.label}>CONTRASEÑA</Text>
             <TextInput
               style={styles.input}
               value={password}
@@ -83,16 +83,16 @@ export default function LoginScreen() {
             {isLoading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.buttonText}>Sign In</Text>
+              <Text style={styles.buttonText}>Iniciar sesión</Text>
             )}
           </TouchableOpacity>
         </View>
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={styles.footerText}>¿No tienes cuenta? </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.footerLink}>Create one</Text>
+            <Text style={styles.footerLink}>Crear una</Text>
           </TouchableOpacity>
         </View>
       </View>

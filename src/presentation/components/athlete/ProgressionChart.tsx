@@ -156,7 +156,7 @@ export function ProgressionChart({
 }
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString('en', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString('es', { month: 'short', day: 'numeric' });
 }
 
 const styles = StyleSheet.create({

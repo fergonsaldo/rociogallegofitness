@@ -13,6 +13,7 @@ import { WorkoutSummaryModal } from '../../../src/presentation/components/athlet
 import { findExerciseById } from '../../../src/shared/constants/exercises';
 import { ExerciseSet } from '../../../src/domain/entities/ExerciseSet';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 export default function WorkoutSessionScreen() {
   const router = useRouter();
@@ -61,16 +62,16 @@ export default function WorkoutSessionScreen() {
   };
 
   const handleFinish = () => {
-    Alert.alert('Finish Workout?', 'Your sets will be saved and synced.', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Finish', style: 'default', onPress: () => finishSession() },
+    Alert.alert('¿Terminar entrenamiento?', 'Tus series se guardarán y sincronizarán.', [
+      { text: Strings.alertFinishCancel, style: 'cancel' },
+      { text: Strings.alertFinishConfirm, style: 'default', onPress: () => finishSession() },
     ]);
   };
 
   const handleAbandon = () => {
-    Alert.alert('Abandon Workout?', 'Progress will be lost.', [
-      { text: 'Continue Training', style: 'cancel' },
-      { text: 'Abandon', style: 'destructive', onPress: async () => { await abandonSession(); router.back(); } },
+    Alert.alert('¿Abandonar el entrenamiento?', 'Se perderá el progreso.', [
+      { text: Strings.alertAbandonContinue, style: 'cancel' },
+      { text: Strings.alertAbandonConfirm, style: 'destructive', onPress: async () => { await abandonSession(); router.back(); } },
     ]);
   };
 
@@ -92,7 +93,7 @@ export default function WorkoutSessionScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
           <ActivityIndicator color={Colors.athlete} size="large" />
-          <Text style={styles.loadingText}>Starting workout…</Text>
+          <Text style={styles.loadingText}>Iniciando entrenamiento…</Text>
         </View>
       </SafeAreaView>
     );
@@ -108,12 +109,12 @@ export default function WorkoutSessionScreen() {
       {/* Top bar */}
       <View style={styles.topbar}>
         <View>
-          <Text style={styles.topbarTitle}>{routineDay?.name ?? 'Free Workout'}</Text>
+          <Text style={styles.topbarTitle}>{routineDay?.name ?? 'Entrenamiento libre'}</Text>
           <Text style={styles.topbarTimer}>⏱ {elapsed}</Text>
         </View>
         <View style={styles.topbarActions}>
           <TouchableOpacity style={styles.finishButton} onPress={handleFinish} activeOpacity={0.8}>
-            <Text style={styles.finishButtonText}>Finish</Text>
+            <Text style={styles.finishButtonText}>Terminar</Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleAbandon} style={styles.abandonButton}>
             <Text style={styles.abandonText}>✕</Text>
@@ -150,7 +151,7 @@ export default function WorkoutSessionScreen() {
                   onPress={() => setActiveExerciseIndex(idx)}
                 >
                   <Text style={[styles.exerciseTabText, isActive && styles.exerciseTabTextActive]}>
-                    {exercise?.name ?? 'Exercise'}
+                    {exercise?.name ?? Strings.fallbackExercise}
                   </Text>
                   <Text style={[styles.exerciseTabProgress, isDone && styles.exerciseTabProgressDone]}>
                     {setsLogged}/{re.targetSets}
@@ -199,7 +200,7 @@ export default function WorkoutSessionScreen() {
                     <Text style={styles.loggedSetBadgeText}>✓</Text>
                   </View>
                   <Text style={styles.loggedSetText}>
-                    Set {i + 1} ·{' '}
+                    Serie {i + 1} ·{' '}
                     {s.performance.type === 'reps'
                       ? `${(s.performance as any).weightKg} kg × ${(s.performance as any).reps} reps`
                       : `${(s.performance as any).durationSeconds}s`}
@@ -210,7 +211,7 @@ export default function WorkoutSessionScreen() {
               {/* Log next set */}
               {!allSetsLogged && (
                 <View style={styles.setLoggerWrapper}>
-                  <Text style={styles.nextSetLabel}>SET {nextSetNumber}</Text>
+                  <Text style={styles.nextSetLabel}>SERIE {nextSetNumber}</Text>
                   <SetLogger
                     exercise={exercise}
                     setNumber={nextSetNumber}
@@ -222,12 +223,12 @@ export default function WorkoutSessionScreen() {
 
               {allSetsLogged && (
                 <View style={styles.exerciseCompleteBanner}>
-                  <Text style={styles.exerciseCompleteText}>✓ Exercise complete!</Text>
+                  <Text style={styles.exerciseCompleteText}>✓ ¡Ejercicio completado!</Text>
                 </View>
               )}
 
               {/* Rest info */}
-              <Text style={styles.restHint}>Rest: {re.restBetweenSetsSeconds}s between sets</Text>
+              <Text style={styles.restHint}>Descanso: {re.restBetweenSetsSeconds}s entre series</Text>
             </View>
           );
         })()}
@@ -235,8 +236,8 @@ export default function WorkoutSessionScreen() {
         {/* Progress overview */}
         {session && session.sets.length > 0 && (
           <View style={styles.progressSection}>
-            <Text style={styles.progressLabel}>SESSION PROGRESS</Text>
-            <Text style={styles.progressValue}>{session.sets.length} sets logged</Text>
+            <Text style={styles.progressLabel}>PROGRESO DE LA SESIÓN</Text>
+            <Text style={styles.progressValue}>{session.sets.length} series registradas</Text>
           </View>
         )}
 

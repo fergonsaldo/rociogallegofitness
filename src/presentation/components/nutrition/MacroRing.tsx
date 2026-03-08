@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { Colors, FontSize, Spacing, BorderRadius } from '@/shared/constants/theme';
+import { Strings } from '@/shared/constants/strings';
 
 interface MacroRingProps {
   /** 0 to 1 */
@@ -118,14 +119,14 @@ export function MacroSummaryCard({ calories, protein, carbs, fat }: MacroSummary
           value={calories.consumed}
           target={calories.target}
           unit="kcal"
-          label="Calories"
+          label={Strings.labelCalories}
           color={Colors.primary}
           size={100}
         />
         <View style={styles.summaryBars}>
-          <MacroBar label="Protein" consumed={protein.consumed} target={protein.target} unit="g" color={Colors.primary} />
-          <MacroBar label="Carbs"   consumed={carbs.consumed}   target={carbs.target}   unit="g" color={Colors.athlete} />
-          <MacroBar label="Fat"     consumed={fat.consumed}     target={fat.target}     unit="g" color={Colors.warning} />
+          <MacroBar label={Strings.labelProtein} consumed={protein.consumed} target={protein.target} unit="g" color={Colors.primary} />
+          <MacroBar label={Strings.labelCarbs}   consumed={carbs.consumed}   target={carbs.target}   unit="g" color={Colors.athlete} />
+          <MacroBar label={Strings.labelFat}     consumed={fat.consumed}     target={fat.target}     unit="g" color={Colors.warning} />
         </View>
       </View>
     </View>

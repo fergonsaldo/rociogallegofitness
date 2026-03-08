@@ -2,6 +2,7 @@ import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'rea
 import { SessionSummary } from '@/application/athlete/WorkoutUseCases';
 import { findExerciseById } from '@/shared/constants/exercises';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
+import { Strings } from '@/shared/constants/strings';
 
 interface WorkoutSummaryModalProps {
   summary: SessionSummary;
@@ -21,31 +22,31 @@ export function WorkoutSummaryModal({ summary, onClose }: WorkoutSummaryModalPro
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.emoji}>🏆</Text>
-          <Text style={styles.title}>Workout Complete!</Text>
-          <Text style={styles.subtitle}>Great session, keep it up</Text>
+          <Text style={styles.title}>¡Entrenamiento completado!</Text>
+          <Text style={styles.subtitle}>Gran sesión, sigue así</Text>
         </View>
 
         {/* Stats row */}
         <View style={styles.statsRow}>
-          <StatCard emoji="⏱" value={`${durationMinutes}m`} label="Duration" />
-          <StatCard emoji="🔁" value={String(totalSets)} label="Total Sets" />
-          <StatCard emoji="⚡️" value={`${Math.round(totalVolumeKg).toLocaleString()}`} label="Volume kg" />
+          <StatCard emoji="⏱" value={`${durationMinutes}m`} label={Strings.labelDuration} />
+          <StatCard emoji="🔁" value={String(totalSets)} label={Strings.labelTotalSets} />
+          <StatCard emoji="⚡️" value={`${Math.round(totalVolumeKg).toLocaleString()}`} label={Strings.labelVolumeKg} />
         </View>
 
         {/* Per-exercise breakdown */}
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-          <Text style={styles.sectionLabel}>EXERCISE BREAKDOWN</Text>
+          <Text style={styles.sectionLabel}>DESGLOSE POR EJERCICIO</Text>
           {exerciseSummaries.map((ex) => {
             const exercise = findExerciseById(ex.exerciseId);
             return (
               <View key={ex.exerciseId} style={styles.exerciseRow}>
                 <View style={styles.exerciseInfo}>
-                  <Text style={styles.exerciseName}>{exercise?.name ?? 'Unknown'}</Text>
-                  <Text style={styles.exerciseSets}>{ex.sets} sets completed</Text>
+                  <Text style={styles.exerciseName}>{exercise?.name ?? Strings.fallbackUnknown}</Text>
+                  <Text style={styles.exerciseSets}>{ex.sets} series completadas</Text>
                 </View>
                 {ex.estimatedOneRepMaxKg && (
                   <View style={styles.ormBadge}>
-                    <Text style={styles.ormLabel}>EST. 1RM</Text>
+                    <Text style={styles.ormLabel}>1RM EST.</Text>
                     <Text style={styles.ormValue}>{ex.estimatedOneRepMaxKg} kg</Text>
                   </View>
                 )}
@@ -55,7 +56,7 @@ export function WorkoutSummaryModal({ summary, onClose }: WorkoutSummaryModalPro
         </ScrollView>
 
         <TouchableOpacity style={styles.doneButton} onPress={onClose} activeOpacity={0.8}>
-          <Text style={styles.doneButtonText}>Done</Text>
+          <Text style={styles.doneButtonText}>Listo</Text>
         </TouchableOpacity>
       </View>
     </Modal>

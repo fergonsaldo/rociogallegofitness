@@ -10,6 +10,7 @@ import { WorkoutHistoryCard } from '../../../src/presentation/components/athlete
 import { WorkoutHistoryEntry } from '../../../src/application/athlete/ProgressUseCases';
 import { findExerciseById } from '../../../src/shared/constants/exercises';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 type Tab = 'history' | 'bests';
 
@@ -39,8 +40,8 @@ export default function ProgressScreen() {
         <View style={styles.headerLeft}>
           <View style={styles.accentBar} />
           <View>
-            <Text style={styles.title}>Progress</Text>
-            <Text style={styles.subtitle}>Track your gains</Text>
+            <Text style={styles.title}>Progreso</Text>
+            <Text style={styles.subtitle}>Sigue tu evolución</Text>
           </View>
         </View>
       </View>
@@ -54,7 +55,7 @@ export default function ProgressScreen() {
             onPress={() => setActiveTab(tab)}
           >
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab === 'history' ? '📋 History' : '🏆 Personal Bests'}
+              {tab === 'history' ? Strings.tabHistory : Strings.tabPersonalBests}
             </Text>
           </TouchableOpacity>
         ))}
@@ -71,8 +72,8 @@ export default function ProgressScreen() {
         history.length === 0 ? (
           <View style={styles.center}>
             <Text style={styles.emptyEmoji}>📋</Text>
-            <Text style={styles.emptyTitle}>No workouts yet</Text>
-            <Text style={styles.emptySubtitle}>Complete your first session to see it here</Text>
+            <Text style={styles.emptyTitle}>Sin entrenamientos aún</Text>
+            <Text style={styles.emptySubtitle}>Completa tu primera sesión para verla aquí</Text>
           </View>
         ) : (
           <FlatList
@@ -97,8 +98,8 @@ export default function ProgressScreen() {
         personalBests.length === 0 ? (
           <View style={styles.center}>
             <Text style={styles.emptyEmoji}>🏆</Text>
-            <Text style={styles.emptyTitle}>No records yet</Text>
-            <Text style={styles.emptySubtitle}>Finish a workout to record your first PR</Text>
+            <Text style={styles.emptyTitle}>Sin récords aún</Text>
+            <Text style={styles.emptySubtitle}>Termina un entrenamiento para registrar tu primer récord</Text>
           </View>
         ) : (
           <FlatList
@@ -116,21 +117,21 @@ export default function ProgressScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.prLeft}>
-                    <Text style={styles.prName}>{exercise?.name ?? 'Unknown'}</Text>
+                    <Text style={styles.prName}>{exercise?.name ?? Strings.fallbackUnknown}</Text>
                     <Text style={styles.prDate}>
-                      {item.achievedAt.toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {item.achievedAt.toLocaleDateString('es', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </Text>
                   </View>
                   <View style={styles.prRight}>
                     {item.estimatedOneRepMaxKg && (
                       <View style={styles.prBadge}>
-                        <Text style={styles.prBadgeLabel}>EST. 1RM</Text>
+                        <Text style={styles.prBadgeLabel}>1RM EST.</Text>
                         <Text style={styles.prBadgeValue}>{item.estimatedOneRepMaxKg} kg</Text>
                       </View>
                     )}
                     {item.bestWeightKg && !item.estimatedOneRepMaxKg && (
                       <View style={styles.prBadge}>
-                        <Text style={styles.prBadgeLabel}>BEST</Text>
+                        <Text style={styles.prBadgeLabel}>MEJOR</Text>
                         <Text style={styles.prBadgeValue}>{item.bestWeightKg} kg</Text>
                       </View>
                     )}

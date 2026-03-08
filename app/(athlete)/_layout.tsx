@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize } from '../../src/shared/constants/theme';
+import { Strings } from '../../src/shared/constants/strings';
 
 interface TabIconProps {
   emoji: string;
@@ -34,7 +35,7 @@ export default function AthleteLayout() {
         name="dashboard"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🏠" label="Home" focused={focused} />
+            <TabIcon emoji="🏠" label={Strings.tabHome} focused={focused} />
           ),
         }}
       />
@@ -42,7 +43,7 @@ export default function AthleteLayout() {
         name="workout/index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="💪" label="Train" focused={focused} />
+            <TabIcon emoji="💪" label={Strings.tabTrain} focused={focused} />
           ),
         }}
       />
@@ -50,7 +51,7 @@ export default function AthleteLayout() {
         name="progress/index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📈" label="Progress" focused={focused} />
+            <TabIcon emoji="📈" label={Strings.tabProgress} focused={focused} />
           ),
         }}
       />
@@ -58,7 +59,7 @@ export default function AthleteLayout() {
         name="nutrition/index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🥗" label="Nutrition" focused={focused} />
+            <TabIcon emoji="🥗" label={Strings.tabNutrition} focused={focused} />
           ),
         }}
       />

@@ -1,3 +1,4 @@
+import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
 import { Routine, CreateRoutineInput } from '@/domain/entities/Routine';
 import { RoutineRemoteRepository } from '@/infrastructure/supabase/remote/RoutineRemoteRepository';
@@ -45,7 +46,7 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
       const routines = await getCoachRoutinesUseCase(coachId, repo);
       set({ routines, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load routines', isLoading: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadRoutines, isLoading: false });
     }
   },
 
@@ -55,7 +56,7 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
       const routines = await getAthleteRoutinesUseCase(athleteId, repo);
       set({ routines, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load routines', isLoading: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadRoutines, isLoading: false });
     }
   },
 
@@ -65,7 +66,7 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
       const routine = await getRoutineByIdUseCase(id, repo);
       set({ selectedRoutine: routine, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to load routine', isLoading: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadRoutine, isLoading: false });
     }
   },
 
@@ -79,7 +80,7 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
       }));
       return routine;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to create routine', isCreating: false });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedCreateRoutine, isCreating: false });
       return null;
     }
   },
@@ -88,7 +89,7 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
     try {
       await assignRoutineUseCase({ routineId, athleteId }, repo);
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to assign routine' });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignRoutine });
     }
   },
 
@@ -96,7 +97,7 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
     try {
       await unassignRoutineUseCase({ routineId, athleteId }, repo);
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Failed to unassign routine' });
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedUnassignRoutine });
     }
   },
 

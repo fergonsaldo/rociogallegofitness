@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import { useNutritionStore } from '../../../src/presentation/stores/nutritionStore';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
+import { Strings } from '../../../src/shared/constants/strings';
 
 interface MealDraft {
   name: string;
@@ -17,10 +18,10 @@ interface MealDraft {
 }
 
 const MEAL_PRESETS = [
-  { name: 'Breakfast', p: '35', c: '60', f: '15' },
-  { name: 'Lunch',     p: '45', c: '70', f: '20' },
-  { name: 'Dinner',    p: '45', c: '60', f: '20' },
-  { name: 'Snack',     p: '15', c: '25', f: '8'  },
+  { name: Strings.mealBreakfast, p: '35', c: '60', f: '15' },
+  { name: Strings.mealLunch,     p: '45', c: '70', f: '20' },
+  { name: Strings.mealDinner,    p: '45', c: '60', f: '20' },
+  { name: Strings.mealSnack,     p: '15', c: '25', f: '8'  },
 ];
 
 function calcCals(p: string, c: string, f: string) {
@@ -43,7 +44,7 @@ export default function CreateNutritionPlanScreen() {
 
   // Step 2 - meals
   const [meals, setMeals] = useState<MealDraft[]>([
-    { name: 'Breakfast', proteinG: '35', carbsG: '60', fatG: '15', notes: '' },
+    { name: Strings.mealBreakfast, proteinG: '35', carbsG: '60', fatG: '15', notes: '' },
   ]);
 
   const totalCals = calcCals(totalProtein, totalCarbs, totalFat);
@@ -51,7 +52,7 @@ export default function CreateNutritionPlanScreen() {
 
   const addMeal = (preset?: typeof MEAL_PRESETS[0]) => {
     setMeals([...meals, {
-      name: preset?.name ?? `Meal ${meals.length + 1}`,
+      name: preset?.name ?? `Comida ${meals.length + 1}`,
       proteinG: preset?.p ?? '30',
       carbsG: preset?.c ?? '50',
       fatG: preset?.f ?? '15',
@@ -136,24 +137,24 @@ export default function CreateNutritionPlanScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Plan Details</Text>
 
-            <Field label="NAME *">
+            <Field label="NOMBRE *">
               <TextInput style={styles.input} value={name} onChangeText={setName}
-                placeholder="e.g. Lean Bulk Phase 1" placeholderTextColor={Colors.textMuted} />
+                placeholder="ej. Volumen limpio fase 1" placeholderTextColor={Colors.textMuted} />
             </Field>
 
-            <Field label="DESCRIPTION">
+            <Field label={Strings.labelDescription}>
               <TextInput style={[styles.input, styles.inputMulti]} value={description}
                 onChangeText={setDescription} multiline numberOfLines={3}
-                placeholder="Optional notes for your athlete..." placeholderTextColor={Colors.textMuted} />
+                placeholder="Notas opcionales para tu atleta..." placeholderTextColor={Colors.textMuted} />
             </Field>
 
             <Text style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>Daily Macro Targets</Text>
             <Text style={styles.hint}>Calories are auto-calculated (4-4-9 formula)</Text>
 
             <View style={styles.macroInputRow}>
-              <MacroField label="Protein (g)" value={totalProtein} onChange={setTotalProtein} color={Colors.primary} />
-              <MacroField label="Carbs (g)"   value={totalCarbs}   onChange={setTotalCarbs}   color={Colors.athlete} />
-              <MacroField label="Fat (g)"     value={totalFat}     onChange={setTotalFat}     color={Colors.warning} />
+              <MacroField label={Strings.labelProteinG} value={totalProtein} onChange={setTotalProtein} color={Colors.primary} />
+              <MacroField label={Strings.labelCarbsG}   value={totalCarbs}   onChange={setTotalCarbs}   color={Colors.athlete} />
+              <MacroField label={Strings.labelFatG}     value={totalFat}     onChange={setTotalFat}     color={Colors.warning} />
             </View>
 
             <View style={styles.calsPreview}>
@@ -187,7 +188,7 @@ export default function CreateNutritionPlanScreen() {
                     style={styles.mealNameInput}
                     value={meal.name}
                     onChangeText={(v) => updateMeal(i, 'name', v)}
-                    placeholder="Meal name"
+                    placeholder={Strings.placeholderMealName}
                     placeholderTextColor={Colors.textMuted}
                   />
                   <Text style={styles.mealCals}>{calcCals(meal.proteinG, meal.carbsG, meal.fatG)} kcal</Text>
@@ -199,16 +200,16 @@ export default function CreateNutritionPlanScreen() {
                 </View>
 
                 <View style={styles.mealMacroRow}>
-                  <MacroField label="Protein (g)" value={meal.proteinG} onChange={(v) => updateMeal(i, 'proteinG', v)} color={Colors.primary} />
-                  <MacroField label="Carbs (g)"   value={meal.carbsG}   onChange={(v) => updateMeal(i, 'carbsG', v)}   color={Colors.athlete} />
-                  <MacroField label="Fat (g)"     value={meal.fatG}     onChange={(v) => updateMeal(i, 'fatG', v)}     color={Colors.warning} />
+                  <MacroField label={Strings.labelProteinG} value={meal.proteinG} onChange={(v) => updateMeal(i, 'proteinG', v)} color={Colors.primary} />
+                  <MacroField label={Strings.labelCarbsG}   value={meal.carbsG}   onChange={(v) => updateMeal(i, 'carbsG', v)}   color={Colors.athlete} />
+                  <MacroField label={Strings.labelFatG}     value={meal.fatG}     onChange={(v) => updateMeal(i, 'fatG', v)}     color={Colors.warning} />
                 </View>
 
                 <TextInput
                   style={styles.mealNotesInput}
                   value={meal.notes}
                   onChangeText={(v) => updateMeal(i, 'notes', v)}
-                  placeholder="Notes (optional)"
+                  placeholder={Strings.placeholderMealNotes}
                   placeholderTextColor={Colors.textMuted}
                 />
               </View>

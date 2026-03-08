@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { WorkoutHistoryEntry } from '@/application/athlete/ProgressUseCases';
 import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
+import { Strings } from '@/shared/constants/strings';
 
 interface WorkoutHistoryCardProps {
   entry: WorkoutHistoryEntry;
@@ -10,11 +11,11 @@ interface WorkoutHistoryCardProps {
 export function WorkoutHistoryCard({ entry, onPress }: WorkoutHistoryCardProps) {
   const { session, totalVolumeKg, totalSets, durationMinutes, exerciseCount } = entry;
 
-  const dateLabel = session.startedAt.toLocaleDateString('en', {
+  const dateLabel = session.startedAt.toLocaleDateString('es', {
     weekday: 'short', month: 'short', day: 'numeric',
   });
 
-  const timeLabel = session.startedAt.toLocaleTimeString('en', {
+  const timeLabel = session.startedAt.toLocaleTimeString('es', {
     hour: '2-digit', minute: '2-digit',
   });
 
@@ -35,8 +36,8 @@ export function WorkoutHistoryCard({ entry, onPress }: WorkoutHistoryCardProps) 
         </View>
 
         <View style={styles.stats}>
-          <Stat emoji="🔁" value={String(totalSets)} label="Sets" />
-          <Stat emoji="🏋️" value={String(exerciseCount)} label="Exercises" />
+          <Stat emoji="🔁" value={String(totalSets)} label={Strings.labelSets} />
+          <Stat emoji="🏋️" value={String(exerciseCount)} label={Strings.labelExercises} />
           <Stat emoji="⚡️" value={`${Math.round(totalVolumeKg / 1000 * 10) / 10}k`} label="Vol. kg" />
         </View>
 

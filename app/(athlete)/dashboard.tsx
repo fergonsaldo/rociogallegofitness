@@ -9,6 +9,7 @@ import { useProgressStore } from '../../src/presentation/stores/progressStore';
 import { useRoutineStore } from '../../src/presentation/stores/routineStore';
 import { findExerciseById } from '../../src/shared/constants/exercises';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../src/shared/constants/theme';
+import { Strings } from '../../src/shared/constants/strings';
 
 export default function AthleteDashboardScreen() {
   const router = useRouter();
@@ -43,34 +44,34 @@ export default function AthleteDashboardScreen() {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>
-              {greeting()}, {user?.name?.split(' ')[0] ?? 'Athlete'} 👋
+              {greeting()}, {user?.name?.split(' ')[0] ?? Strings.fallbackAthlete} 👋
             </Text>
-            <Text style={styles.subGreeting}>Ready to crush today's session?</Text>
+            <Text style={styles.subGreeting}>¿Listo para el entrenamiento de hoy?</Text>
           </View>
           <TouchableOpacity onPress={logout} style={styles.logoutBtn}>
-            <Text style={styles.logoutText}>Sign out</Text>
+            <Text style={styles.logoutText}>Cerrar sesión</Text>
           </TouchableOpacity>
         </View>
 
         {/* Quick stats */}
         <View style={styles.statsRow}>
-          <QuickStat emoji="🔥" value={String(streak)} label="Day streak" accent={Colors.primary} />
-          <QuickStat emoji="🏋️" value={String(totalWorkouts)} label="Workouts" accent={Colors.athlete} />
+          <QuickStat emoji="🔥" value={String(streak)} label={Strings.labelDayStreak} accent={Colors.primary} />
+          <QuickStat emoji="🏋️" value={String(totalWorkouts)} label={Strings.labelWorkouts} accent={Colors.athlete} />
           <QuickStat
             emoji="⚡️"
             value={weeklyVolume > 0 ? `${Math.round(weeklyVolume / 1000 * 10) / 10}k` : '—'}
-            label="This week"
+            label={Strings.labelThisWeek}
             accent={Colors.success}
           />
         </View>
 
         {/* Start workout CTA */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Start Workout</Text>
+          <Text style={styles.sectionTitle}>Iniciar entrenamiento</Text>
           {routines.length === 0 ? (
             <View style={styles.noRoutinesBanner}>
               <Text style={styles.noRoutinesEmoji}>📋</Text>
-              <Text style={styles.noRoutinesText}>Your coach hasn't assigned a routine yet</Text>
+              <Text style={styles.noRoutinesText}>Tu entrenador aún no te ha asignado una rutina</Text>
             </View>
           ) : (
             routines.slice(0, 2).map((routine) => (
@@ -102,7 +103,7 @@ export default function AthleteDashboardScreen() {
           <View style={styles.loadingBox}><ActivityIndicator color={Colors.athlete} /></View>
         ) : lastSession && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Last Workout</Text>
+            <Text style={styles.sectionTitle}>Último entrenamiento</Text>
             <TouchableOpacity
               style={styles.lastSessionCard}
               onPress={() => router.push({
@@ -113,16 +114,16 @@ export default function AthleteDashboardScreen() {
             >
               <View style={styles.lastSessionHeader}>
                 <Text style={styles.lastSessionDate}>
-                  {lastSession.session.startedAt.toLocaleDateString('en', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  {lastSession.session.startedAt.toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </Text>
                 <Text style={styles.lastSessionDuration}>⏱ {lastSession.durationMinutes}m</Text>
               </View>
               <View style={styles.lastSessionStats}>
-                <MiniStat value={String(lastSession.totalSets)} label="Sets" />
-                <MiniStat value={String(lastSession.exerciseCount)} label="Exercises" />
-                <MiniStat value={`${Math.round(lastSession.totalVolumeKg)} kg`} label="Volume" />
+                <MiniStat value={String(lastSession.totalSets)} label={Strings.labelSets} />
+                <MiniStat value={String(lastSession.exerciseCount)} label={Strings.labelExercises} />
+                <MiniStat value={`${Math.round(lastSession.totalVolumeKg)} kg`} label={Strings.labelVolume} />
               </View>
-              <Text style={styles.viewDetail}>View details →</Text>
+              <Text style={styles.viewDetail}>Ver detalles →</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -131,9 +132,9 @@ export default function AthleteDashboardScreen() {
         {topBests.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Personal Bests</Text>
+              <Text style={styles.sectionTitle}>Récords personales</Text>
               <TouchableOpacity onPress={() => router.push('/(athlete)/progress')}>
-                <Text style={styles.seeAll}>See all →</Text>
+                <Text style={styles.seeAll}>Ver todos →</Text>
               </TouchableOpacity>
             </View>
             {topBests.map((pb) => {
@@ -148,7 +149,7 @@ export default function AthleteDashboardScreen() {
                   })}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.pbName}>{exercise?.name ?? 'Unknown'}</Text>
+                  <Text style={styles.pbName}>{exercise?.name ?? Strings.fallbackUnknown}</Text>
                   {pb.estimatedOneRepMaxKg && (
                     <View style={styles.pbBadge}>
                       <Text style={styles.pbBadgeText}>{pb.estimatedOneRepMaxKg} kg</Text>
@@ -169,9 +170,9 @@ export default function AthleteDashboardScreen() {
 
 function greeting() {
   const h = new Date().getHours();
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (h < 12) return Strings.greetingMorning;
+  if (h < 18) return Strings.greetingAfternoon;
+  return Strings.greetingEvening;
 }
 
 function computeStreak(dates: Date[]): number {
