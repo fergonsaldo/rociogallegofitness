@@ -14,12 +14,8 @@ export interface LoginResult {
   user: User;
 }
 
-/**
- * Authenticates an existing user with email and password.
- * Returns the full user profile (including role) on success.
- * Throws AuthError on failure.
- */
 export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
+  console.log('[LoginUseCase] Attempting login for:', input.email);
   LoginInputSchema.parse(input);
 
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -27,15 +23,19 @@ export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
     password: input.password,
   });
 
+  console.log('[LoginUseCase] Auth result:', { user: authData?.user?.id, error: authError?.message });
+
   if (authError || !authData.user) {
     throw mapSupabaseAuthError(authError ?? { message: 'No user returned' });
   }
 
   const { data: profile, error: profileError } = await supabase
-    .from('users')
+    .from('profiles')  // ← corregido de 'users' a 'profiles'
     .select('*')
     .eq('id', authData.user.id)
     .single();
+
+  console.log('[LoginUseCase] Profile result:', { profile: profile?.id, error: profileError?.message });
 
   if (profileError || !profile) {
     throw mapSupabaseAuthError(profileError ?? { message: 'Profile not found' });
@@ -52,5 +52,6 @@ export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
     updatedAt: new Date(profile.updated_at),
   };
 
+  console.log('[LoginUseCase] Login successful, role:', user.role);
   return { user };
 }
