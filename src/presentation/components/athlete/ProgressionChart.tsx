@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import Svg, { Path, Circle, Line, Text as SvgText, Defs, LinearGradient, Stop, Rect } from 'react-native-svg';
-import { ExerciseProgressionPoint } from '../../../application/athlete/ProgressUseCases';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../../shared/constants/theme';
+import { ExerciseProgressionPoint } from '@/application/athlete/ProgressUseCases';
+import { Colors, FontSize, Spacing, BorderRadius } from '@/shared/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CHART_WIDTH = SCREEN_WIDTH - Spacing.lg * 2 - Spacing.md * 2;

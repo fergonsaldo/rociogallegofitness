@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { WorkoutSession } from '../../domain/entities/WorkoutSession';
-import { ExerciseSet } from '../../domain/entities/ExerciseSet';
-import { WorkoutLocalRepository } from '../../infrastructure/database/local/WorkoutLocalRepository';
-import { syncService } from '../../infrastructure/sync/SyncService';
+import { WorkoutSession } from '@/domain/entities/WorkoutSession';
+import { ExerciseSet } from '@/domain/entities/ExerciseSet';
+import { WorkoutLocalRepository } from '@/infrastructure/database/local/WorkoutLocalRepository';
+import { syncService } from '@/infrastructure/sync/SyncService';
 import {
   startWorkoutSessionUseCase,
   logExerciseSetUseCase,
@@ -10,7 +10,7 @@ import {
   abandonWorkoutSessionUseCase,
   SessionSummary,
   LogSetInput,
-} from '../../application/athlete/WorkoutUseCases';
+} from '@/application/athlete/WorkoutUseCases';
 
 const repo = new WorkoutLocalRepository();
 

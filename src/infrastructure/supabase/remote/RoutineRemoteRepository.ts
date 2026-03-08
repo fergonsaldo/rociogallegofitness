@@ -1,6 +1,6 @@
 import { supabase } from '../client';
-import { IRoutineRepository } from '../../../domain/repositories/IRoutineRepository';
-import { Routine, CreateRoutineInput, RoutineDay, RoutineExercise } from '../../../domain/entities/Routine';
+import { IRoutineRepository } from '@/domain/repositories/IRoutineRepository';
+import { Routine, CreateRoutineInput, RoutineDay, RoutineExercise } from '@/domain/entities/Routine';
 
 /**
  * Supabase implementation of IRoutineRepository.

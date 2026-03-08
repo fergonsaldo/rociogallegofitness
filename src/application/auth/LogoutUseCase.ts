@@ -1,4 +1,4 @@
-import { supabase } from '../../infrastructure/supabase/client';
+import { supabase } from '@/infrastructure/supabase/client';
 import { mapSupabaseAuthError } from './AuthError';
 
 /**

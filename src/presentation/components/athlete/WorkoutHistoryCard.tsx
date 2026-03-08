@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { WorkoutHistoryEntry } from '../../../application/athlete/ProgressUseCases';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../../shared/constants/theme';
+import { WorkoutHistoryEntry } from '@/application/athlete/ProgressUseCases';
+import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
 
 interface WorkoutHistoryCardProps {
   entry: WorkoutHistoryEntry;

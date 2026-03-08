@@ -1,9 +1,9 @@
 import { supabase } from '../client';
-import { INutritionRepository } from '../../../domain/repositories/INutritionRepository';
+import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 import {
   NutritionPlan, CreateNutritionPlanInput,
   MealLogEntry, CreateMealLogEntryInput, Macros,
-} from '../../../domain/entities/NutritionPlan';
+} from '@/domain/entities/NutritionPlan';
 
 export class NutritionRemoteRepository implements INutritionRepository {
 

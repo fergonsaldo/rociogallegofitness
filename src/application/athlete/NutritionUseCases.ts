@@ -2,8 +2,8 @@ import {
   NutritionPlan, MealLogEntry, DailyNutritionSummary,
   CreateMealLogEntrySchema, CreateMealLogEntryInput,
   sumMacros, Macros,
-} from '../../domain/entities/NutritionPlan';
-import { INutritionRepository } from '../../domain/repositories/INutritionRepository';
+} from '@/domain/entities/NutritionPlan';
+import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 
 // ── GetAssignedPlan ───────────────────────────────────────────────────────────
 

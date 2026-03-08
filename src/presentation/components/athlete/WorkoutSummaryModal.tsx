@@ -1,7 +1,7 @@
 import { View, Text, Modal, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
-import { SessionSummary } from '../../../application/athlete/WorkoutUseCases';
-import { findExerciseById } from '../../../shared/constants/exercises';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../../shared/constants/theme';
+import { SessionSummary } from '@/application/athlete/WorkoutUseCases';
+import { findExerciseById } from '@/shared/constants/exercises';
+import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
 
 interface WorkoutSummaryModalProps {
   summary: SessionSummary;

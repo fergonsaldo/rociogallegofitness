@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserRole, WeightUnit } from '../../shared/types';
+import { UserRole, WeightUnit } from '@/shared/types';
 
 export const UserSchema = z.object({
   id: z.string().uuid(),

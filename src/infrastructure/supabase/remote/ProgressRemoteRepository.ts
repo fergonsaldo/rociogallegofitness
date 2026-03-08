@@ -1,6 +1,6 @@
 import { supabase } from '../client';
-import { IProgressRepository } from '../../../domain/repositories/IProgressRepository';
-import { ProgressRecord, CreateProgressRecordInput } from '../../../domain/entities/ProgressRecord';
+import { IProgressRepository } from '@/domain/repositories/IProgressRepository';
+import { ProgressRecord, CreateProgressRecordInput } from '@/domain/entities/ProgressRecord';
 
 export class ProgressRemoteRepository implements IProgressRepository {
 

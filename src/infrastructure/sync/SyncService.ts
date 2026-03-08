@@ -1,8 +1,8 @@
 import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../supabase/client';
 import { WorkoutLocalRepository } from '../database/local/WorkoutLocalRepository';
-import { WorkoutSession } from '../../domain/entities/WorkoutSession';
-import { ExerciseSet } from '../../domain/entities/ExerciseSet';
+import { WorkoutSession } from '@/domain/entities/WorkoutSession';
+import { ExerciseSet } from '@/domain/entities/ExerciseSet';
 
 const localRepo = new WorkoutLocalRepository();
 

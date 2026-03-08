@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../../shared/constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius } from '@/shared/constants/theme';
 
 interface MacroRingProps {
   /** 0 to 1 */

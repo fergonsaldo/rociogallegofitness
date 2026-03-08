@@ -1,9 +1,9 @@
-import { WorkoutSession } from '../../domain/entities/WorkoutSession';
-import { ProgressRecord } from '../../domain/entities/ProgressRecord';
-import { IWorkoutRepository } from '../../domain/repositories/IWorkoutRepository';
-import { IProgressRepository } from '../../domain/repositories/IProgressRepository';
-import { calculateTotalVolume } from '../../domain/value-objects/Volume';
-import { estimateOneRepMax } from '../../domain/value-objects/OneRepMax';
+import { WorkoutSession } from '@/domain/entities/WorkoutSession';
+import { ProgressRecord } from '@/domain/entities/ProgressRecord';
+import { IWorkoutRepository } from '@/domain/repositories/IWorkoutRepository';
+import { IProgressRepository } from '@/domain/repositories/IProgressRepository';
+import { calculateTotalVolume } from '@/domain/value-objects/Volume';
+import { estimateOneRepMax } from '@/domain/value-objects/OneRepMax';
 
 // ── GetWorkoutHistory ─────────────────────────────────────────────────────────
 

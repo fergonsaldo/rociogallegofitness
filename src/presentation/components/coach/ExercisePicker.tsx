@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native';
 import { useState } from 'react';
-import { Exercise } from '../../../domain/entities/Exercise';
-import { EXERCISE_CATALOG } from '../../../shared/constants/exercises';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../../shared/constants/theme';
+import { Exercise } from '@/domain/entities/Exercise';
+import { EXERCISE_CATALOG } from '@/shared/constants/exercises';
+import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
 
 interface ExercisePickerProps {
   onSelect: (exercise: Exercise) => void;

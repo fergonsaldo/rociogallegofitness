@@ -1,9 +1,9 @@
 import { z } from 'zod';
-import { WorkoutSession } from '../../domain/entities/WorkoutSession';
-import { ExerciseSet } from '../../domain/entities/ExerciseSet';
-import { IWorkoutRepository } from '../../domain/repositories/IWorkoutRepository';
-import { calculateTotalVolume } from '../../domain/value-objects/Volume';
-import { estimateOneRepMax } from '../../domain/value-objects/OneRepMax';
+import { WorkoutSession } from '@/domain/entities/WorkoutSession';
+import { ExerciseSet } from '@/domain/entities/ExerciseSet';
+import { IWorkoutRepository } from '@/domain/repositories/IWorkoutRepository';
+import { calculateTotalVolume } from '@/domain/value-objects/Volume';
+import { estimateOneRepMax } from '@/domain/value-objects/OneRepMax';
 
 // ── StartWorkoutSession ───────────────────────────────────────────────────────
 

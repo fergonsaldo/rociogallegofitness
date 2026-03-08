@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { Routine, CreateRoutineSchema } from '../../domain/entities/Routine';
-import { IRoutineRepository } from '../../domain/repositories/IRoutineRepository';
+import { Routine, CreateRoutineSchema } from '@/domain/entities/Routine';
+import { IRoutineRepository } from '@/domain/repositories/IRoutineRepository';
 
 export const CreateRoutineInputSchema = CreateRoutineSchema;
 export type CreateRoutineUseCaseInput = z.infer<typeof CreateRoutineInputSchema>;

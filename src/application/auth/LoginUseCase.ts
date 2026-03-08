@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { User } from '../../domain/entities/User';
-import { supabase } from '../../infrastructure/supabase/client';
+import { User } from '@/domain/entities/User';
+import { supabase } from '@/infrastructure/supabase/client';
 import { mapSupabaseAuthError } from './AuthError';
 
 export const LoginInputSchema = z.object({

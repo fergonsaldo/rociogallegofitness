@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { User } from '../../domain/entities/User';
-import { loginUseCase, LoginInput } from '../../application/auth/LoginUseCase';
-import { registerUseCase, RegisterInput } from '../../application/auth/RegisterUseCase';
-import { logoutUseCase } from '../../application/auth/LogoutUseCase';
+import { User } from '@/domain/entities/User';
+import { loginUseCase, LoginInput } from '@/application/auth/LoginUseCase';
+import { registerUseCase, RegisterInput } from '@/application/auth/RegisterUseCase';
+import { logoutUseCase } from '@/application/auth/LogoutUseCase';
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
 

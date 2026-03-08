@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { IRoutineRepository } from '../../domain/repositories/IRoutineRepository';
+import { IRoutineRepository } from '@/domain/repositories/IRoutineRepository';
 
 export const AssignRoutineInputSchema = z.object({
   routineId: z.string().uuid('Invalid routine ID'),

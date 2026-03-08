@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import { Routine, CreateRoutineInput } from '../../domain/entities/Routine';
-import { RoutineRemoteRepository } from '../../infrastructure/supabase/remote/RoutineRemoteRepository';
-import { createRoutineUseCase } from '../../application/coach/CreateRoutineUseCase';
-import { getCoachRoutinesUseCase, getAthleteRoutinesUseCase, getRoutineByIdUseCase } from '../../application/coach/GetRoutinesUseCase';
-import { assignRoutineUseCase, unassignRoutineUseCase } from '../../application/coach/AssignRoutineUseCase';
+import { Routine, CreateRoutineInput } from '@/domain/entities/Routine';
+import { RoutineRemoteRepository } from '@/infrastructure/supabase/remote/RoutineRemoteRepository';
+import { createRoutineUseCase } from '@/application/coach/CreateRoutineUseCase';
+import { getCoachRoutinesUseCase, getAthleteRoutinesUseCase, getRoutineByIdUseCase } from '@/application/coach/GetRoutinesUseCase';
+import { assignRoutineUseCase, unassignRoutineUseCase } from '@/application/coach/AssignRoutineUseCase';
 
 const repo = new RoutineRemoteRepository();
 

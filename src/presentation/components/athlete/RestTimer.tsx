@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { useWorkoutStore } from '../../stores/workoutStore';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../../shared/constants/theme';
+import { Colors, FontSize, Spacing, BorderRadius } from '@/shared/constants/theme';
 
 /**
  * Displays a countdown timer between sets.

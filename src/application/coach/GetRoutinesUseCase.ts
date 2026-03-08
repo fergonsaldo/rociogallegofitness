@@ -1,5 +1,5 @@
-import { Routine } from '../../domain/entities/Routine';
-import { IRoutineRepository } from '../../domain/repositories/IRoutineRepository';
+import { Routine } from '@/domain/entities/Routine';
+import { IRoutineRepository } from '@/domain/repositories/IRoutineRepository';
 
 /**
  * Returns all routines created by a coach, ordered newest first.

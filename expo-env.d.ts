@@ -1,10 +1,3 @@
 /// <reference types="expo/types" />
 
-// Typed access to EXPO_PUBLIC_ environment variables.
-// Add entries here whenever you add new vars to .env.local.
-declare namespace NodeJS {
-  interface ProcessEnv {
-    readonly EXPO_PUBLIC_SUPABASE_URL: string;
-    readonly EXPO_PUBLIC_SUPABASE_ANON_KEY: string;
-  }
-}
+// NOTE: This file should not be edited and should be in your git ignore

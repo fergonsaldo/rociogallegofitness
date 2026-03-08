@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import { WorkoutLocalRepository } from '../../infrastructure/database/local/WorkoutLocalRepository';
-import { ProgressRemoteRepository } from '../../infrastructure/supabase/remote/ProgressRemoteRepository';
+import { WorkoutLocalRepository } from '@/infrastructure/database/local/WorkoutLocalRepository';
+import { ProgressRemoteRepository } from '@/infrastructure/supabase/remote/ProgressRemoteRepository';
 import {
   getWorkoutHistoryUseCase, WorkoutHistoryEntry,
   getExerciseProgressionUseCase, ExerciseProgressionPoint,
   getPersonalBestsUseCase, PersonalBestSnapshot,
-} from '../../application/athlete/ProgressUseCases';
+} from '@/application/athlete/ProgressUseCases';
 
 const workoutRepo = new WorkoutLocalRepository();
 const progressRepo = new ProgressRemoteRepository();

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { supabase } from '../../infrastructure/supabase/client';
+import { supabase } from '@/infrastructure/supabase/client';
 import { useAuthStore } from '../stores/authStore';
-import { User } from '../../domain/entities/User';
+import { User } from '@/domain/entities/User';
 
 /**
  * Listens to Supabase auth state changes and keeps the Zustand

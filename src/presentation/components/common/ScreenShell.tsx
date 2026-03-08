@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
-import { Colors, Spacing, FontSize } from '../../shared/constants/theme';
+import { Colors, Spacing, FontSize } from '@/shared/constants/theme';
 
 interface ScreenShellProps {
   title: string;

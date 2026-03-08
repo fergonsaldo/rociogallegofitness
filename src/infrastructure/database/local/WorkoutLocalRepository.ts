@@ -2,9 +2,9 @@ import { eq, and, desc, isNull } from 'drizzle-orm';
 import * as Crypto from 'expo-crypto';
 import { db } from '../client';
 import { workoutSessions, exerciseSets } from '../schema';
-import { IWorkoutRepository } from '../../../domain/repositories/IWorkoutRepository';
-import { WorkoutSession, StartWorkoutSessionInput } from '../../../domain/entities/WorkoutSession';
-import { ExerciseSet, CreateExerciseSetInput } from '../../../domain/entities/ExerciseSet';
+import { IWorkoutRepository } from '@/domain/repositories/IWorkoutRepository';
+import { WorkoutSession, StartWorkoutSessionInput } from '@/domain/entities/WorkoutSession';
+import { ExerciseSet, CreateExerciseSetInput } from '@/domain/entities/ExerciseSet';
 
 /**
  * SQLite implementation — all writes go here first.

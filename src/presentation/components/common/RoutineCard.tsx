@@ -1,6 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { Routine } from '../../../domain/entities/Routine';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../../shared/constants/theme';
+import { Routine } from '@/domain/entities/Routine';
+import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
 
 interface RoutineCardProps {
   routine: Routine;

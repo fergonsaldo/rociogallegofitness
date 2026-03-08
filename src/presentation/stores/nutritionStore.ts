@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry } from '../../domain/entities/NutritionPlan';
-import { NutritionRemoteRepository } from '../../infrastructure/supabase/remote/NutritionRemoteRepository';
-import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase } from '../../application/coach/NutritionUseCases';
-import { getAssignedNutritionPlanUseCase, logMealUseCase, getDailyNutritionSummaryUseCase, getWeeklyAdherenceUseCase, WeeklyAdherenceDay } from '../../application/athlete/NutritionUseCases';
+import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry } from '@/domain/entities/NutritionPlan';
+import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
+import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase } from '@/application/coach/NutritionUseCases';
+import { getAssignedNutritionPlanUseCase, logMealUseCase, getDailyNutritionSummaryUseCase, getWeeklyAdherenceUseCase, WeeklyAdherenceDay } from '@/application/athlete/NutritionUseCases';
 
 const repo = new NutritionRemoteRepository();
 

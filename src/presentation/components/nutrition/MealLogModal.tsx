@@ -3,10 +3,10 @@ import {
   View, Text, TextInput, TouchableOpacity,
   Modal, StyleSheet, ScrollView, ActivityIndicator,
 } from 'react-native';
-import { Meal } from '../../../domain/entities/NutritionPlan';
+import { Meal } from '@/domain/entities/NutritionPlan';
 import { useNutritionStore } from '../../stores/nutritionStore';
 import { useAuthStore } from '../../stores/authStore';
-import { Colors, Spacing, FontSize, BorderRadius } from '../../../shared/constants/theme';
+import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/theme';
 
 interface MealLogModalProps {
   meal: Meal;

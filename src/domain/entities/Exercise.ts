@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MuscleGroup, ExerciseCategory } from '../../shared/types';
+import { MuscleGroup, ExerciseCategory } from '@/shared/types';
 
 const MUSCLE_GROUPS = [
   'chest', 'back', 'shoulders', 'biceps', 'triceps',

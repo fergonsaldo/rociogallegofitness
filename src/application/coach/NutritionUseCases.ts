@@ -1,6 +1,6 @@
 import { z } from 'zod';
-import { NutritionPlan, CreateNutritionPlanSchema } from '../../domain/entities/NutritionPlan';
-import { INutritionRepository } from '../../domain/repositories/INutritionRepository';
+import { NutritionPlan, CreateNutritionPlanSchema } from '@/domain/entities/NutritionPlan';
+import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 
 // ── CreateNutritionPlan ───────────────────────────────────────────────────────
 

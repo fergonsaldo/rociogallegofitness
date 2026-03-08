@@ -1,4 +1,4 @@
-import { Exercise } from '../../domain/entities/Exercise';
+import { Exercise } from '@/domain/entities/Exercise';
 
 /**
  * Predefined exercise catalog.

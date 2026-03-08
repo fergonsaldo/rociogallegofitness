@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { User } from '../../domain/entities/User';
-import { UserRole } from '../../shared/types';
-import { supabase } from '../../infrastructure/supabase/client';
+import { User } from '@/domain/entities/User';
+import { UserRole } from '@/shared/types';
+import { supabase } from '@/infrastructure/supabase/client';
 import { mapSupabaseAuthError } from './AuthError';
 
 export const RegisterInputSchema = z.object({

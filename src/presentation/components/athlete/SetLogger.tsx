@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { Exercise } from '../../../domain/entities/Exercise';
-import { ExerciseSet } from '../../../domain/entities/ExerciseSet';
-import { Colors, FontSize, Spacing, BorderRadius } from '../../../shared/constants/theme';
+import { Exercise } from '@/domain/entities/Exercise';
+import { ExerciseSet } from '@/domain/entities/ExerciseSet';
+import { Colors, FontSize, Spacing, BorderRadius } from '@/shared/constants/theme';
 
 interface SetLoggerProps {
   exercise: Exercise;
