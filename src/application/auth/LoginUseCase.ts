@@ -9,10 +9,7 @@ export const LoginInputSchema = z.object({
 });
 
 export type LoginInput = z.infer<typeof LoginInputSchema>;
-
-export interface LoginResult {
-  user: User;
-}
+export interface LoginResult { user: User; }
 
 export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
   console.log('[LoginUseCase] Attempting login for:', input.email);
@@ -23,35 +20,34 @@ export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
     password: input.password,
   });
 
-  console.log('[LoginUseCase] Auth result:', { user: authData?.user?.id, error: authError?.message });
+  console.log('[LoginUseCase] Auth result:', { userId: authData?.user?.id, error: authError?.message });
 
   if (authError || !authData.user) {
     throw mapSupabaseAuthError(authError ?? { message: 'No user returned' });
   }
 
   const { data: profile, error: profileError } = await supabase
-    .from('profiles')  // ← corregido de 'users' a 'profiles'
+    .from('users')  // ← public.users, como define el schema
     .select('*')
     .eq('id', authData.user.id)
     .single();
 
-  console.log('[LoginUseCase] Profile result:', { profile: profile?.id, error: profileError?.message });
+  console.log('[LoginUseCase] Profile result:', { id: profile?.id, role: profile?.role, error: profileError?.message });
 
   if (profileError || !profile) {
     throw mapSupabaseAuthError(profileError ?? { message: 'Profile not found' });
   }
 
-  const user: User = {
-    id: profile.id,
-    email: profile.email,
-    fullName: profile.full_name,
-    role: profile.role,
-    weightUnit: profile.weight_unit,
-    avatarUrl: profile.avatar_url ?? undefined,
-    createdAt: new Date(profile.created_at),
-    updatedAt: new Date(profile.updated_at),
+  return {
+    user: {
+      id: profile.id,
+      email: profile.email,
+      fullName: profile.full_name,
+      role: profile.role,
+      weightUnit: profile.weight_unit,
+      avatarUrl: profile.avatar_url ?? undefined,
+      createdAt: new Date(profile.created_at),
+      updatedAt: new Date(profile.updated_at),
+    },
   };
-
-  console.log('[LoginUseCase] Login successful, role:', user.role);
-  return { user };
 }

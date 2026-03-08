@@ -6,29 +6,16 @@ import { mapSupabaseAuthError } from './AuthError';
 
 export const RegisterInputSchema = z.object({
   email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .max(72, 'Password is too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(72, 'Password is too long'),
   fullName: z.string().min(1, 'Full name is required').max(100),
   role: z.enum(['coach', 'athlete'] satisfies [UserRole, UserRole]),
 });
 
 export type RegisterInput = z.infer<typeof RegisterInputSchema>;
+export interface RegisterResult { user: User; }
 
-export interface RegisterResult {
-  user: User;
-}
-
-/**
- * Creates a new user account.
- * Steps:
- *   1. Create auth credentials in Supabase Auth.
- *   2. Insert the public profile row (id, role, fullName…).
- *
- * Throws AuthError if the email is already in use or on network failure.
- */
 export async function registerUseCase(input: RegisterInput): Promise<RegisterResult> {
+  console.log('[RegisterUseCase] Registering:', input.email, input.role);
   RegisterInputSchema.parse(input);
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -36,14 +23,14 @@ export async function registerUseCase(input: RegisterInput): Promise<RegisterRes
     password: input.password,
   });
 
+  console.log('[RegisterUseCase] SignUp result:', { userId: authData?.user?.id, error: authError?.message });
+
   if (authError || !authData.user) {
     throw mapSupabaseAuthError(authError ?? { message: 'Registration failed' });
   }
 
-  const now = new Date().toISOString();
-
   const { data: profile, error: profileError } = await supabase
-    .from('users')
+    .from('users')  // ← public.users, como define el schema
     .insert({
       id: authData.user.id,
       email: input.email,
@@ -54,21 +41,22 @@ export async function registerUseCase(input: RegisterInput): Promise<RegisterRes
     .select()
     .single();
 
+  console.log('[RegisterUseCase] Profile insert:', { id: profile?.id, error: profileError?.message });
+
   if (profileError || !profile) {
-    // Roll back: delete the auth user so the account is not left in a broken state
-    await supabase.auth.admin.deleteUser(authData.user.id);
+    console.error('[RegisterUseCase] Profile creation failed:', profileError);
     throw mapSupabaseAuthError(profileError ?? { message: 'Failed to create profile' });
   }
 
-  const user: User = {
-    id: profile.id,
-    email: profile.email,
-    fullName: profile.full_name,
-    role: profile.role,
-    weightUnit: profile.weight_unit,
-    createdAt: new Date(profile.created_at),
-    updatedAt: new Date(profile.updated_at),
+  return {
+    user: {
+      id: profile.id,
+      email: profile.email,
+      fullName: profile.full_name,
+      role: profile.role,
+      weightUnit: profile.weight_unit,
+      createdAt: new Date(profile.created_at),
+      updatedAt: new Date(profile.updated_at),
+    },
   };
-
-  return { user };
 }

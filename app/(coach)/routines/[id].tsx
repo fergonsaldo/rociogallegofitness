@@ -11,15 +11,19 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/con
 export default function RoutineDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { selectedRoutine, isLoading, fetchRoutineById } = useRoutineStore();
+  const { selectedRoutine, isLoading, error, fetchRoutineById } = useRoutineStore();
+
+  console.log('[RoutineDetail] render — id:', id, 'isLoading:', isLoading, 'error:', error);
+  console.log('[RoutineDetail] selectedRoutine:', selectedRoutine?.id, selectedRoutine?.name);
 
   useEffect(() => {
+    console.log('[RoutineDetail] useEffect — id:', id, 'selectedRoutine:', selectedRoutine?.id);
     if (id && (!selectedRoutine || selectedRoutine.id !== id)) {
       fetchRoutineById(id);
     }
   }, [id]);
 
-  if (isLoading || !selectedRoutine) {
+  if (isLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
@@ -29,37 +33,71 @@ export default function RoutineDetailScreen() {
     );
   }
 
+  if (error) {
+    console.error('[RoutineDetail] error state:', error);
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.topbar}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backText}>← Volver</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.center}>
+          <Text style={styles.errorEmoji}>⚠️</Text>
+          <Text style={styles.errorTitle}>Error al cargar</Text>
+          <Text style={styles.errorMsg}>{error}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!selectedRoutine) {
+    console.warn('[RoutineDetail] no selectedRoutine, id:', id);
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.topbar}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backText}>← Volver</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.center}>
+          <Text style={styles.errorEmoji}>🔍</Text>
+          <Text style={styles.errorTitle}>Rutina no encontrada</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  console.log('[RoutineDetail] days:', selectedRoutine.days?.length);
+
   const totalExercises = selectedRoutine.days.reduce((s, d) => s + d.exercises.length, 0);
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Top bar */}
       <View style={styles.topbar}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>← Back</Text>
+          <Text style={styles.backText}>← Volver</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.assignButton}>
-          <Text style={styles.assignButtonText}>Assign to Athlete</Text>
+          <Text style={styles.assignButtonText}>Asignar a atleta</Text>
         </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Header card */}
         <View style={styles.headerCard}>
           <Text style={styles.routineName}>{selectedRoutine.name}</Text>
           {selectedRoutine.description && (
             <Text style={styles.routineDescription}>{selectedRoutine.description}</Text>
           )}
           <View style={styles.metaRow}>
-            <MetaPill emoji="📅" label={`${selectedRoutine.days.length} days`} />
-            <MetaPill emoji="🏋️" label={`${totalExercises} exercises`} />
+            <MetaPill emoji="📅" label={`${selectedRoutine.days.length} días`} />
+            <MetaPill emoji="🏋️" label={`${totalExercises} ejercicios`} />
             {selectedRoutine.durationWeeks && (
-              <MetaPill emoji="📆" label={`${selectedRoutine.durationWeeks} weeks`} />
+              <MetaPill emoji="📆" label={`${selectedRoutine.durationWeeks} semanas`} />
             )}
           </View>
         </View>
 
-        {/* Days */}
         <View style={styles.daysContainer}>
           {selectedRoutine.days.map((day) => (
             <View key={day.id} style={styles.dayCard}>
@@ -68,11 +106,12 @@ export default function RoutineDetailScreen() {
                   <Text style={styles.dayBadgeText}>{day.dayNumber}</Text>
                 </View>
                 <Text style={styles.dayName}>{day.name}</Text>
-                <Text style={styles.dayExCount}>{day.exercises.length} ex.</Text>
+                <Text style={styles.dayExCount}>{day.exercises.length} ej.</Text>
               </View>
 
               {day.exercises.map((ex) => {
                 const exercise = findExerciseById(ex.exerciseId);
+                console.log('[RoutineDetail] exercise:', ex.exerciseId, '→', exercise?.name);
                 return (
                   <View key={ex.id} style={styles.exerciseRow}>
                     <View style={styles.exerciseOrder}>
@@ -81,11 +120,9 @@ export default function RoutineDetailScreen() {
                     <View style={styles.exerciseInfo}>
                       <Text style={styles.exerciseName}>{exercise?.name ?? ex.exerciseId}</Text>
                       <Text style={styles.exerciseMeta}>
-                        {ex.targetSets} sets ·{' '}
-                        {ex.targetReps
-                          ? `${ex.targetReps} reps`
-                          : `${ex.targetDurationSeconds}s`}
-                        {' '}· {ex.restBetweenSetsSeconds}s rest
+                        {ex.targetSets} series ·{' '}
+                        {ex.targetReps ? `${ex.targetReps} reps` : `${ex.targetDurationSeconds}s`}
+                        {' '}· {ex.restBetweenSetsSeconds}s descanso
                       </Text>
                     </View>
                     {exercise && (
@@ -115,7 +152,7 @@ function MetaPill({ emoji, label }: { emoji: string; label: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   topbar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
@@ -125,16 +162,12 @@ const styles = StyleSheet.create({
   assignButton: {
     backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
   },
   assignButtonText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
   headerCard: {
     backgroundColor: Colors.surface, margin: Spacing.lg,
     borderRadius: BorderRadius.lg, padding: Spacing.lg,
     borderWidth: 1, borderColor: Colors.border,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   routineName: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
   routineDescription: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: Spacing.xs, lineHeight: 20 },
@@ -150,8 +183,6 @@ const styles = StyleSheet.create({
   dayCard: {
     backgroundColor: Colors.surface, borderRadius: BorderRadius.lg,
     borderWidth: 1, borderColor: Colors.border, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   dayHeader: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
@@ -177,8 +208,8 @@ const styles = StyleSheet.create({
   exerciseInfo: { flex: 1 },
   exerciseName: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textPrimary },
   exerciseMeta: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
-  exerciseMuscle: {
-    fontSize: FontSize.xs, color: Colors.primary,
-    fontWeight: '600', textTransform: 'capitalize',
-  },
+  exerciseMuscle: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: '600', textTransform: 'capitalize' },
+  errorEmoji: { fontSize: 48 },
+  errorTitle: { fontSize: FontSize.lg, fontWeight: '700', color: Colors.textPrimary },
+  errorMsg: { fontSize: FontSize.sm, color: Colors.error, textAlign: 'center', paddingHorizontal: Spacing.lg },
 });
