@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize } from '../../src/shared/constants/theme';
 import { Strings } from '../../src/shared/constants/strings';
 
@@ -21,16 +22,20 @@ function TabIcon({ emoji, label, focused }: TabIconProps) {
 }
 
 export default function AthleteLayout() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 64 + insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: insets.bottom }],
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.athlete,
         tabBarInactiveTintColor: Colors.tabInactive,
       }}
     >
+      {/* ── Tabs visibles ── */}
       <Tabs.Screen
         name="dashboard"
         options={{
@@ -63,6 +68,11 @@ export default function AthleteLayout() {
           ),
         }}
       />
+
+      {/* ── Rutas sin tab (ocultas de la barra) ── */}
+      <Tabs.Screen name="workout/session"   options={{ href: null }} />
+      <Tabs.Screen name="progress/exercise" options={{ href: null }} />
+      <Tabs.Screen name="progress/session"  options={{ href: null }} />
     </Tabs>
   );
 }
@@ -72,8 +82,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.tabBackground,
     borderTopColor: Colors.border,
     borderTopWidth: 1,
-    height: 72,
-    paddingBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.06,

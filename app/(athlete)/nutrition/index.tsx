@@ -43,12 +43,12 @@ export default function AthleteNutritionScreen() {
       <SafeAreaView style={styles.safe}>
         <View style={styles.header}>
           <View style={styles.accentBar} />
-          <Text style={styles.title}>Nutrition</Text>
+          <Text style={styles.title}>Nutrición</Text>
         </View>
         <View style={styles.center}>
           <Text style={styles.emptyEmoji}>🥗</Text>
-          <Text style={styles.emptyTitle}>No nutrition plan yet</Text>
-          <Text style={styles.emptySubtitle}>Your coach hasn't assigned a plan yet</Text>
+          <Text style={styles.emptyTitle}>Sin plan de nutrición</Text>
+          <Text style={styles.emptySubtitle}>Tu entrenador aún no te ha asignado un plan</Text>
         </View>
       </SafeAreaView>
     );
@@ -76,7 +76,7 @@ export default function AthleteNutritionScreen() {
           <View style={styles.headerLeft}>
             <View style={styles.accentBar} />
             <View>
-              <Text style={styles.title}>Nutrition</Text>
+              <Text style={styles.title}>Nutrición</Text>
               <Text style={styles.subtitle}>{assignedPlan.name}</Text>
             </View>
           </View>
@@ -102,7 +102,7 @@ export default function AthleteNutritionScreen() {
         {/* Weekly adherence strip */}
         {weeklyAdherence.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>THIS WEEK</Text>
+            <Text style={styles.sectionLabel}>ESTA SEMANA</Text>
             <View style={styles.adherenceRow}>
               {weeklyAdherence.map((day, i) => {
                 const isToday = day.date.toDateString() === today.toDateString();
@@ -131,7 +131,7 @@ export default function AthleteNutritionScreen() {
 
         {/* Meals */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>TODAY'S MEALS</Text>
+          <Text style={styles.sectionLabel}>COMIDAS DE HOY</Text>
           {assignedPlan.meals.map((meal) => {
             const isLogged = loggedMealIds.has(meal.id);
             const logEntry = dailySummary?.logEntries.find((e) => e.mealId === meal.id);
@@ -151,11 +151,11 @@ export default function AthleteNutritionScreen() {
                     <Text style={styles.mealName}>{meal.name}</Text>
                     {isLogged ? (
                       <View style={styles.loggedBadge}>
-                        <Text style={styles.loggedBadgeText}>✓ Logged</Text>
+                        <Text style={styles.loggedBadgeText}>✓ Registrado</Text>
                       </View>
                     ) : (
                       <View style={styles.pendingBadge}>
-                        <Text style={styles.pendingBadgeText}>Tap to log</Text>
+                        <Text style={styles.pendingBadgeText}>Toca para registrar</Text>
                       </View>
                     )}
                   </View>
@@ -171,7 +171,7 @@ export default function AthleteNutritionScreen() {
                   {/* Actual logged macros */}
                   {isLogged && logEntry && (
                     <View style={styles.actualMacros}>
-                      <Text style={styles.actualLabel}>Logged: </Text>
+                      <Text style={styles.actualLabel}>Registrado: </Text>
                       <Text style={styles.actualValue}>
                         {logEntry.actualMacros.proteinG}g P · {logEntry.actualMacros.carbsG}g C · {logEntry.actualMacros.fatG}g F · {logEntry.actualMacros.calories} kcal
                       </Text>

@@ -5,6 +5,7 @@ import { RoutineRemoteRepository } from '@/infrastructure/supabase/remote/Routin
 import { createRoutineUseCase } from '@/application/coach/CreateRoutineUseCase';
 import { getCoachRoutinesUseCase, getAthleteRoutinesUseCase, getRoutineByIdUseCase } from '@/application/coach/GetRoutinesUseCase';
 import { assignRoutineUseCase, unassignRoutineUseCase } from '@/application/coach/AssignRoutineUseCase';
+import { deleteRoutineUseCase } from '@/application/coach/DeleteRoutineUseCase';
 
 const repo = new RoutineRemoteRepository();
 
@@ -21,6 +22,7 @@ interface RoutineState {
   // Coach actions
   fetchCoachRoutines: (coachId: string) => Promise<void>;
   createRoutine: (input: CreateRoutineInput) => Promise<Routine | null>;
+  deleteRoutine: (routineId: string) => Promise<boolean>;
   assignToAthlete: (routineId: string, athleteId: string) => Promise<void>;
   unassignFromAthlete: (routineId: string, athleteId: string) => Promise<void>;
 
@@ -85,10 +87,28 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
     }
   },
 
+  deleteRoutine: async (routineId) => {
+    set({ error: null });
+    try {
+      await deleteRoutineUseCase(routineId, repo);
+      set((state) => ({
+        routines: state.routines.filter((r) => r.id !== routineId),
+        selectedRoutine: state.selectedRoutine?.id === routineId ? null : state.selectedRoutine,
+      }));
+      return true;
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedDeleteRoutine });
+      return false;
+    }
+  },
+
   assignToAthlete: async (routineId, athleteId) => {
+    console.log('[routineStore] assignToAthlete — routineId:', routineId, 'athleteId:', athleteId);
     try {
       await assignRoutineUseCase({ routineId, athleteId }, repo);
+      console.log('[routineStore] assignToAthlete — OK');
     } catch (err) {
+      console.error('[routineStore] assignToAthlete — error:', err);
       set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignRoutine });
     }
   },

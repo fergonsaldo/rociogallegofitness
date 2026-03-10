@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize } from '../../src/shared/constants/theme';
 
 function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
@@ -12,16 +13,20 @@ function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focu
 }
 
 export default function CoachLayout() {
+  const insets = useSafeAreaInsets();
+  const tabBarHeight = 64 + insets.bottom;
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [styles.tabBar, { height: tabBarHeight, paddingBottom: insets.bottom }],
         tabBarShowLabel: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: Colors.tabInactive,
       }}
     >
+      {/* ── Tabs visibles ── */}
       <Tabs.Screen
         name="dashboard"
         options={{
@@ -46,6 +51,13 @@ export default function CoachLayout() {
           tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label="Nutrición" focused={focused} />,
         }}
       />
+
+      {/* ── Rutas sin tab (ocultas de la barra) ── */}
+      <Tabs.Screen name="clients/[id]"      options={{ href: null }} />
+      <Tabs.Screen name="routines/[id]"     options={{ href: null }} />
+      <Tabs.Screen name="routines/create"   options={{ href: null }} />
+      <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
+      <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
     </Tabs>
   );
 }
@@ -55,8 +67,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.tabBackground,
     borderTopColor: Colors.border,
     borderTopWidth: 1,
-    height: 72,
-    paddingBottom: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.06,

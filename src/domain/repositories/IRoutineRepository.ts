@@ -21,6 +21,9 @@ export interface IRoutineRepository {
   /** Replaces a routine's mutable fields */
   update(id: string, input: Partial<CreateRoutineInput>): Promise<Routine>;
 
+  /** Returns true if the routine is currently assigned to at least one athlete */
+  hasAssignments(routineId: string): Promise<boolean>;
+
   /** Deletes a routine and all its days/exercises (cascade) */
   delete(id: string): Promise<void>;
 

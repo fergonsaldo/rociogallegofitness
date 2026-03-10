@@ -122,6 +122,25 @@ export const Strings = {
   errorFailedAssignRoutine: 'Error al asignar la rutina',
   errorFailedUnassignRoutine: 'Error al desasignar la rutina',
 
+  // ── Borrar rutina ─────────────────────────────────────────────────────────
+  alertDeleteRoutineTitle: 'Eliminar rutina',
+  alertDeleteRoutineMessage: (name: string) =>
+    `¿Eliminar "${name}"? Se borrarán todos sus días y ejercicios. Esta acción no se puede deshacer.`,
+  alertDeleteRoutineCancel: 'Cancelar',
+  alertDeleteRoutineConfirm: 'Eliminar',
+  errorRoutineHasAssignments:
+    'No se puede eliminar esta rutina porque está asignada a uno o más clientes. Desasígnala primero.',
+  errorFailedDeleteRoutine: 'Error al eliminar la rutina',
+
+  // ── Asignar rutina a cliente ──────────────────────────────────────────────
+  assignRoutineTitle: 'Asignar a cliente',
+  assignRoutineSubtitle: 'Selecciona el atleta al que quieres asignar esta rutina',
+  assignRoutineAlreadyAssigned: 'Ya asignada',
+  assignRoutineSuccess: (athleteName: string) => `Rutina asignada a ${athleteName}`,
+  assignRoutineEmpty: 'No tienes clientes todavía',
+  errorFailedLoadClients: 'Error al cargar los clientes',
+  errorFailedAssignRoutineToAthlete: 'Error al asignar la rutina',
+
   // ── Errores de dominio / validación ──────────────────────────────────────
   errorInvalidEmail: 'Dirección de email no válida',
   errorPasswordTooShort: 'La contraseña debe tener al menos 8 caracteres',

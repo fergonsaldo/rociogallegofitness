@@ -3,10 +3,8 @@ import type { Config } from 'jest';
 const config: Config = {
   preset: 'jest-expo',
 
-  // Treat TS/TSX as ESM so imports resolve correctly
   extensionsToTreatAsEsm: ['.ts', '.tsx'],
 
-  // Transform everything except native modules that ship pre-compiled CJS
   transformIgnorePatterns: [
     'node_modules/(?!(' +
       '(jest-)?react-native' +
@@ -26,29 +24,31 @@ const config: Config = {
     '))',
   ],
 
-  // Path alias matching tsconfig
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
 
-  // Global mocks run before each test file
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 
-  // Only pick up files inside __tests__
   testMatch: ['**/__tests__/**/*.test.ts?(x)'],
 
-  // Coverage config
+  // Coverage config — excluye ficheros de configuración/infraestructura sin lógica
   collectCoverageFrom: [
     'src/domain/**/*.ts',
     'src/application/**/*.ts',
+    'src/infrastructure/**/*.ts',
     '!src/**/*.d.ts',
+    '!src/infrastructure/supabase/database.types.ts',
+    '!src/infrastructure/supabase/client.ts',
+    '!src/infrastructure/database/client.ts',
+    '!src/infrastructure/database/schema.ts',
   ],
   coverageThresholds: {
     global: {
-      branches: 70,
-      functions: 80,
-      lines: 80,
-      statements: 80,
+      branches:   95,
+      functions:  95,
+      lines:      95,
+      statements: 95,
     },
   },
 };

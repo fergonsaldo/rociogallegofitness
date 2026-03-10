@@ -2,8 +2,8 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert,
 } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { supabase } from '../../../src/infrastructure/supabase/client';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
@@ -21,13 +21,17 @@ export default function ClientDetailScreen() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) fetchClientData();
-  }, [id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (id) fetchClientData();
+    }, [id]),
+  );
 
   const fetchClientData = async () => {
     setLoading(true);
     try {
+      console.log('[ClientDetail] fetchClientData — athleteId:', id, 'coachId:', user?.id);
+
       const [routinesRes, sessionsRes] = await Promise.all([
         supabase
           .from('routine_assignments')
@@ -42,9 +46,23 @@ export default function ClientDetailScreen() {
           .limit(10),
       ]);
 
-      setRoutines((routinesRes.data ?? []).map((r: any) => ({
-        id: r.routines.id, name: r.routines.name, assigned_at: r.assigned_at,
-      })));
+      console.log('[ClientDetail] routinesRes:', {
+        data: routinesRes.data,
+        error: routinesRes.error?.message ?? 'none',
+        count: routinesRes.data?.length,
+      });
+      console.log('[ClientDetail] sessionsRes:', {
+        error: sessionsRes.error?.message ?? 'none',
+        count: sessionsRes.data?.length,
+      });
+
+      const mappedRoutines = (routinesRes.data ?? []).map((r: any) => {
+        console.log('[ClientDetail] mapping row:', JSON.stringify(r));
+        return { id: r.routines?.id, name: r.routines?.name, assigned_at: r.assigned_at };
+      });
+      console.log('[ClientDetail] mappedRoutines:', mappedRoutines);
+
+      setRoutines(mappedRoutines.filter((r) => r.id));
       setSessions(sessionsRes.data ?? []);
     } catch (err) {
       console.error('[ClientDetail] fetchClientData:', err);

@@ -2,8 +2,8 @@ import {
   View, Text, FlatList, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator, ScrollView,
 } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useProgressStore } from '../../../src/presentation/stores/progressStore';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { WorkoutHistoryCard } from '../../../src/presentation/components/athlete/WorkoutHistoryCard';
@@ -25,12 +25,13 @@ export default function ProgressScreen() {
 
   const [activeTab, setActiveTab] = useState<Tab>('history');
 
-  useEffect(() => {
-    if (!user?.id) return;
-    fetchHistory(user.id);
-    fetchPersonalBests(user.id);
-  }, [user?.id]);
-
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return;
+      fetchHistory(user.id);
+      fetchPersonalBests(user.id);
+    }, [user?.id]),
+  );
   const isLoading = historyLoading || personalBestsLoading;
 
   return (

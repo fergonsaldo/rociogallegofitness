@@ -1,6 +1,7 @@
 import { createRoutineUseCase } from '../../../src/application/coach/CreateRoutineUseCase';
 import { getCoachRoutinesUseCase, getAthleteRoutinesUseCase, getRoutineByIdUseCase } from '../../../src/application/coach/GetRoutinesUseCase';
 import { assignRoutineUseCase, unassignRoutineUseCase } from '../../../src/application/coach/AssignRoutineUseCase';
+import { deleteRoutineUseCase } from '../../../src/application/coach/DeleteRoutineUseCase';
 import { IRoutineRepository } from '../../../src/domain/repositories/IRoutineRepository';
 import { Routine } from '../../../src/domain/entities/Routine';
 
@@ -41,6 +42,7 @@ const mockRepo: jest.Mocked<IRoutineRepository> = {
   create: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
+  hasAssignments: jest.fn(),
   assignToAthlete: jest.fn(),
   unassignFromAthlete: jest.fn(),
 };
@@ -155,5 +157,41 @@ describe('unassignRoutineUseCase', () => {
     mockRepo.unassignFromAthlete.mockResolvedValue();
     await unassignRoutineUseCase({ routineId: VALID_UUID, athleteId: ATHLETE_UUID }, mockRepo);
     expect(mockRepo.unassignFromAthlete).toHaveBeenCalledWith(VALID_UUID, ATHLETE_UUID);
+  });
+});
+
+// ── deleteRoutineUseCase ──────────────────────────────────────────────────────
+describe('deleteRoutineUseCase', () => {
+  it('deletes the routine when it has no assignments', async () => {
+    mockRepo.hasAssignments.mockResolvedValue(false);
+    mockRepo.delete.mockResolvedValue();
+
+    await deleteRoutineUseCase(VALID_UUID, mockRepo);
+
+    expect(mockRepo.hasAssignments).toHaveBeenCalledWith(VALID_UUID);
+    expect(mockRepo.delete).toHaveBeenCalledWith(VALID_UUID);
+  });
+
+  it('throws and does not delete when the routine is assigned to clients', async () => {
+    mockRepo.hasAssignments.mockResolvedValue(true);
+
+    await expect(deleteRoutineUseCase(VALID_UUID, mockRepo)).rejects.toThrow(
+      'No se puede eliminar esta rutina porque está asignada a uno o más clientes'
+    );
+    expect(mockRepo.delete).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors from hasAssignments', async () => {
+    mockRepo.hasAssignments.mockRejectedValue(new Error('DB error'));
+
+    await expect(deleteRoutineUseCase(VALID_UUID, mockRepo)).rejects.toThrow('DB error');
+    expect(mockRepo.delete).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors from delete', async () => {
+    mockRepo.hasAssignments.mockResolvedValue(false);
+    mockRepo.delete.mockRejectedValue(new Error('Delete failed'));
+
+    await expect(deleteRoutineUseCase(VALID_UUID, mockRepo)).rejects.toThrow('Delete failed');
   });
 });

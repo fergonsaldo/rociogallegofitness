@@ -74,7 +74,7 @@ export default function AthleteDashboardScreen() {
               <Text style={styles.noRoutinesText}>Tu entrenador aún no te ha asignado una rutina</Text>
             </View>
           ) : (
-            routines.slice(0, 2).map((routine) => (
+            routines.map((routine) => (
               <TouchableOpacity
                 key={routine.id}
                 style={styles.routineCTA}

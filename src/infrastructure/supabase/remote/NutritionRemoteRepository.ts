@@ -133,7 +133,10 @@ export class NutritionRemoteRepository implements INutritionRepository {
   async assignToAthlete(planId: string, athleteId: string): Promise<void> {
     const { error } = await supabase
       .from('nutrition_assignments')
-      .upsert({ nutrition_plan_id: planId, athlete_id: athleteId });
+      .upsert(
+        { nutrition_plan_id: planId, athlete_id: athleteId },
+        { onConflict: 'nutrition_plan_id,athlete_id' },
+      );
     if (error) throw error;
   }
 

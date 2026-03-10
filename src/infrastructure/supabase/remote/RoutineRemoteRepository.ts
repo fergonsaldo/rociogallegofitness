@@ -66,8 +66,12 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .eq('athlete_id', athleteId);
 
     console.log('[RoutineRepo] getByAthleteId result:', { count: data?.length, error: error?.message });
+    console.log('[RoutineRepo] getByAthleteId raw rows:', JSON.stringify(data));
     if (error) throw error;
-    return (data ?? []).map((row: any) => row.routines).filter(Boolean).map(this.mapRow.bind(this));
+
+    const mapped = (data ?? []).map((row: any) => row.routines).filter(Boolean).map(this.mapRow.bind(this));
+    console.log('[RoutineRepo] getByAthleteId mapped count:', mapped.length, 'ids:', mapped.map((r) => r.id));
+    return mapped;
   }
 
   async getById(id: string): Promise<Routine | null> {
@@ -148,15 +152,30 @@ export class RoutineRemoteRepository implements IRoutineRepository {
     return updated;
   }
 
+  async hasAssignments(routineId: string): Promise<boolean> {
+    const { count, error } = await supabase
+      .from('routine_assignments')
+      .select('*', { count: 'exact', head: true })
+      .eq('routine_id', routineId);
+
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  }
+
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from('routines').delete().eq('id', id);
     if (error) throw error;
   }
 
   async assignToAthlete(routineId: string, athleteId: string): Promise<void> {
+    console.log('[RoutineRepo] assignToAthlete — routineId:', routineId, 'athleteId:', athleteId);
     const { error } = await supabase
       .from('routine_assignments')
-      .upsert({ routine_id: routineId, athlete_id: athleteId });
+      .upsert(
+        { routine_id: routineId, athlete_id: athleteId },
+        { onConflict: 'routine_id,athlete_id' },
+      );
+    console.log('[RoutineRepo] assignToAthlete result — error:', error?.message ?? 'none');
     if (error) throw error;
   }
 

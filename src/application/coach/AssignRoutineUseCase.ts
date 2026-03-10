@@ -16,8 +16,11 @@ export async function assignRoutineUseCase(
   input: AssignRoutineInput,
   repository: IRoutineRepository
 ): Promise<void> {
+  console.log('[assignRoutineUseCase] input:', input);
   AssignRoutineInputSchema.parse(input);
+  console.log('[assignRoutineUseCase] validación OK, llamando a repository.assignToAthlete');
   await repository.assignToAthlete(input.routineId, input.athleteId);
+  console.log('[assignRoutineUseCase] asignación completada');
 }
 
 /**

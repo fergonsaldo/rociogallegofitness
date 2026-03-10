@@ -19,7 +19,7 @@ export default function WorkoutSessionScreen() {
   const router = useRouter();
   const { routineDayId } = useLocalSearchParams<{ routineDayId?: string }>();
   const { user } = useAuthStore();
-  const { selectedRoutine } = useRoutineStore();
+  const { routines } = useRoutineStore();
   const {
     session, lastSummary, isLoading, error,
     startSession, logSet, finishSession, abandonSession,
@@ -30,7 +30,8 @@ export default function WorkoutSessionScreen() {
   const [showSummary, setShowSummary] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
-  // Find the routine day to display
+  // Buscar el día y la rutina a partir del routineDayId recibido por parámetro
+  const selectedRoutine = routines.find((r) => r.days.some((d) => d.id === routineDayId)) ?? null;
   const routineDay = selectedRoutine?.days.find((d) => d.id === routineDayId)
     ?? selectedRoutine?.days[0];
 
@@ -40,12 +41,12 @@ export default function WorkoutSessionScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Start session on mount if not already active
+  // Arrancar sesión cuando routineDay está resuelto y no hay sesión activa
   useEffect(() => {
-    if (!session && user?.id) {
+    if (!session && user?.id && routineDay) {
       startSession(user.id, selectedRoutine?.id, routineDay?.id);
     }
-  }, []);
+  }, [routineDay?.id]);
 
   // Show summary when session finishes
   useEffect(() => {
