@@ -14,6 +14,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['triceps', 'shoulders'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=rT7DgCr-3pg',
   },
   {
     id: '11111111-0001-0000-0000-000000000002',
@@ -22,6 +23,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['triceps', 'shoulders'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=DbFgADa2PL8',
   },
   {
     id: '11111111-0001-0000-0000-000000000003',
@@ -30,6 +32,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['triceps', 'core'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=IODxDxX7oi4',
   },
   // ── BACK ─────────────────────────────────────────────────────────────
   {
@@ -39,6 +42,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['hamstrings', 'glutes', 'core'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=op9kVnSso6Q',
   },
   {
     id: '11111111-0002-0000-0000-000000000002',
@@ -47,6 +51,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['biceps'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=eGo4IYlbE5g',
   },
   {
     id: '11111111-0002-0000-0000-000000000003',
@@ -55,6 +60,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['biceps', 'core'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=FWJR5Ve8bnQ',
   },
   // ── SHOULDERS ────────────────────────────────────────────────────────
   {
@@ -64,6 +70,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['triceps', 'core'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=2yjwXTZQDDI',
   },
   {
     id: '11111111-0003-0000-0000-000000000002',
@@ -72,6 +79,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: [],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=3VcKaXpzqRo',
   },
   // ── ARMS ─────────────────────────────────────────────────────────────
   {
@@ -81,6 +89,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['forearms'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=kwG2ipFRgfo',
   },
   {
     id: '11111111-0004-0000-0000-000000000002',
@@ -89,6 +98,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: [],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=2-LAMcpzODU',
   },
   // ── LEGS ─────────────────────────────────────────────────────────────
   {
@@ -98,6 +108,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['glutes', 'hamstrings', 'core'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=ultWZbUMPL8',
   },
   {
     id: '11111111-0005-0000-0000-000000000002',
@@ -106,6 +117,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['glutes', 'back'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=JCXUYuzwNrM',
   },
   {
     id: '11111111-0005-0000-0000-000000000003',
@@ -114,6 +126,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['glutes', 'hamstrings'],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=IZxyjW7MPJQ',
   },
   {
     id: '11111111-0005-0000-0000-000000000004',
@@ -122,6 +135,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: [],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=gwLzBJYoWlI',
   },
   // ── CORE ─────────────────────────────────────────────────────────────
   {
@@ -132,6 +146,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     category: 'isometric',
     isIsometric: true,
     description: 'Hold position for the target duration',
+    videoUrl: 'https://www.youtube.com/watch?v=ASdvN_XEl_c',
   },
   {
     id: '11111111-0006-0000-0000-000000000002',
@@ -140,6 +155,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['shoulders'],
     category: 'isometric',
     isIsometric: true,
+    videoUrl: 'https://www.youtube.com/watch?v=K2EYEh2OH_M',
   },
   {
     id: '11111111-0006-0000-0000-000000000003',
@@ -148,6 +164,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: [],
     category: 'strength',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=Xyd_fa5zoEU',
   },
   // ── FULL BODY ─────────────────────────────────────────────────────────
   {
@@ -157,6 +174,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     secondaryMuscles: ['core', 'chest'],
     category: 'cardio',
     isIsometric: false,
+    videoUrl: 'https://www.youtube.com/watch?v=dZgVxmf6jkA',
   },
   {
     id: '11111111-0007-0000-0000-000000000002',
@@ -166,6 +184,7 @@ export const EXERCISE_CATALOG: Readonly<Exercise[]> = [
     category: 'isometric',
     isIsometric: true,
     description: 'Hold the seated position against the wall for the target duration',
+    videoUrl: 'https://www.youtube.com/watch?v=y-wV4Venusw',
   },
 ] as const;
 

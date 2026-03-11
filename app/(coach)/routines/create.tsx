@@ -274,7 +274,7 @@ export default function CreateRoutineScreen() {
               </View>
             ))}
 
-            <ExercisePicker onSelect={(ex) => addExerciseToDay(activeDayIndex, ex)} selectedIds={activeDay.exercises.map((e) => e.exerciseId)} />
+            <ExercisePicker coachId={user?.id ?? ''} onSelect={(ex) => addExerciseToDay(activeDayIndex, ex)} selectedIds={activeDay.exercises.map((e) => e.exerciseId)} />
           </View>
         )}
       </ScrollView>

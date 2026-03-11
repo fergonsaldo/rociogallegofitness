@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize } from '../../src/shared/constants/theme';
 
@@ -29,33 +29,30 @@ export default function CoachLayout() {
       {/* ── Tabs visibles ── */}
       <Tabs.Screen
         name="dashboard"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📊" label="Inicio" focused={focused} />,
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📊" label="Inicio" focused={focused} /> }}
       />
       <Tabs.Screen
         name="clients/index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="👥" label="Clientes" focused={focused} />,
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="👥" label="Clientes" focused={focused} /> }}
       />
       <Tabs.Screen
         name="routines/index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="📋" label="Rutinas" focused={focused} />,
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📋" label="Rutinas" focused={focused} /> }}
+      />
+      <Tabs.Screen
+        name="exercises/index"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏋️" label="Ejercicios" focused={focused} /> }}
       />
       <Tabs.Screen
         name="nutrition/index"
-        options={{
-          tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label="Nutrición" focused={focused} />,
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label="Nutrición" focused={focused} /> }}
       />
 
       {/* ── Rutas sin tab (ocultas de la barra) ── */}
       <Tabs.Screen name="clients/[id]"      options={{ href: null }} />
       <Tabs.Screen name="routines/[id]"     options={{ href: null }} />
       <Tabs.Screen name="routines/create"   options={{ href: null }} />
+      <Tabs.Screen name="exercises/create"  options={{ href: null }} />
       <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
     </Tabs>

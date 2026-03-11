@@ -31,9 +31,6 @@ export default function AthleteLayout() {
   const { user } = useAuthStore();
   const { restoreActiveSession } = useWorkoutStore();
 
-  // Restaurar sesión activa al montar el layout del atleta.
-  // Esto cubre el caso de que el usuario cierre la app con una sesión en curso
-  // y vuelva a abrirla: la sesión queda en SQLite y se recupera aquí.
   useEffect(() => {
     if (user?.id) {
       restoreActiveSession(user.id);
@@ -64,6 +61,14 @@ export default function AthleteLayout() {
         options={{
           tabBarIcon: ({ focused }) => (
             <TabIcon emoji="💪" label={Strings.tabTrain} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="exercises/index"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon emoji="📚" label={Strings.tabExercises} focused={focused} />
           ),
         }}
       />
@@ -103,21 +108,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  tabIcon: {
-    alignItems: 'center',
-    gap: 2,
-    paddingTop: 6,
-  },
-  tabEmoji: {
-    fontSize: 22,
-  },
-  tabLabel: {
-    fontSize: FontSize.xs,
-    color: Colors.tabInactive,
-    letterSpacing: 0.5,
-  },
-  tabLabelActive: {
-    color: Colors.athlete,
-    fontWeight: '600',
-  },
+  tabIcon: { alignItems: 'center', gap: 2, paddingTop: 6 },
+  tabEmoji: { fontSize: 22 },
+  tabLabel: { fontSize: FontSize.xs, color: Colors.tabInactive, letterSpacing: 0.5 },
+  tabLabelActive: { color: Colors.athlete, fontWeight: '600' },
 });

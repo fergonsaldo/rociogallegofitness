@@ -67,3 +67,32 @@ describe('findIsometricExercises', () => {
     });
   });
 });
+
+// ── Tests de videoUrl (Historia 1 — Librería de ejercicios) ───────────────────
+
+import { isValidYouTubeUrl } from '../../../src/shared/utils/youtube';
+
+describe('EXERCISE_CATALOG — videoUrl', () => {
+  it('todos los ejercicios tienen videoUrl definida', () => {
+    const withoutVideo = EXERCISE_CATALOG.filter((ex) => !ex.videoUrl);
+    expect(withoutVideo).toHaveLength(0);
+  });
+
+  it('todas las videoUrl son URLs válidas de YouTube', () => {
+    const invalidUrls = EXERCISE_CATALOG.filter(
+      (ex) => ex.videoUrl && !isValidYouTubeUrl(ex.videoUrl)
+    );
+    expect(invalidUrls).toHaveLength(0);
+  });
+
+  it('ninguna URL es de Vimeo', () => {
+    const vimeoUrls = EXERCISE_CATALOG.filter((ex) => ex.videoUrl?.includes('vimeo.com'));
+    expect(vimeoUrls).toHaveLength(0);
+  });
+
+  it('el ejercicio Bench Press tiene videoUrl de YouTube', () => {
+    const ex = findExerciseById('11111111-0001-0000-0000-000000000001');
+    expect(ex?.videoUrl).toBeTruthy();
+    expect(isValidYouTubeUrl(ex!.videoUrl!)).toBe(true);
+  });
+});

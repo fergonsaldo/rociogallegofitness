@@ -88,3 +88,21 @@ export type Database = {
     };
   };
 };
+
+// ── coach_exercises ───────────────────────────────────────────────────────────
+// Append this block to the Tables object in Database['public']['Tables']
+// (kept separate to avoid regenerating the full file)
+export interface CoachExerciseRow {
+  id:                string;
+  coach_id:          string;
+  name:              string;
+  category:          'strength' | 'cardio' | 'flexibility' | 'isometric';
+  primary_muscles:   string[];
+  secondary_muscles: string[];
+  is_isometric:      boolean;
+  description:       string | null;
+  video_url:         string | null;
+  created_at:        string;
+}
+
+export type CoachExerciseInsert = Omit<CoachExerciseRow, 'id' | 'created_at'>;
