@@ -2,7 +2,7 @@ import NetInfo from '@react-native-community/netinfo';
 import { supabase } from '../supabase/client';
 import { WorkoutLocalRepository } from '../database/local/WorkoutLocalRepository';
 import { WorkoutSession } from '@/domain/entities/WorkoutSession';
-import { ExerciseSet } from '@/domain/entities/ExerciseSet';
+import { ExerciseSet, isRepsPerformance, isIsometricPerformance } from '@/domain/entities/ExerciseSet';
 
 const localRepo = new WorkoutLocalRepository();
 
@@ -74,9 +74,9 @@ export class SyncService {
       exercise_id: set.exerciseId,
       set_number: set.setNumber,
       set_type: set.performance.type,
-      reps: isIsometric ? null : (set.performance as any).reps,
-      weight_kg: isIsometric ? null : (set.performance as any).weightKg,
-      duration_seconds: isIsometric ? (set.performance as any).durationSeconds : null,
+      reps: isIsometric ? null : isRepsPerformance(set.performance) ? set.performance.reps : null,
+      weight_kg: isIsometric ? null : isRepsPerformance(set.performance) ? set.performance.weightKg : null,
+      duration_seconds: isIsometric ? isIsometricPerformance(set.performance) ? set.performance.durationSeconds : null : null,
       rest_after_seconds: set.restAfterSeconds,
       completed_at: set.completedAt.toISOString(),
     };

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Exercise } from '@/domain/entities/Exercise';
-import { ExerciseSet } from '@/domain/entities/ExerciseSet';
+import { ExerciseSet, isRepsPerformance, isIsometricPerformance } from '@/domain/entities/ExerciseSet';
 import { Colors, FontSize, Spacing, BorderRadius } from '@/shared/constants/theme';
 
 interface SetLoggerProps {
@@ -16,9 +16,9 @@ interface SetLoggerProps {
  * Adapts UI based on exercise type: reps+weight or duration (isometric).
  */
 export function SetLogger({ exercise, setNumber, previousSet, onLog }: SetLoggerProps) {
-  const prevReps = previousSet?.performance.type === 'reps' ? String((previousSet.performance as any).reps) : '';
-  const prevWeight = previousSet?.performance.type === 'reps' ? String((previousSet.performance as any).weightKg) : '';
-  const prevDuration = previousSet?.performance.type === 'isometric' ? String((previousSet.performance as any).durationSeconds) : '';
+  const prevReps = previousSet?.performance.type === 'reps' ? String(isRepsPerformance(previousSet.performance) ? previousSet.performance.reps : undefined) : '';
+  const prevWeight = previousSet?.performance.type === 'reps' ? String(isRepsPerformance(previousSet.performance) ? previousSet.performance.weightKg : undefined) : '';
+  const prevDuration = previousSet?.performance.type === 'isometric' ? String(isIsometricPerformance(previousSet.performance) ? previousSet.performance.durationSeconds : undefined) : '';
 
   const [reps, setReps] = useState(prevReps);
   const [weight, setWeight] = useState(prevWeight);

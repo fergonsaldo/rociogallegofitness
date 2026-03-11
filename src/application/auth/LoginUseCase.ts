@@ -12,7 +12,6 @@ export type LoginInput = z.infer<typeof LoginInputSchema>;
 export interface LoginResult { user: User; }
 
 export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
-  console.log('[LoginUseCase] Attempting login for:', input.email);
   LoginInputSchema.parse(input);
 
   const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -20,7 +19,6 @@ export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
     password: input.password,
   });
 
-  console.log('[LoginUseCase] Auth result:', { userId: authData?.user?.id, error: authError?.message });
 
   if (authError || !authData.user) {
     throw mapSupabaseAuthError(authError ?? { message: 'No user returned' });
@@ -32,7 +30,6 @@ export async function loginUseCase(input: LoginInput): Promise<LoginResult> {
     .eq('id', authData.user.id)
     .single();
 
-  console.log('[LoginUseCase] Profile result:', { id: profile?.id, role: profile?.role, error: profileError?.message });
 
   if (profileError || !profile) {
     throw mapSupabaseAuthError(profileError ?? { message: 'Profile not found' });

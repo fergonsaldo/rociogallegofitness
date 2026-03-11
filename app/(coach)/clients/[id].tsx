@@ -2,94 +2,82 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert,
 } from 'react-native';
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
-import { useAuthStore } from '../../../src/presentation/stores/authStore';
-import { supabase } from '../../../src/infrastructure/supabase/client';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
+import { CoachRemoteRepository } from '../../../src/infrastructure/supabase/remote/CoachRemoteRepository';
+import {
+  getAthleteDetailUseCase,
+  unassignRoutineFromAthleteUseCase,
+  AthleteDetail,
+} from '../../../src/application/coach/ClientUseCases';
+import { AthleteRoutineAssignment, AthleteSession } from '../../../src/domain/repositories/ICoachRepository';
 
-interface Routine { id: string; name: string; assigned_at: string; }
-interface Session { id: string; started_at: string; finished_at: string | null; status: string; }
+const repo = new CoachRemoteRepository();
 
 export default function ClientDetailScreen() {
   const router = useRouter();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
-  const { user } = useAuthStore();
 
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [detail, setDetail] = useState<AthleteDetail>({ assignments: [], sessions: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      if (id) fetchClientData();
+      if (id) loadAthleteDetail();
     }, [id]),
   );
 
-  const fetchClientData = async () => {
+  const loadAthleteDetail = async () => {
     setLoading(true);
+    setError(null);
     try {
-      console.log('[ClientDetail] fetchClientData — athleteId:', id, 'coachId:', user?.id);
-
-      const [routinesRes, sessionsRes] = await Promise.all([
-        supabase
-          .from('routine_assignments')
-          .select('assigned_at, routines ( id, name )')
-          .eq('athlete_id', id)
-          .order('assigned_at', { ascending: false }),
-        supabase
-          .from('workout_sessions')
-          .select('id, started_at, finished_at, status')
-          .eq('athlete_id', id)
-          .order('started_at', { ascending: false })
-          .limit(10),
-      ]);
-
-      console.log('[ClientDetail] routinesRes:', {
-        data: routinesRes.data,
-        error: routinesRes.error?.message ?? 'none',
-        count: routinesRes.data?.length,
-      });
-      console.log('[ClientDetail] sessionsRes:', {
-        error: sessionsRes.error?.message ?? 'none',
-        count: sessionsRes.data?.length,
-      });
-
-      const mappedRoutines = (routinesRes.data ?? []).map((r: any) => {
-        console.log('[ClientDetail] mapping row:', JSON.stringify(r));
-        return { id: r.routines?.id, name: r.routines?.name, assigned_at: r.assigned_at };
-      });
-      console.log('[ClientDetail] mappedRoutines:', mappedRoutines);
-
-      setRoutines(mappedRoutines.filter((r) => r.id));
-      setSessions(sessionsRes.data ?? []);
+      const data = await getAthleteDetailUseCase(id, repo);
+      setDetail(data);
     } catch (err) {
-      console.error('[ClientDetail] fetchClientData:', err);
+      setError(err instanceof Error ? err.message : Strings.errorGeneric);
     } finally {
       setLoading(false);
     }
   };
 
-  const unassignRoutine = (routine: Routine) => {
-    Alert.alert(Strings.alertUnassignRoutineTitle, Strings.alertUnassignRoutineMessage(routine.name, name), [
-      { text: Strings.alertUnassignCancel, style: 'cancel' },
-      { text: Strings.alertUnassignConfirm, style: 'destructive', onPress: async () => {
-        const { error } = await supabase.from('routine_assignments').delete()
-          .eq('routine_id', routine.id).eq('athlete_id', id);
-        if (!error) setRoutines((prev) => prev.filter((r) => r.id !== routine.id));
-      }},
-    ]);
+  const handleUnassignRoutine = (assignment: AthleteRoutineAssignment) => {
+    Alert.alert(
+      Strings.alertUnassignRoutineTitle,
+      Strings.alertUnassignRoutineMessage(assignment.routineName, name),
+      [
+        { text: Strings.alertUnassignCancel, style: 'cancel' },
+        {
+          text: Strings.alertUnassignConfirm,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await unassignRoutineFromAthleteUseCase(assignment.routineId, id, repo);
+              setDetail((prev) => ({
+                ...prev,
+                assignments: prev.assignments.filter((a) => a.routineId !== assignment.routineId),
+              }));
+            } catch (err) {
+              setError(err instanceof Error ? err.message : Strings.errorGeneric);
+            }
+          },
+        },
+      ],
+    );
   };
 
   const getInitials = (n: string) =>
     n.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 
-  const formatDuration = (start: string, end: string | null) => {
+  const formatDuration = (start: Date, end: Date | null) => {
     if (!end) return Strings.labelInProgress;
-    const mins = Math.round((new Date(end).getTime() - new Date(start).getTime()) / 60000);
+    const mins = Math.round((end.getTime() - start.getTime()) / 60000);
     return `${mins} min`;
   };
+
+  const { assignments, sessions } = detail;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -107,43 +95,46 @@ export default function ClientDetailScreen() {
 
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={Colors.primary} size="large" /></View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error}</Text>
+        </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Profile header */}
           <View style={styles.profileCard}>
             <View style={styles.avatarLarge}>
               <Text style={styles.avatarLargeText}>{getInitials(name ?? '')}</Text>
             </View>
             <Text style={styles.clientName}>{name}</Text>
             <View style={styles.statsRow}>
-              <StatPill label={Strings.labelRoutines} value={String(routines.length)} />
+              <StatPill label={Strings.labelRoutines} value={String(assignments.length)} />
               <StatPill label={Strings.labelSessions} value={String(sessions.length)} />
               <StatPill
                 label={Strings.labelLastWorkout}
                 value={sessions[0]
-                  ? new Date(sessions[0].started_at).toLocaleDateString('es', { month: 'short', day: 'numeric' })
+                  ? sessions[0].startedAt.toLocaleDateString('es', { month: 'short', day: 'numeric' })
                   : '—'}
               />
             </View>
           </View>
 
-          {/* Routines */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>RUTINAS ASIGNADAS</Text>
-            {routines.length === 0 ? (
+            {assignments.length === 0 ? (
               <View style={styles.emptySection}>
                 <Text style={styles.emptySectionText}>Sin rutinas asignadas aún</Text>
               </View>
-            ) : routines.map((r) => (
+            ) : assignments.map((a) => (
               <TouchableOpacity
-                key={r.id} style={styles.routineCard}
-                onLongPress={() => unassignRoutine(r)}
+                key={a.routineId}
+                style={styles.routineCard}
+                onLongPress={() => handleUnassignRoutine(a)}
               >
                 <View style={styles.routineAccent} />
                 <View style={styles.routineContent}>
-                  <Text style={styles.routineName}>{r.name}</Text>
+                  <Text style={styles.routineName}>{a.routineName}</Text>
                   <Text style={styles.routineDate}>
-                    {Strings.labelAssigned(new Date(r.assigned_at).toLocaleDateString('es', { month: 'short', day: 'numeric', year: 'numeric' }))}
+                    {Strings.labelAssigned(a.assignedAt.toLocaleDateString('es', { month: 'short', day: 'numeric', year: 'numeric' }))}
                   </Text>
                 </View>
                 <Text style={styles.longPressHint}>mantén para quitar</Text>
@@ -151,7 +142,6 @@ export default function ClientDetailScreen() {
             ))}
           </View>
 
-          {/* Recent sessions */}
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>SESIONES RECIENTES</Text>
             {sessions.length === 0 ? (
@@ -162,16 +152,16 @@ export default function ClientDetailScreen() {
               <View key={s.id} style={styles.sessionCard}>
                 <View style={[
                   styles.sessionDot,
-                  s.status === 'completed' ? styles.sessionDotDone :
-                  s.status === 'abandoned' ? styles.sessionDotAbandoned :
+                  s.status === 'completed'  ? styles.sessionDotDone :
+                  s.status === 'abandoned'  ? styles.sessionDotAbandoned :
                   styles.sessionDotActive,
                 ]} />
                 <View style={styles.sessionInfo}>
                   <Text style={styles.sessionDate}>
-                    {new Date(s.started_at).toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    {s.startedAt.toLocaleDateString('es', { weekday: 'short', month: 'short', day: 'numeric' })}
                   </Text>
                   <Text style={styles.sessionMeta}>
-                    {formatDuration(s.started_at, s.finished_at)} · {s.status}
+                    {formatDuration(s.startedAt, s.finishedAt)} · {s.status}
                   </Text>
                 </View>
               </View>
@@ -196,11 +186,12 @@ function StatPill({ label, value }: { label: string; value: string }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   backText: { color: Colors.textSecondary, fontSize: FontSize.sm },
   assignBtn: { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
   assignBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+  errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
   profileCard: { backgroundColor: Colors.surface, margin: Spacing.lg, borderRadius: BorderRadius.lg, padding: Spacing.lg, alignItems: 'center', gap: Spacing.md, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
   avatarLarge: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primarySubtle, alignItems: 'center', justifyContent: 'center' },
   avatarLargeText: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.primary },

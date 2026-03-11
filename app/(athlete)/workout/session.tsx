@@ -2,7 +2,7 @@ import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, Alert, ActivityIndicator,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useWorkoutStore } from '../../../src/presentation/stores/workoutStore';
 import { useRoutineStore } from '../../../src/presentation/stores/routineStore';
@@ -11,7 +11,7 @@ import { RestTimer } from '../../../src/presentation/components/athlete/RestTime
 import { SetLogger } from '../../../src/presentation/components/athlete/SetLogger';
 import { WorkoutSummaryModal } from '../../../src/presentation/components/athlete/WorkoutSummaryModal';
 import { findExerciseById } from '../../../src/shared/constants/exercises';
-import { ExerciseSet } from '../../../src/domain/entities/ExerciseSet';
+import { ExerciseSet, isRepsPerformance, isIsometricPerformance } from '../../../src/domain/entities/ExerciseSet';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
 
@@ -28,9 +28,17 @@ export default function WorkoutSessionScreen() {
 
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
   const [showSummary, setShowSummary] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  // Inicializar con el tiempo real ya transcurrido si la sesión estaba en curso.
+  // Esto evita que el cronómetro se reinicie al volver a la pantalla.
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => {
+    if (!session?.startedAt) return 0;
+    return Math.floor((Date.now() - session.startedAt.getTime()) / 1000);
+  });
 
-  // Buscar el día y la rutina a partir del routineDayId recibido por parámetro
+  // Usar una ref para evitar que startSession se llame más de una vez
+  // aunque el efecto se re-evalúe por cambios de dependencia.
+  const sessionStarted = useRef(false);
+
   const selectedRoutine = routines.find((r) => r.days.some((d) => d.id === routineDayId)) ?? null;
   const routineDay = selectedRoutine?.days.find((d) => d.id === routineDayId)
     ?? selectedRoutine?.days[0];
@@ -41,14 +49,19 @@ export default function WorkoutSessionScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Arrancar sesión cuando routineDay está resuelto y no hay sesión activa
-  useEffect(() => {
-    if (!session && user?.id && routineDay) {
-      startSession(user.id, selectedRoutine?.id, routineDay?.id);
-    }
-  }, [routineDay?.id]);
+  // Arrancar sesión: se dispara cuando routineDay y user están listos,
+  // y solo si aún no hay sesión activa ni se ha llamado ya.
+  const handleStartSession = useCallback(() => {
+    if (session || sessionStarted.current || !user?.id || !routineDay) return;
+    sessionStarted.current = true;
+    startSession(user.id, selectedRoutine?.id, routineDay.id);
+  }, [session, user?.id, routineDay, selectedRoutine?.id, startSession]);
 
-  // Show summary when session finishes
+  useEffect(() => {
+    handleStartSession();
+  }, [handleStartSession]);
+
+  // Mostrar resumen cuando la sesión termina
   useEffect(() => {
     if (lastSummary) setShowSummary(true);
   }, [lastSummary]);
@@ -82,7 +95,6 @@ export default function WorkoutSessionScreen() {
     router.replace('/(athlete)/dashboard');
   };
 
-  // Elapsed time display
   const elapsed = (() => {
     const m = Math.floor(elapsedSeconds / 60);
     const s = elapsedSeconds % 60;
@@ -102,12 +114,10 @@ export default function WorkoutSessionScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Summary modal */}
       {showSummary && lastSummary && (
         <WorkoutSummaryModal summary={lastSummary} onClose={handleSummaryClose} />
       )}
 
-      {/* Top bar */}
       <View style={styles.topbar}>
         <View>
           <Text style={styles.topbarTitle}>{routineDay?.name ?? 'Entrenamiento libre'}</Text>
@@ -123,10 +133,8 @@ export default function WorkoutSessionScreen() {
         </View>
       </View>
 
-      {/* Rest timer */}
       <RestTimer />
 
-      {/* Error */}
       {error && (
         <View style={styles.errorBanner}>
           <Text style={styles.errorText}>{error}</Text>
@@ -136,7 +144,6 @@ export default function WorkoutSessionScreen() {
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
 
-        {/* Exercise selector */}
         {routineDay && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.exerciseTabs}>
             {routineDay.exercises.map((re, idx) => {
@@ -163,7 +170,6 @@ export default function WorkoutSessionScreen() {
           </ScrollView>
         )}
 
-        {/* Active exercise */}
         {routineDay && routineDay.exercises[activeExerciseIndex] && (() => {
           const re = routineDay.exercises[activeExerciseIndex];
           const exercise = findExerciseById(re.exerciseId);
@@ -178,7 +184,6 @@ export default function WorkoutSessionScreen() {
 
           return (
             <View style={styles.exerciseSection}>
-              {/* Exercise header */}
               <View style={styles.exerciseHeader}>
                 <View>
                   <Text style={styles.exerciseName}>{exercise.name}</Text>
@@ -194,7 +199,6 @@ export default function WorkoutSessionScreen() {
                 </View>
               </View>
 
-              {/* Logged sets history */}
               {sessionSetsForExercise.map((s, i) => (
                 <View key={s.id} style={styles.loggedSet}>
                   <View style={styles.loggedSetBadge}>
@@ -203,13 +207,12 @@ export default function WorkoutSessionScreen() {
                   <Text style={styles.loggedSetText}>
                     Serie {i + 1} ·{' '}
                     {s.performance.type === 'reps'
-                      ? `${(s.performance as any).weightKg} kg × ${(s.performance as any).reps} reps`
-                      : `${(s.performance as any).durationSeconds}s`}
+                      ? `${isRepsPerformance(s.performance) ? s.performance.weightKg : 0} kg × ${isRepsPerformance(s.performance) ? s.performance.reps : 0} reps`
+                      : `${isIsometricPerformance(s.performance) ? s.performance.durationSeconds : 0}s`}
                   </Text>
                 </View>
               ))}
 
-              {/* Log next set */}
               {!allSetsLogged && (
                 <View style={styles.setLoggerWrapper}>
                   <Text style={styles.nextSetLabel}>SERIE {nextSetNumber}</Text>
@@ -228,13 +231,11 @@ export default function WorkoutSessionScreen() {
                 </View>
               )}
 
-              {/* Rest info */}
               <Text style={styles.restHint}>Descanso: {re.restBetweenSetsSeconds}s entre series</Text>
             </View>
           );
         })()}
 
-        {/* Progress overview */}
         {session && session.sets.length > 0 && (
           <View style={styles.progressSection}>
             <Text style={styles.progressLabel}>PROGRESO DE LA SESIÓN</Text>

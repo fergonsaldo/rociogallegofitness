@@ -15,7 +15,6 @@ export type RegisterInput = z.infer<typeof RegisterInputSchema>;
 export interface RegisterResult { user: User; }
 
 export async function registerUseCase(input: RegisterInput): Promise<RegisterResult> {
-  console.log('[RegisterUseCase] Registering:', input.email, input.role);
   RegisterInputSchema.parse(input);
 
   const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -23,7 +22,6 @@ export async function registerUseCase(input: RegisterInput): Promise<RegisterRes
     password: input.password,
   });
 
-  console.log('[RegisterUseCase] SignUp result:', { userId: authData?.user?.id, error: authError?.message });
 
   if (authError || !authData.user) {
     throw mapSupabaseAuthError(authError ?? { message: 'Registration failed' });
@@ -41,10 +39,8 @@ export async function registerUseCase(input: RegisterInput): Promise<RegisterRes
     .select()
     .single();
 
-  console.log('[RegisterUseCase] Profile insert:', { id: profile?.id, error: profileError?.message });
 
   if (profileError || !profile) {
-    console.error('[RegisterUseCase] Profile creation failed:', profileError);
     throw mapSupabaseAuthError(profileError ?? { message: 'Failed to create profile' });
   }
 

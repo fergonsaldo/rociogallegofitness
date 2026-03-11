@@ -103,13 +103,10 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
   },
 
   assignToAthlete: async (routineId, athleteId) => {
-    console.log('[routineStore] assignToAthlete — routineId:', routineId, 'athleteId:', athleteId);
     try {
       await assignRoutineUseCase({ routineId, athleteId }, repo);
-      console.log('[routineStore] assignToAthlete — OK');
-    } catch (err) {
-      console.error('[routineStore] assignToAthlete — error:', err);
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignRoutine });
+      } catch (err) {
+        set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignRoutine });
     }
   },
 

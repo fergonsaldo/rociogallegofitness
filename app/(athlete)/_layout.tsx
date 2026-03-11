@@ -1,8 +1,11 @@
+import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize } from '../../src/shared/constants/theme';
 import { Strings } from '../../src/shared/constants/strings';
+import { useAuthStore } from '../../src/presentation/stores/authStore';
+import { useWorkoutStore } from '../../src/presentation/stores/workoutStore';
 
 interface TabIconProps {
   emoji: string;
@@ -24,6 +27,18 @@ function TabIcon({ emoji, label, focused }: TabIconProps) {
 export default function AthleteLayout() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 64 + insets.bottom;
+
+  const { user } = useAuthStore();
+  const { restoreActiveSession } = useWorkoutStore();
+
+  // Restaurar sesión activa al montar el layout del atleta.
+  // Esto cubre el caso de que el usuario cierre la app con una sesión en curso
+  // y vuelva a abrirla: la sesión queda en SQLite y se recupera aquí.
+  useEffect(() => {
+    if (user?.id) {
+      restoreActiveSession(user.id);
+    }
+  }, [user?.id]);
 
   return (
     <Tabs

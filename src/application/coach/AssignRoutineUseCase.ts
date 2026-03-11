@@ -1,35 +1,25 @@
-import { z } from 'zod';
 import { IRoutineRepository } from '@/domain/repositories/IRoutineRepository';
+import { validateUUID } from '@/domain/validation/validateUUID';
 
-export const AssignRoutineInputSchema = z.object({
-  routineId: z.string().uuid('Invalid routine ID'),
-  athleteId: z.string().uuid('Invalid athlete ID'),
-});
-
-export type AssignRoutineInput = z.infer<typeof AssignRoutineInputSchema>;
-
-/**
- * Assigns an existing routine to an athlete.
- * If the athlete already has this routine assigned, this is a no-op (upsert).
- */
-export async function assignRoutineUseCase(
-  input: AssignRoutineInput,
-  repository: IRoutineRepository
-): Promise<void> {
-  console.log('[assignRoutineUseCase] input:', input);
-  AssignRoutineInputSchema.parse(input);
-  console.log('[assignRoutineUseCase] validación OK, llamando a repository.assignToAthlete');
-  await repository.assignToAthlete(input.routineId, input.athleteId);
-  console.log('[assignRoutineUseCase] asignación completada');
+export interface AssignRoutineInput {
+  routineId: string;
+  athleteId: string;
 }
 
-/**
- * Removes the assignment of a routine from an athlete.
- */
+export async function assignRoutineUseCase(
+  input: AssignRoutineInput,
+  repo: IRoutineRepository,
+): Promise<void> {
+  if (!validateUUID(input.routineId)) throw new Error('Invalid routine ID');
+  if (!validateUUID(input.athleteId)) throw new Error('Invalid athlete ID');
+  await repo.assignToAthlete(input.routineId, input.athleteId);
+}
+
 export async function unassignRoutineUseCase(
   input: AssignRoutineInput,
-  repository: IRoutineRepository
+  repo: IRoutineRepository,
 ): Promise<void> {
-  AssignRoutineInputSchema.parse(input);
-  await repository.unassignFromAthlete(input.routineId, input.athleteId);
+  if (!validateUUID(input.routineId)) throw new Error('Invalid routine ID');
+  if (!validateUUID(input.athleteId)) throw new Error('Invalid athlete ID');
+  await repo.unassignFromAthlete(input.routineId, input.athleteId);
 }

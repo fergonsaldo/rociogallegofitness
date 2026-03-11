@@ -39,3 +39,26 @@ export type ExerciseSet = z.infer<typeof ExerciseSetSchema>;
 
 export const CreateExerciseSetSchema = ExerciseSetSchema.omit({ id: true, completedAt: true });
 export type CreateExerciseSetInput = z.infer<typeof CreateExerciseSetSchema>;
+
+// ── Type guards ───────────────────────────────────────────────────────────────
+
+/**
+ * Narrows SetPerformance to RepsSet.
+ * Use instead of `(performance as any).reps` to keep full type safety.
+ *
+ * @example
+ * if (isRepsPerformance(set.performance)) {
+ *   console.log(set.performance.reps, set.performance.weightKg);
+ * }
+ */
+export function isRepsPerformance(p: SetPerformance): p is RepsSet {
+  return p.type === 'reps';
+}
+
+/**
+ * Narrows SetPerformance to IsometricSet.
+ * Use instead of `(performance as any).durationSeconds`.
+ */
+export function isIsometricPerformance(p: SetPerformance): p is IsometricSet {
+  return p.type === 'isometric';
+}

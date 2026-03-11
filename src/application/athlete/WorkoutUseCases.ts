@@ -1,7 +1,7 @@
 import { Strings } from '@/shared/constants/strings';
 import { z } from 'zod';
 import { WorkoutSession } from '@/domain/entities/WorkoutSession';
-import { ExerciseSet } from '@/domain/entities/ExerciseSet';
+import { ExerciseSet, isRepsPerformance, isIsometricPerformance } from '@/domain/entities/ExerciseSet';
 import { IWorkoutRepository } from '@/domain/repositories/IWorkoutRepository';
 import { calculateTotalVolume } from '@/domain/value-objects/Volume';
 import { estimateOneRepMax } from '@/domain/value-objects/OneRepMax';
@@ -104,8 +104,8 @@ export async function finishWorkoutSessionUseCase(
   const repsSets = finished.sets
     .filter((s) => s.performance.type === 'reps')
     .map((s) => ({
-      reps: (s.performance as any).reps,
-      weightKg: (s.performance as any).weightKg,
+      reps: isRepsPerformance(s.performance) ? s.performance.reps : 0,
+      weightKg: isRepsPerformance(s.performance) ? s.performance.weightKg : 0,
     }));
 
   const totalVolumeKg = calculateTotalVolume(repsSets);
@@ -120,8 +120,8 @@ export async function finishWorkoutSessionUseCase(
     const repsSetsForExercise = exerciseSets
       .filter((s) => s.performance.type === 'reps')
       .map((s) => ({
-        reps: (s.performance as any).reps as number,
-        weightKg: (s.performance as any).weightKg as number,
+        reps: isRepsPerformance(s.performance) ? s.performance.reps : 0 as number,
+        weightKg: isRepsPerformance(s.performance) ? s.performance.weightKg : 0 as number,
       }));
 
     let estimatedOneRepMaxKg: number | undefined;

@@ -35,11 +35,7 @@ export default function RoutineDetailScreen() {
   const [clientsError, setClientsError] = useState<string | null>(null);
   const [assigningId, setAssigningId] = useState<string | null>(null);
 
-  console.log('[RoutineDetail] render — id:', id, 'isLoading:', isLoading, 'error:', error);
-  console.log('[RoutineDetail] selectedRoutine:', selectedRoutine?.id, selectedRoutine?.name);
-
   useEffect(() => {
-    console.log('[RoutineDetail] useEffect — id:', id, 'selectedRoutine:', selectedRoutine?.id);
     if (id && (!selectedRoutine || selectedRoutine.id !== id)) {
       fetchRoutineById(id);
     }
@@ -48,8 +44,6 @@ export default function RoutineDetailScreen() {
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleOpenAssignModal = async () => {
-    console.log('[RoutineDetail] handleOpenAssignModal — routineId:', selectedRoutine?.id);
-    console.log('[RoutineDetail] coachId:', user?.id);
 
     clearError();        // limpia cualquier error previo del store
     setClientsError(null);
@@ -57,21 +51,14 @@ export default function RoutineDetailScreen() {
     setLoadingClients(true);
 
     try {
-      console.log('[RoutineDetail] fetching coach clients from Supabase...');
       const { data: coachAthletes, error: coachError } = await supabase
         .from('coach_athletes')
         .select('users!coach_athletes_athlete_id_fkey ( id, full_name, email )')
         .eq('coach_id', user!.id);
 
-      console.log('[RoutineDetail] coachAthletes result:', {
-        count: coachAthletes?.length,
-        error: coachError?.message ?? 'none',
-      });
-
       if (coachError) throw coachError;
 
       const athleteList = (coachAthletes ?? []).map((row: any) => row.users).filter(Boolean);
-      console.log('[RoutineDetail] athleteList ids:', athleteList.map((a: any) => a.id));
 
       if (athleteList.length === 0) {
         setClients([]);
@@ -80,17 +67,10 @@ export default function RoutineDetailScreen() {
       }
 
       // Consultar qué atletas ya tienen esta rutina asignada
-      console.log('[RoutineDetail] fetching existing assignments for routineId:', id);
       const { data: assignments, error: assignError } = await supabase
         .from('routine_assignments')
         .select('athlete_id')
         .eq('routine_id', id);
-
-      console.log('[RoutineDetail] assignments result:', {
-        count: assignments?.length,
-        error: assignError?.message ?? 'none',
-        athleteIds: assignments?.map((a: any) => a.athlete_id),
-      });
 
       if (assignError) throw assignError;
 
@@ -103,14 +83,9 @@ export default function RoutineDetailScreen() {
         alreadyAssigned: assignedIds.has(athlete.id),
       }));
 
-      console.log('[RoutineDetail] clientOptions built:', clientOptions.map((c) => ({
-        id: c.id, name: c.full_name, alreadyAssigned: c.alreadyAssigned,
-      })));
-
       setClients(clientOptions);
     } catch (err) {
       const msg = err instanceof Error ? err.message : Strings.errorFailedLoadClients;
-      console.error('[RoutineDetail] handleOpenAssignModal error:', err);
       setClientsError(msg);
     } finally {
       setLoadingClients(false);
@@ -119,17 +94,12 @@ export default function RoutineDetailScreen() {
 
   const handleAssignToClient = async (client: ClientOption) => {
     if (client.alreadyAssigned) {
-      console.log('[RoutineDetail] handleAssignToClient — ya asignada, ignorando. clientId:', client.id);
       return;
     }
-
-    console.log('[RoutineDetail] handleAssignToClient — routineId:', selectedRoutine?.id, 'clientId:', client.id);
     setAssigningId(client.id);
     clearError();
 
     await assignToAthlete(selectedRoutine!.id, client.id);
-
-    console.log('[RoutineDetail] handleAssignToClient — store.assignToAthlete completado');
 
     // Marcar como asignada en la lista local sin recargar
     setClients((prev) =>
@@ -183,7 +153,6 @@ export default function RoutineDetailScreen() {
   }
 
   if (error && !selectedRoutine) {
-    console.error('[RoutineDetail] error state:', error);
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.topbar}>
@@ -201,7 +170,6 @@ export default function RoutineDetailScreen() {
   }
 
   if (!selectedRoutine) {
-    console.warn('[RoutineDetail] no selectedRoutine, id:', id);
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.topbar}>
@@ -216,8 +184,6 @@ export default function RoutineDetailScreen() {
       </SafeAreaView>
     );
   }
-
-  console.log('[RoutineDetail] days:', selectedRoutine.days?.length);
   const totalExercises = selectedRoutine.days.reduce((s, d) => s + d.exercises.length, 0);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -276,7 +242,6 @@ export default function RoutineDetailScreen() {
 
               {day.exercises.map((ex) => {
                 const exercise = findExerciseById(ex.exerciseId);
-                console.log('[RoutineDetail] exercise:', ex.exerciseId, '→', exercise?.name);
                 return (
                   <View key={ex.id} style={styles.exerciseRow}>
                     <View style={styles.exerciseOrder}>

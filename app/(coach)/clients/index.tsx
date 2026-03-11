@@ -63,7 +63,6 @@ export default function ClientsScreen() {
         assigned_at: row.assigned_at,
       })));
     } catch (err) {
-      console.error('[ClientsScreen] fetchAthletes:', err);
     } finally {
       setLoading(false);
     }
@@ -85,7 +84,6 @@ export default function ClientsScreen() {
       if (error) throw error;
       setAvailable(data ?? []);
     } catch (err) {
-      console.error('[ClientsScreen] searchAthletes:', err);
     } finally {
       setSearching(false);
     }
@@ -164,7 +162,6 @@ export default function ClientsScreen() {
       closeModal();
       Alert.alert('✅ Atleta creado', `${newName.trim()} ya puede acceder con su email y contraseña.`);
     } catch (err: any) {
-      console.error('[ClientsScreen] createAthlete:', err);
       Alert.alert('Error al crear atleta', err?.message ?? 'Inténtalo de nuevo.');
     } finally {
       setCreating(false);

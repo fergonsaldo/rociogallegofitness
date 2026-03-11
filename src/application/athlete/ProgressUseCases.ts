@@ -32,8 +32,8 @@ export async function getWorkoutHistoryUseCase(
     const repsSets = session.sets
       .filter((s) => s.performance.type === 'reps')
       .map((s) => ({
-        reps: (s.performance as any).reps as number,
-        weightKg: (s.performance as any).weightKg as number,
+        reps: isRepsPerformance(s.performance) ? s.performance.reps : 0 as number,
+        weightKg: isRepsPerformance(s.performance) ? s.performance.weightKg : 0 as number,
       }));
 
     const totalVolumeKg = calculateTotalVolume(repsSets);
@@ -137,8 +137,8 @@ export async function saveProgressRecordsUseCase(
     const repsSets = exerciseSets
       .filter((s) => s.performance.type === 'reps')
       .map((s) => ({
-        reps: (s.performance as any).reps as number,
-        weightKg: (s.performance as any).weightKg as number,
+        reps: isRepsPerformance(s.performance) ? s.performance.reps : 0 as number,
+        weightKg: isRepsPerformance(s.performance) ? s.performance.weightKg : 0 as number,
       }));
 
     const totalVolumeKg = calculateTotalVolume(repsSets);

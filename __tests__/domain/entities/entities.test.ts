@@ -166,3 +166,46 @@ describe('WorkoutSessionSchema', () => {
     expect(result.status).toBe('active');
   });
 });
+
+// ── isRepsPerformance / isIsometricPerformance ────────────────────────────────
+
+import { isRepsPerformance, isIsometricPerformance, SetPerformance } from '../../src/domain/entities/ExerciseSet';
+
+describe('isRepsPerformance', () => {
+  it('returns true for a reps performance', () => {
+    const p: SetPerformance = { type: 'reps', reps: 10, weightKg: 80 };
+    expect(isRepsPerformance(p)).toBe(true);
+  });
+
+  it('returns false for an isometric performance', () => {
+    const p: SetPerformance = { type: 'isometric', durationSeconds: 30 };
+    expect(isRepsPerformance(p)).toBe(false);
+  });
+
+  it('narrows type correctly: reps and weightKg are accessible after guard', () => {
+    const p: SetPerformance = { type: 'reps', reps: 5, weightKg: 100 };
+    if (isRepsPerformance(p)) {
+      expect(p.reps).toBe(5);
+      expect(p.weightKg).toBe(100);
+    }
+  });
+});
+
+describe('isIsometricPerformance', () => {
+  it('returns true for an isometric performance', () => {
+    const p: SetPerformance = { type: 'isometric', durationSeconds: 45 };
+    expect(isIsometricPerformance(p)).toBe(true);
+  });
+
+  it('returns false for a reps performance', () => {
+    const p: SetPerformance = { type: 'reps', reps: 10, weightKg: 80 };
+    expect(isIsometricPerformance(p)).toBe(false);
+  });
+
+  it('narrows type correctly: durationSeconds is accessible after guard', () => {
+    const p: SetPerformance = { type: 'isometric', durationSeconds: 60 };
+    if (isIsometricPerformance(p)) {
+      expect(p.durationSeconds).toBe(60);
+    }
+  });
+});

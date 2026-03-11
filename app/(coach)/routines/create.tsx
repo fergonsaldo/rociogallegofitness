@@ -104,11 +104,8 @@ export default function CreateRoutineScreen() {
     }));
 
   const handleCreate = async () => {
-    console.log('[CreateRoutine] handleCreate start — name:', name, 'days:', days.length);
     if (!name.trim()) { Alert.alert('Falta el nombre', 'Ponle nombre a la rutina.'); return; }
     if (days.some((d) => d.exercises.length === 0)) { Alert.alert('Día vacío', 'Cada día debe tener al menos un ejercicio.'); return; }
-
-    console.log('[CreateRoutine] sending to createRoutine...');
     const routine = await createRoutine({
       coachId: user!.id,
       name: name.trim(),
@@ -132,8 +129,6 @@ export default function CreateRoutineScreen() {
         })),
       })),
     });
-
-    console.log('[CreateRoutine] result:', { id: routine?.id, name: routine?.name, error: !routine });
     if (routine) router.back();
   };
 

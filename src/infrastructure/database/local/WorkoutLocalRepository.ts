@@ -4,7 +4,7 @@ import { db } from '../client';
 import { workoutSessions, exerciseSets } from '../schema';
 import { IWorkoutRepository } from '@/domain/repositories/IWorkoutRepository';
 import { WorkoutSession, StartWorkoutSessionInput } from '@/domain/entities/WorkoutSession';
-import { ExerciseSet, CreateExerciseSetInput } from '@/domain/entities/ExerciseSet';
+import { ExerciseSet, CreateExerciseSetInput, isRepsPerformance, isIsometricPerformance } from '@/domain/entities/ExerciseSet';
 
 /**
  * SQLite implementation — all writes go here first.
@@ -120,9 +120,9 @@ export class WorkoutLocalRepository implements IWorkoutRepository {
       exerciseId: input.exerciseId,
       setNumber: input.setNumber,
       setType: input.performance.type,
-      reps: isIsometric ? null : (input.performance as any).reps,
-      weightKg: isIsometric ? null : (input.performance as any).weightKg,
-      durationSeconds: isIsometric ? (input.performance as any).durationSeconds : null,
+      reps: isIsometric ? null : isRepsPerformance(input.performance) ? input.performance.reps : null,
+      weightKg: isIsometric ? null : isRepsPerformance(input.performance) ? input.performance.weightKg : null,
+      durationSeconds: isIsometric ? isIsometricPerformance(input.performance) ? input.performance.durationSeconds : null : null,
       restAfterSeconds: input.restAfterSeconds,
       completedAt: now,
     });

@@ -1,3 +1,4 @@
+import { isRepsPerformance, isIsometricPerformance } from '../../../src/domain/entities/ExerciseSet';
 import {
   View, Text, ScrollView, StyleSheet,
   SafeAreaView, ActivityIndicator, TouchableOpacity,
@@ -52,7 +53,7 @@ export default function SessionDetailScreen() {
 
   const repsSets = session.sets
     .filter((s) => s.performance.type === 'reps')
-    .map((s) => ({ reps: (s.performance as any).reps, weightKg: (s.performance as any).weightKg }));
+    .map((s) => ({ reps: isRepsPerformance(s.performance) ? s.performance.reps : 0, weightKg: isRepsPerformance(s.performance) ? s.performance.weightKg : 0 }));
   const totalVolumeKg = calculateTotalVolume(repsSets);
 
   return (
@@ -111,10 +112,10 @@ export default function SessionDetailScreen() {
                   {exerciseSets.map((s, i) => {
                     const isReps = s.performance.type === 'reps';
                     const perfLabel = isReps
-                      ? `${(s.performance as any).weightKg} kg × ${(s.performance as any).reps}`
-                      : `${(s.performance as any).durationSeconds}s hold`;
+                      ? `${isRepsPerformance(s.performance) ? s.performance.weightKg : 0} kg × ${isRepsPerformance(s.performance) ? s.performance.reps : 0}`
+                      : `${isIsometricPerformance(s.performance) ? s.performance.durationSeconds : 0}s hold`;
                     const volume = isReps
-                      ? `${(s.performance as any).weightKg * (s.performance as any).reps} kg`
+                      ? `${isRepsPerformance(s.performance) ? s.performance.weightKg : 0 * isRepsPerformance(s.performance) ? s.performance.reps : 0} kg`
                       : '—';
 
                     return (
