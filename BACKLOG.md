@@ -87,7 +87,7 @@
 - [x] **Historia 1** — Catálogo base visible para el atleta (nueva pestaña + player YouTube)
 - [x] **Historia 2** — Vídeo accesible desde ExercisePicker del coach
 - [x] **Historia 3** — El coach crea ejercicios personalizados
-- [ ] **Historia 4** — El coach edita y elimina sus ejercicios personalizados
+- [x] **Historia 4** — El coach edita y elimina sus ejercicios personalizados
 - [ ] **Historia 5** — Ver vídeo de técnica durante la sesión de entrenamiento (modal sin salir de la sesión)
 
 

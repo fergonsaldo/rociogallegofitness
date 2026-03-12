@@ -10,8 +10,11 @@ import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { RestTimer } from '../../../src/presentation/components/athlete/RestTimer';
 import { SetLogger } from '../../../src/presentation/components/athlete/SetLogger';
 import { WorkoutSummaryModal } from '../../../src/presentation/components/athlete/WorkoutSummaryModal';
-import { findExerciseById } from '../../../src/shared/constants/exercises';
+import { ExerciseVideoPlayer } from '../../../src/presentation/components/athlete/ExerciseVideoPlayer';
+import { useExerciseResolver } from '../../../src/presentation/hooks/useExerciseResolver';
+import { isValidYouTubeUrl } from '../../../src/shared/utils/youtube';
 import { ExerciseSet, isRepsPerformance, isIsometricPerformance } from '../../../src/domain/entities/ExerciseSet';
+import { Exercise } from '../../../src/domain/entities/Exercise';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
 
@@ -25,18 +28,19 @@ export default function WorkoutSessionScreen() {
     startSession, logSet, finishSession, abandonSession,
     startRestTimer, clearSummary, clearError,
   } = useWorkoutStore();
+  const resolveExercise = useExerciseResolver();
 
   const [activeExerciseIndex, setActiveExerciseIndex] = useState(0);
-  const [showSummary, setShowSummary] = useState(false);
+  const [showSummary, setShowSummary]                 = useState(false);
+  const [videoExercise, setVideoExercise]             = useState<Exercise | null>(null);
+
   // Inicializar con el tiempo real ya transcurrido si la sesión estaba en curso.
-  // Esto evita que el cronómetro se reinicie al volver a la pantalla.
   const [elapsedSeconds, setElapsedSeconds] = useState(() => {
     if (!session?.startedAt) return 0;
     return Math.floor((Date.now() - session.startedAt.getTime()) / 1000);
   });
 
-  // Usar una ref para evitar que startSession se llame más de una vez
-  // aunque el efecto se re-evalúe por cambios de dependencia.
+  // Ref para evitar que startSession se llame más de una vez.
   const sessionStarted = useRef(false);
 
   const selectedRoutine = routines.find((r) => r.days.some((d) => d.id === routineDayId)) ?? null;
@@ -49,19 +53,16 @@ export default function WorkoutSessionScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  // Arrancar sesión: se dispara cuando routineDay y user están listos,
-  // y solo si aún no hay sesión activa ni se ha llamado ya.
+  // Arrancar sesión una sola vez cuando routineDay y user están listos.
   const handleStartSession = useCallback(() => {
     if (session || sessionStarted.current || !user?.id || !routineDay) return;
     sessionStarted.current = true;
     startSession(user.id, selectedRoutine?.id, routineDay.id);
   }, [session, user?.id, routineDay, selectedRoutine?.id, startSession]);
 
-  useEffect(() => {
-    handleStartSession();
-  }, [handleStartSession]);
+  useEffect(() => { handleStartSession(); }, [handleStartSession]);
 
-  // Mostrar resumen cuando la sesión termina
+  // Mostrar resumen cuando la sesión termina.
   useEffect(() => {
     if (lastSummary) setShowSummary(true);
   }, [lastSummary]);
@@ -70,14 +71,17 @@ export default function WorkoutSessionScreen() {
     if (!routineDay) return;
     const exercise = routineDay.exercises[activeExerciseIndex];
     if (!exercise) return;
-
-    const newSet = await logSet({ exerciseId: exercise.exerciseId, performance, restAfterSeconds: exercise.restBetweenSetsSeconds });
+    const newSet = await logSet({
+      exerciseId: exercise.exerciseId,
+      performance,
+      restAfterSeconds: exercise.restBetweenSetsSeconds,
+    });
     if (newSet) startRestTimer(exercise.restBetweenSetsSeconds);
   };
 
   const handleFinish = () => {
     Alert.alert('¿Terminar entrenamiento?', 'Tus series se guardarán y sincronizarán.', [
-      { text: Strings.alertFinishCancel, style: 'cancel' },
+      { text: Strings.alertFinishCancel,  style: 'cancel' },
       { text: Strings.alertFinishConfirm, style: 'default', onPress: () => finishSession() },
     ]);
   };
@@ -85,7 +89,7 @@ export default function WorkoutSessionScreen() {
   const handleAbandon = () => {
     Alert.alert('¿Abandonar el entrenamiento?', 'Se perderá el progreso.', [
       { text: Strings.alertAbandonContinue, style: 'cancel' },
-      { text: Strings.alertAbandonConfirm, style: 'destructive', onPress: async () => { await abandonSession(); router.back(); } },
+      { text: Strings.alertAbandonConfirm,  style: 'destructive', onPress: async () => { await abandonSession(); router.back(); } },
     ]);
   };
 
@@ -118,6 +122,16 @@ export default function WorkoutSessionScreen() {
         <WorkoutSummaryModal summary={lastSummary} onClose={handleSummaryClose} />
       )}
 
+      {/* Player de vídeo de técnica — abre sin salir de la sesión */}
+      {videoExercise?.videoUrl && (
+        <ExerciseVideoPlayer
+          videoUrl={videoExercise.videoUrl}
+          exerciseName={videoExercise.name}
+          visible={!!videoExercise}
+          onClose={() => setVideoExercise(null)}
+        />
+      )}
+
       <View style={styles.topbar}>
         <View>
           <Text style={styles.topbarTitle}>{routineDay?.name ?? 'Entrenamiento libre'}</Text>
@@ -147,10 +161,10 @@ export default function WorkoutSessionScreen() {
         {routineDay && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.exerciseTabs}>
             {routineDay.exercises.map((re, idx) => {
-              const exercise = findExerciseById(re.exerciseId);
+              const exercise   = resolveExercise(re.exerciseId);
               const setsLogged = session?.sets.filter((s) => s.exerciseId === re.exerciseId).length ?? 0;
-              const isActive = idx === activeExerciseIndex;
-              const isDone = setsLogged >= re.targetSets;
+              const isActive   = idx === activeExerciseIndex;
+              const isDone     = setsLogged >= re.targetSets;
 
               return (
                 <TouchableOpacity
@@ -171,31 +185,46 @@ export default function WorkoutSessionScreen() {
         )}
 
         {routineDay && routineDay.exercises[activeExerciseIndex] && (() => {
-          const re = routineDay.exercises[activeExerciseIndex];
-          const exercise = findExerciseById(re.exerciseId);
+          const re       = routineDay.exercises[activeExerciseIndex];
+          const exercise = resolveExercise(re.exerciseId);
           if (!exercise) return null;
 
           const sessionSetsForExercise = (session?.sets ?? []).filter(
-            (s) => s.exerciseId === re.exerciseId
+            (s) => s.exerciseId === re.exerciseId,
           );
           const nextSetNumber = sessionSetsForExercise.length + 1;
-          const previousSet = sessionSetsForExercise[sessionSetsForExercise.length - 1] as ExerciseSet | undefined;
+          const previousSet   = sessionSetsForExercise[sessionSetsForExercise.length - 1] as ExerciseSet | undefined;
           const allSetsLogged = sessionSetsForExercise.length >= re.targetSets;
+          const hasVideo      = !!exercise.videoUrl && isValidYouTubeUrl(exercise.videoUrl);
 
           return (
             <View style={styles.exerciseSection}>
               <View style={styles.exerciseHeader}>
-                <View>
+                <View style={styles.exerciseHeaderInfo}>
                   <Text style={styles.exerciseName}>{exercise.name}</Text>
                   <Text style={styles.exerciseMeta}>
                     {exercise.primaryMuscles.join(', ')} · {re.targetSets} sets ·{' '}
                     {re.targetReps ? `${re.targetReps} reps` : `${re.targetDurationSeconds}s`}
                   </Text>
                 </View>
-                <View style={[styles.setsProgressBadge, allSetsLogged && styles.setsProgressBadgeDone]}>
-                  <Text style={[styles.setsProgressText, allSetsLogged && styles.setsProgressTextDone]}>
-                    {sessionSetsForExercise.length}/{re.targetSets}
-                  </Text>
+
+                <View style={styles.exerciseHeaderActions}>
+                  {/* Botón de vídeo — solo si el ejercicio tiene URL válida de YouTube */}
+                  {hasVideo && (
+                    <TouchableOpacity
+                      style={styles.videoButton}
+                      onPress={() => setVideoExercise(exercise)}
+                      activeOpacity={0.8}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.videoButtonText}>▶</Text>
+                    </TouchableOpacity>
+                  )}
+                  <View style={[styles.setsProgressBadge, allSetsLogged && styles.setsProgressBadgeDone]}>
+                    <Text style={[styles.setsProgressText, allSetsLogged && styles.setsProgressTextDone]}>
+                      {sessionSetsForExercise.length}/{re.targetSets}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
@@ -250,16 +279,16 @@ export default function WorkoutSessionScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.background },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
+  safe:        { flex: 1, backgroundColor: Colors.background },
+  center:      { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   loadingText: { color: Colors.textSecondary, fontSize: FontSize.sm },
   topbar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
     backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  topbarTitle: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
-  topbarTimer: { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
+  topbarTitle:   { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
+  topbarTimer:   { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
   topbarActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
   finishButton: {
     backgroundColor: Colors.athlete, borderRadius: BorderRadius.md,
@@ -272,14 +301,14 @@ const styles = StyleSheet.create({
     width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted,
     borderWidth: 1, borderColor: Colors.border, alignItems: 'center', justifyContent: 'center',
   },
-  abandonText: { color: Colors.textSecondary, fontSize: FontSize.md },
-  scroll: { flex: 1 },
+  abandonText:  { color: Colors.textSecondary, fontSize: FontSize.md },
+  scroll:       { flex: 1 },
   errorBanner: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: `${Colors.error}15`, borderBottomWidth: 1,
     borderBottomColor: `${Colors.error}30`, padding: Spacing.md,
   },
-  errorText: { color: Colors.error, fontSize: FontSize.sm, flex: 1 },
+  errorText:    { color: Colors.error, fontSize: FontSize.sm, flex: 1 },
   errorDismiss: { color: Colors.error, fontSize: FontSize.md, paddingLeft: Spacing.sm },
   exerciseTabs: { paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md },
   exerciseTab: {
@@ -287,12 +316,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     marginRight: Spacing.sm, backgroundColor: Colors.surface, alignItems: 'center', gap: 2,
   },
-  exerciseTabActive: { borderColor: Colors.athlete, backgroundColor: Colors.athleteSubtle },
-  exerciseTabDone: { borderColor: Colors.success, backgroundColor: `${Colors.success}12` },
-  exerciseTabText: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '600', maxWidth: 80 },
-  exerciseTabTextActive: { color: Colors.athlete },
-  exerciseTabProgress: { fontSize: 10, color: Colors.textMuted, fontWeight: '700' },
-  exerciseTabProgressDone: { color: Colors.success },
+  exerciseTabActive:        { borderColor: Colors.athlete, backgroundColor: Colors.athleteSubtle },
+  exerciseTabDone:          { borderColor: Colors.success, backgroundColor: `${Colors.success}12` },
+  exerciseTabText:          { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '600', maxWidth: 80 },
+  exerciseTabTextActive:    { color: Colors.athlete },
+  exerciseTabProgress:      { fontSize: 10, color: Colors.textMuted, fontWeight: '700' },
+  exerciseTabProgressDone:  { color: Colors.success },
   exerciseSection: {
     margin: Spacing.lg, backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.border,
@@ -300,29 +329,39 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  exerciseHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
+  exerciseHeader: {
+    flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between',
+  },
+  exerciseHeaderInfo:    { flex: 1, marginRight: Spacing.sm },
+  exerciseHeaderActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   exerciseName: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
   exerciseMeta: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  videoButton: {
+    width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.athlete,
+    alignItems: 'center', justifyContent: 'center',
+    shadowColor: Colors.athlete, shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3, shadowRadius: 4, elevation: 3,
+  },
+  videoButtonText: { fontSize: 11, color: '#fff', fontWeight: '700' },
   setsProgressBadge: {
     backgroundColor: Colors.surfaceMuted, borderRadius: BorderRadius.full,
     paddingHorizontal: Spacing.sm, paddingVertical: 4,
     borderWidth: 1, borderColor: Colors.border,
   },
   setsProgressBadgeDone: { backgroundColor: `${Colors.success}15`, borderColor: `${Colors.success}40` },
-  setsProgressText: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary },
-  setsProgressTextDone: { color: Colors.success },
+  setsProgressText:      { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textSecondary },
+  setsProgressTextDone:  { color: Colors.success },
   loggedSet: {
-    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
-    paddingVertical: Spacing.xs,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, paddingVertical: Spacing.xs,
   },
   loggedSetBadge: {
     width: 20, height: 20, borderRadius: 10,
     backgroundColor: `${Colors.success}20`, alignItems: 'center', justifyContent: 'center',
   },
   loggedSetBadgeText: { color: Colors.success, fontSize: 11, fontWeight: '800' },
-  loggedSetText: { fontSize: FontSize.sm, color: Colors.textSecondary },
-  setLoggerWrapper: { gap: Spacing.xs },
-  nextSetLabel: { fontSize: FontSize.xs, color: Colors.textMuted, letterSpacing: 2, fontWeight: '600' },
+  loggedSetText:      { fontSize: FontSize.sm, color: Colors.textSecondary },
+  setLoggerWrapper:   { gap: Spacing.xs },
+  nextSetLabel:       { fontSize: FontSize.xs, color: Colors.textMuted, letterSpacing: 2, fontWeight: '600' },
   exerciseCompleteBanner: {
     backgroundColor: `${Colors.success}12`, borderRadius: BorderRadius.md,
     borderWidth: 1, borderColor: `${Colors.success}30`,

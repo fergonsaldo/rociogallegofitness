@@ -19,37 +19,38 @@ const CATEGORIES: { key: ExerciseCategory; label: string }[] = [
 ];
 
 const MUSCLE_OPTIONS: { key: MuscleGroup; label: string }[] = [
-  { key: 'chest',        label: 'Pecho' },
-  { key: 'back',         label: 'Espalda' },
-  { key: 'shoulders',    label: 'Hombros' },
-  { key: 'biceps',       label: 'Bíceps' },
-  { key: 'triceps',      label: 'Tríceps' },
-  { key: 'forearms',     label: 'Antebrazos' },
-  { key: 'core',         label: 'Core' },
-  { key: 'glutes',       label: 'Glúteos' },
-  { key: 'quadriceps',   label: 'Cuádriceps' },
-  { key: 'hamstrings',   label: 'Isquiotibiales' },
-  { key: 'calves',       label: 'Gemelos' },
-  { key: 'full_body',    label: 'Cuerpo completo' },
+  { key: 'chest',      label: 'Pecho' },
+  { key: 'back',       label: 'Espalda' },
+  { key: 'shoulders',  label: 'Hombros' },
+  { key: 'biceps',     label: 'Bíceps' },
+  { key: 'triceps',    label: 'Tríceps' },
+  { key: 'forearms',   label: 'Antebrazos' },
+  { key: 'core',       label: 'Core' },
+  { key: 'glutes',     label: 'Glúteos' },
+  { key: 'quadriceps', label: 'Cuádriceps' },
+  { key: 'hamstrings', label: 'Isquiotibiales' },
+  { key: 'calves',     label: 'Gemelos' },
+  { key: 'full_body',  label: 'Cuerpo completo' },
 ];
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export interface ExerciseFormValues {
+export interface ExerciseFormInitialValues {
   name:             string;
   category:         ExerciseCategory;
   primaryMuscles:   MuscleGroup[];
   secondaryMuscles: MuscleGroup[];
-  isIsometric:      boolean;
   description:      string;
   videoUrl:         string;
 }
 
 interface ExerciseFormProps {
-  coachId:    string;
-  isLoading:  boolean;
-  onSubmit:   (input: CreateCustomExerciseInput) => void;
-  onCancel:   () => void;
+  coachId:        string;
+  isLoading:      boolean;
+  initialValues?: ExerciseFormInitialValues;
+  submitLabel?:   string;
+  onSubmit:       (input: CreateCustomExerciseInput) => void;
+  onCancel:       () => void;
 }
 
 interface FormErrors {
@@ -60,16 +61,22 @@ interface FormErrors {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function ExerciseForm({ coachId, isLoading, onSubmit, onCancel }: ExerciseFormProps) {
-  const [name, setName]                       = useState('');
-  const [category, setCategory]               = useState<ExerciseCategory>('strength');
-  const [primaryMuscles, setPrimaryMuscles]   = useState<MuscleGroup[]>([]);
-  const [secondaryMuscles, setSecondaryMuscles] = useState<MuscleGroup[]>([]);
-  const [description, setDescription]         = useState('');
-  const [videoUrl, setVideoUrl]               = useState('');
-  const [errors, setErrors]                   = useState<FormErrors>({});
+export function ExerciseForm({
+  coachId,
+  isLoading,
+  initialValues,
+  submitLabel,
+  onSubmit,
+  onCancel,
+}: ExerciseFormProps) {
+  const [name, setName]                         = useState(initialValues?.name             ?? '');
+  const [category, setCategory]                 = useState<ExerciseCategory>(initialValues?.category ?? 'strength');
+  const [primaryMuscles, setPrimaryMuscles]     = useState<MuscleGroup[]>(initialValues?.primaryMuscles   ?? []);
+  const [secondaryMuscles, setSecondaryMuscles] = useState<MuscleGroup[]>(initialValues?.secondaryMuscles ?? []);
+  const [description, setDescription]           = useState(initialValues?.description ?? '');
+  const [videoUrl, setVideoUrl]                 = useState(initialValues?.videoUrl     ?? '');
+  const [errors, setErrors]                     = useState<FormErrors>({});
 
-  // isIsometric se deriva de la categoría seleccionada
   const isIsometric = category === 'isometric';
 
   const toggleMuscle = (
@@ -78,24 +85,16 @@ export function ExerciseForm({ coachId, isLoading, onSubmit, onCancel }: Exercis
     setter: (v: MuscleGroup[]) => void,
     otherList: MuscleGroup[],
   ) => {
-    // Un músculo no puede estar en primarios y secundarios a la vez
     if (otherList.includes(muscle)) return;
     setter(list.includes(muscle) ? list.filter((m) => m !== muscle) : [...list, muscle]);
   };
 
   const validate = (): boolean => {
     const next: FormErrors = {};
-
-    if (!name.trim()) {
-      next.name = 'El nombre es obligatorio';
-    }
-    if (primaryMuscles.length === 0) {
-      next.primaryMuscles = 'Selecciona al menos un músculo principal';
-    }
-    if (videoUrl.trim() && !isValidYouTubeUrl(videoUrl.trim())) {
+    if (!name.trim())             next.name           = 'El nombre es obligatorio';
+    if (!primaryMuscles.length)   next.primaryMuscles = 'Selecciona al menos un músculo principal';
+    if (videoUrl.trim() && !isValidYouTubeUrl(videoUrl.trim()))
       next.videoUrl = 'La URL debe ser de YouTube (youtube.com o youtu.be)';
-    }
-
     setErrors(next);
     return Object.keys(next).length === 0;
   };
@@ -110,7 +109,7 @@ export function ExerciseForm({ coachId, isLoading, onSubmit, onCancel }: Exercis
       secondaryMuscles,
       isIsometric,
       description:      description.trim() || undefined,
-      videoUrl:         videoUrl.trim() || undefined,
+      videoUrl:         videoUrl.trim()    || undefined,
     });
   };
 
@@ -149,9 +148,7 @@ export function ExerciseForm({ coachId, isLoading, onSubmit, onCancel }: Exercis
             </TouchableOpacity>
           ))}
         </View>
-        {isIsometric && (
-          <Text style={styles.hint}>{Strings.exerciseFormIsometricHint}</Text>
-        )}
+        {isIsometric && <Text style={styles.hint}>{Strings.exerciseFormIsometricHint}</Text>}
       </View>
 
       {/* Músculos principales */}
@@ -246,7 +243,7 @@ export function ExerciseForm({ coachId, isLoading, onSubmit, onCancel }: Exercis
         >
           {isLoading
             ? <ActivityIndicator color="#fff" size="small" />
-            : <Text style={styles.submitButtonText}>{Strings.exerciseFormSubmit}</Text>
+            : <Text style={styles.submitButtonText}>{submitLabel ?? Strings.exerciseFormSubmit}</Text>
           }
         </TouchableOpacity>
       </View>
@@ -260,64 +257,42 @@ export function ExerciseForm({ coachId, isLoading, onSubmit, onCancel }: Exercis
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, paddingHorizontal: Spacing.lg },
-
   field: { marginTop: Spacing.lg, gap: Spacing.xs },
   label: { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textPrimary, letterSpacing: 0.3 },
   required: { color: Colors.error },
-
   input: {
-    backgroundColor: Colors.surface,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.md,
-    fontSize: FontSize.md,
-    color: Colors.textPrimary,
+    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    borderWidth: 1.5, borderColor: Colors.border,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.md,
+    fontSize: FontSize.md, color: Colors.textPrimary,
   },
   inputMultiline: { minHeight: 80, paddingTop: Spacing.md },
   inputError: { borderColor: Colors.error },
   errorText: { fontSize: FontSize.xs, color: Colors.error, marginTop: 2 },
-
   hint: { fontSize: FontSize.xs, color: Colors.textMuted, fontStyle: 'italic' },
-
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
   chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: 7,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.md, paddingVertical: 7,
+    borderRadius: BorderRadius.full, borderWidth: 1.5,
+    borderColor: Colors.border, backgroundColor: Colors.surface,
   },
-  chipActive: { backgroundColor: Colors.primarySubtle, borderColor: Colors.primary },
+  chipActive:          { backgroundColor: Colors.primarySubtle, borderColor: Colors.primary },
   chipSecondaryActive: { backgroundColor: `${Colors.success}15`, borderColor: Colors.success },
-  chipDisabled: { opacity: 0.35 },
-  chipText: { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
-  chipTextActive: { color: Colors.primary },
-  chipTextDisabled: { color: Colors.textMuted },
-
+  chipDisabled:        { opacity: 0.35 },
+  chipText:            { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
+  chipTextActive:      { color: Colors.primary },
+  chipTextDisabled:    { color: Colors.textMuted },
   actions: { flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.xl },
   cancelButton: {
-    flex: 1,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    alignItems: 'center',
+    flex: 1, paddingVertical: Spacing.md, borderRadius: BorderRadius.md,
+    borderWidth: 1.5, borderColor: Colors.border, alignItems: 'center',
   },
   cancelButtonText: { fontSize: FontSize.md, fontWeight: '600', color: Colors.textSecondary },
   submitButton: {
-    flex: 2,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 4,
+    flex: 2, paddingVertical: Spacing.md, borderRadius: BorderRadius.md,
+    backgroundColor: Colors.primary, alignItems: 'center',
+    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { fontSize: FontSize.md, fontWeight: '700', color: '#fff' },

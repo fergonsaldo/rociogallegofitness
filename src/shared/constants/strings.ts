@@ -203,4 +203,13 @@ export const Strings = {
   exercisePickerMyExercises: 'Mis ejercicios',
   exercisePickerCatalog: 'Catálogo base',
   exercisePickerNewExercise: '+ Crear nuevo ejercicio',
+
+  // Editar / eliminar ejercicios personalizados
+  exerciseFormEditTitle: 'Editar ejercicio',
+  exerciseFormEditSubmit: 'Guardar cambios',
+  exerciseDeleteConfirmTitle: 'Eliminar ejercicio',
+  exerciseDeleteConfirmMessage: '¿Seguro que quieres eliminar este ejercicio? Esta acción no se puede deshacer.',
+  exerciseDeleteConfirm: 'Eliminar',
+  exerciseDeleteCancel: 'Cancelar',
+  exerciseDeleteInUseError: 'No se puede eliminar un ejercicio que está en uso en una rutina activa',
 } as const;

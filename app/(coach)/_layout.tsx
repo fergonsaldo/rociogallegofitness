@@ -53,6 +53,7 @@ export default function CoachLayout() {
       <Tabs.Screen name="routines/[id]"     options={{ href: null }} />
       <Tabs.Screen name="routines/create"   options={{ href: null }} />
       <Tabs.Screen name="exercises/create"  options={{ href: null }} />
+      <Tabs.Screen name="exercises/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
     </Tabs>
