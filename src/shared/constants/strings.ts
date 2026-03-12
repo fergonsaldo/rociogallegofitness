@@ -212,4 +212,40 @@ export const Strings = {
   exerciseDeleteConfirm: 'Eliminar',
   exerciseDeleteCancel: 'Cancelar',
   exerciseDeleteInUseError: 'No se puede eliminar un ejercicio que está en uso en una rutina activa',
+
+  // Métricas corporales
+  bodyMetricsTitle: 'Métricas corporales',
+  bodyMetricsEmpty: 'Sin registros aún. Añade tu primera medición.',
+  bodyMetricsAdd: '+ Añadir medición',
+  bodyMetricWeight: 'Peso',
+  bodyMetricWaist: 'Cintura',
+  bodyMetricHip: 'Cadera',
+  bodyMetricFat: '% Grasa',
+  bodyMetricDate: 'Fecha',
+  bodyMetricNotes: 'Notas (opcional)',
+  bodyMetricSave: 'Guardar medición',
+  bodyMetricDeleteConfirm: '¿Eliminar esta medición?',
+  bodyMetricUnitKg: 'kg',
+  bodyMetricUnitCm: 'cm',
+  bodyMetricUnitPercent: '%',
+  bodyMetricInitial: 'Inicial',
+  bodyMetricCurrent: 'Actual',
+  bodyMetricChange: 'Cambio',
+
+  // Consistencia
+  consistencyTitle: 'Consistencia',
+
+  // Fotos de progreso
+  progressPhotosTitle: 'Fotos de progreso',
+  progressPhotosEmpty: 'Sin fotos aún. Añade tu primera foto.',
+  progressPhotosAdd: '+ Añadir foto',
+  progressPhotoTag: 'Posición',
+  progressPhotoDate: 'Fecha',
+  progressPhotoNotes: 'Notas (opcional)',
+  progressPhotoSave: 'Guardar foto',
+  progressPhotoDelete: 'Eliminar foto',
+  progressPhotoCompare: 'Comparar',
+  progressPhotoSelectBefore: 'Selecciona foto "Antes"',
+  progressPhotoSelectAfter: 'Selecciona foto "Después"',
+  progressPhotoComparing: 'Comparando',
 } as const;

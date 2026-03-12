@@ -90,9 +90,14 @@ export default function AthleteLayout() {
       />
 
       {/* ── Rutas sin tab (ocultas de la barra) ── */}
-      <Tabs.Screen name="workout/session"   options={{ href: null }} />
-      <Tabs.Screen name="progress/exercise" options={{ href: null }} />
-      <Tabs.Screen name="progress/session"  options={{ href: null }} />
+      <Tabs.Screen name="workout/session"          options={{ href: null }} />
+      <Tabs.Screen name="progress/exercise"        options={{ href: null }} />
+      <Tabs.Screen name="progress/session"         options={{ href: null }} />
+      <Tabs.Screen name="progress/body-metric"     options={{ href: null }} />
+      <Tabs.Screen name="progress/body-charts"     options={{ href: null }} />
+      <Tabs.Screen name="progress/photos/add"      options={{ href: null }} />
+      <Tabs.Screen name="progress/photos/timeline" options={{ href: null }} />
+      <Tabs.Screen name="progress/photos/compare"  options={{ href: null }} />
     </Tabs>
   );
 }

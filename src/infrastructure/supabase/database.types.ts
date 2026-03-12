@@ -106,3 +106,30 @@ export interface CoachExerciseRow {
 }
 
 export type CoachExerciseInsert = Omit<CoachExerciseRow, 'id' | 'created_at'>;
+
+// ── body_metrics ──────────────────────────────────────────────────────────────
+export interface BodyMetricRow {
+  id:               string;
+  athlete_id:       string;
+  recorded_at:      string;
+  weight_kg:        number | null;
+  waist_cm:         number | null;
+  hip_cm:           number | null;
+  body_fat_percent: number | null;
+  notes:            string | null;
+  created_at:       string;
+}
+export type BodyMetricInsert = Omit<BodyMetricRow, 'id' | 'created_at'>;
+
+// ── progress_photos ───────────────────────────────────────────────────────────
+export interface ProgressPhotoRow {
+  id:           string;
+  athlete_id:   string;
+  taken_at:     string;
+  tag:          'front' | 'back' | 'side';
+  notes:        string | null;
+  storage_path: string;
+  public_url:   string;
+  created_at:   string;
+}
+export type ProgressPhotoInsert = Omit<ProgressPhotoRow, 'id' | 'created_at'>;
