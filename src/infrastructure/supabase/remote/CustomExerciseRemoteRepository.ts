@@ -1,16 +1,29 @@
 import { supabase } from '../client';
 import { ICustomExerciseRepository, UpdateCustomExerciseInput } from '@/domain/repositories/ICustomExerciseRepository';
 import { CustomExercise, CreateCustomExerciseInput } from '@/domain/entities/CustomExercise';
-import { CoachExerciseRow } from '../database.types';
+
+// exercises row shape (unified catalog)
+interface ExerciseRow {
+  id:                string;
+  coach_id:          string | null;
+  name:              string;
+  category:          string;
+  primary_muscles:   string[];
+  secondary_muscles: string[];
+  is_isometric:      boolean;
+  description:       string | null;
+  video_url:         string | null;
+  created_at:        string;
+}
 
 export class CustomExerciseRemoteRepository implements ICustomExerciseRepository {
 
-  private mapRow(row: CoachExerciseRow): CustomExercise {
+  private mapRow(row: ExerciseRow): CustomExercise {
     return {
       id:               row.id,
-      coachId:          row.coach_id,
+      coachId:          row.coach_id ?? '',
       name:             row.name,
-      category:         row.category,
+      category:         row.category as CustomExercise['category'],
       primaryMuscles:   row.primary_muscles as CustomExercise['primaryMuscles'],
       secondaryMuscles: row.secondary_muscles as CustomExercise['secondaryMuscles'],
       isIsometric:      row.is_isometric,
@@ -22,7 +35,7 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
 
   async getByCoachId(coachId: string): Promise<CustomExercise[]> {
     const { data, error } = await supabase
-      .from('coach_exercises')
+      .from('exercises')
       .select('*')
       .eq('coach_id', coachId)
       .order('created_at', { ascending: false });
@@ -33,7 +46,7 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
 
   async create(input: CreateCustomExerciseInput): Promise<CustomExercise> {
     const { data, error } = await supabase
-      .from('coach_exercises')
+      .from('exercises')
       .insert({
         coach_id:          input.coachId,
         name:              input.name,
@@ -48,11 +61,11 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
       .single();
 
     if (error || !data) throw error ?? new Error('No data returned after insert');
-    return this.mapRow(data as CoachExerciseRow);
+    return this.mapRow(data as ExerciseRow);
   }
 
   async update(id: string, input: UpdateCustomExerciseInput): Promise<CustomExercise> {
-    const patch: Partial<CoachExerciseRow> = {};
+    const patch: Partial<ExerciseRow> = {};
     if (input.name             !== undefined) patch.name              = input.name;
     if (input.category         !== undefined) patch.category          = input.category;
     if (input.primaryMuscles   !== undefined) patch.primary_muscles   = input.primaryMuscles;
@@ -62,19 +75,19 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
     if (input.videoUrl         !== undefined) patch.video_url         = input.videoUrl ?? null;
 
     const { data, error } = await supabase
-      .from('coach_exercises')
+      .from('exercises')
       .update(patch)
       .eq('id', id)
       .select()
       .single();
 
     if (error || !data) throw error ?? new Error('No data returned after update');
-    return this.mapRow(data as CoachExerciseRow);
+    return this.mapRow(data as ExerciseRow);
   }
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase
-      .from('coach_exercises')
+      .from('exercises')
       .delete()
       .eq('id', id);
 

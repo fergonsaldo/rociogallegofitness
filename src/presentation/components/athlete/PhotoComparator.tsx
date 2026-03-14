@@ -49,7 +49,7 @@ export function PhotoComparator({ before, after }: PhotoComparatorProps) {
       <View style={[styles.frame, { width: IMAGE_WIDTH, height: IMAGE_HEIGHT }]}>
         {/* After photo — full width underneath */}
         <Image
-          source={{ uri: after.publicUrl }}
+          source={{ uri: after.signedUrl }}
           style={[styles.photo, { width: IMAGE_WIDTH, height: IMAGE_HEIGHT }]}
           resizeMode="cover"
         />
@@ -57,7 +57,7 @@ export function PhotoComparator({ before, after }: PhotoComparatorProps) {
         {/* Before photo — clipped to sliderX */}
         <View style={[styles.beforeClip, { width: sliderX }]}>
           <Image
-            source={{ uri: before.publicUrl }}
+            source={{ uri: before.signedUrl }}
             style={[styles.photo, { width: IMAGE_WIDTH, height: IMAGE_HEIGHT }]}
             resizeMode="cover"
           />

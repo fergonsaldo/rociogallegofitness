@@ -169,7 +169,7 @@ describe('WorkoutSessionSchema', () => {
 
 // ── isRepsPerformance / isIsometricPerformance ────────────────────────────────
 
-import { isRepsPerformance, isIsometricPerformance, SetPerformance } from '../../src/domain/entities/ExerciseSet';
+import { isRepsPerformance, isIsometricPerformance, SetPerformance } from '../../../src/domain/entities/ExerciseSet';
 
 describe('isRepsPerformance', () => {
   it('returns true for a reps performance', () => {
@@ -207,5 +207,135 @@ describe('isIsometricPerformance', () => {
     if (isIsometricPerformance(p)) {
       expect(p.durationSeconds).toBe(60);
     }
+  });
+});
+
+
+// ── Exercise ──────────────────────────────────────────────────────────────────
+import { ExerciseSchema } from '../../../src/domain/entities/Exercise';
+
+describe('ExerciseSchema', () => {
+  const valid = {
+    id: '00000000-0000-4000-a000-000000000001',
+    name: 'Bench Press',
+    primaryMuscles: ['chest'] as const,
+    secondaryMuscles: ['triceps'] as const,
+    category: 'strength' as const,
+    isIsometric: false,
+  };
+
+  it('parses a valid exercise', () => {
+    const result = ExerciseSchema.parse(valid);
+    expect(result.name).toBe('Bench Press');
+    expect(result.isIsometric).toBe(false);
+  });
+
+  it('defaults secondaryMuscles to empty array', () => {
+    const { secondaryMuscles, ...without } = valid;
+    const result = ExerciseSchema.parse(without);
+    expect(result.secondaryMuscles).toEqual([]);
+  });
+
+  it('defaults isIsometric to false', () => {
+    const { isIsometric, ...without } = valid;
+    const result = ExerciseSchema.parse(without);
+    expect(result.isIsometric).toBe(false);
+  });
+
+  it('rejects empty name', () => {
+    expect(() => ExerciseSchema.parse({ ...valid, name: '' })).toThrow();
+  });
+
+  it('rejects empty primaryMuscles', () => {
+    expect(() => ExerciseSchema.parse({ ...valid, primaryMuscles: [] })).toThrow();
+  });
+
+  it('rejects invalid category', () => {
+    expect(() => ExerciseSchema.parse({ ...valid, category: 'yoga' })).toThrow();
+  });
+});
+
+// ── ProgressRecord ────────────────────────────────────────────────────────────
+import { ProgressRecordSchema } from '../../../src/domain/entities/ProgressRecord';
+
+describe('ProgressRecordSchema', () => {
+  const valid = {
+    id:                   '00000000-0000-4000-a000-000000000001',
+    athleteId:            '00000000-0000-4000-a000-000000000002',
+    exerciseId:           '00000000-0000-4000-a000-000000000003',
+    recordedAt:           new Date('2025-01-01'),
+    totalVolumeKg:        1000,
+    sessionId:            '00000000-0000-4000-a000-000000000004',
+  };
+
+  it('parses a valid progress record', () => {
+    const result = ProgressRecordSchema.parse(valid);
+    expect(result.totalVolumeKg).toBe(1000);
+  });
+
+  it('accepts optional fields', () => {
+    const result = ProgressRecordSchema.parse({
+      ...valid,
+      bestWeightKg: 100,
+      bestReps: 5,
+      estimatedOneRepMaxKg: 115,
+    });
+    expect(result.bestWeightKg).toBe(100);
+    expect(result.estimatedOneRepMaxKg).toBe(115);
+  });
+
+  it('rejects negative totalVolumeKg', () => {
+    expect(() => ProgressRecordSchema.parse({ ...valid, totalVolumeKg: -1 })).toThrow();
+  });
+
+  it('rejects invalid UUID for athleteId', () => {
+    expect(() => ProgressRecordSchema.parse({ ...valid, athleteId: 'bad' })).toThrow();
+  });
+});
+
+// ── BodyMetric ────────────────────────────────────────────────────────────────
+import { BodyMetricSchema, CreateBodyMetricSchema } from '../../../src/domain/entities/BodyMetric';
+
+describe('BodyMetricSchema', () => {
+  const valid = {
+    id:        '00000000-0000-4000-a000-000000000001',
+    athleteId: '00000000-0000-4000-a000-000000000002',
+    recordedAt: new Date('2025-01-01'),
+    weightKg:  80,
+    createdAt:  new Date('2025-01-01'),
+  };
+
+  it('parses a valid body metric with at least one measurement', () => {
+    const result = BodyMetricSchema.parse(valid);
+    expect(result.weightKg).toBe(80);
+  });
+
+  it('throws when no measurement field is provided', () => {
+    const { weightKg, ...noMetrics } = valid;
+    expect(() => BodyMetricSchema.parse(noMetrics)).toThrow('Al menos una métrica debe tener valor');
+  });
+
+  it('accepts metric with only waistCm', () => {
+    const { weightKg, ...rest } = valid;
+    const result = BodyMetricSchema.parse({ ...rest, waistCm: 85 });
+    expect(result.waistCm).toBe(85);
+  });
+});
+
+describe('CreateBodyMetricSchema', () => {
+  const valid = {
+    athleteId:  '00000000-0000-4000-a000-000000000002',
+    recordedAt: new Date('2025-01-01'),
+    weightKg:   80,
+  };
+
+  it('parses valid create input', () => {
+    const result = CreateBodyMetricSchema.parse(valid);
+    expect(result.athleteId).toBeDefined();
+  });
+
+  it('rejects when no measurement is provided', () => {
+    const { weightKg, ...noMetrics } = valid;
+    expect(() => CreateBodyMetricSchema.parse(noMetrics)).toThrow();
   });
 });

@@ -82,7 +82,7 @@ export default function PhotoCompareScreen() {
                 }}
                 activeOpacity={isDisabled ? 1 : 0.8}
               >
-                <Image source={{ uri: item.publicUrl }} style={styles.photo} resizeMode="cover" />
+                <Image source={{ uri: item.signedUrl }} style={styles.photo} resizeMode="cover" />
                 <View style={styles.photoOverlay}>
                   <Text style={styles.photoTag}>{PHOTO_TAG_LABELS[item.tag]}</Text>
                   <Text style={styles.photoDate}>

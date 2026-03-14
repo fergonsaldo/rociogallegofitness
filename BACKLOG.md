@@ -15,7 +15,7 @@
 - [x] Tema de colores y espaciado centralizado (`theme.ts`)
 - [x] RLS (Row Level Security) configurado en Supabase
 - [x] Función SECURITY DEFINER para romper recursión en RLS
-- [x] Cobertura de tests ≥ 95% — 262 tests en 21 ficheros
+- [x] Cobertura de tests ≥ 95% — 430 tests en 34 suites, 0 fallos
 
 ### Autenticación
 - [x] Login con email y contraseña
@@ -44,6 +44,11 @@
 - [x] Asignación de plan nutricional a un atleta
 - [x] Desasignación de plan nutricional
 
+### Coach — Librería de ejercicios con vídeo
+- [x] El coach crea ejercicios personalizados (nombre, músculos, categoría, URL YouTube)
+- [x] El coach edita y elimina sus ejercicios personalizados
+- [x] Vídeo accesible desde el ExercisePicker al crear/editar rutinas
+
 ### Atleta — Entrenamiento
 - [x] Listado de rutinas asignadas por el coach
 - [x] Selector de día cuando la rutina tiene varios días
@@ -56,6 +61,11 @@
 - [x] Restauración de sesión activa al reabrir la app
 - [x] Persistencia offline: todo se escribe primero en SQLite
 - [x] Sincronización automática con Supabase al terminar
+- [x] Ver vídeo de técnica durante la sesión (modal `ExerciseVideoPlayer`, sin salir de la sesión)
+
+### Atleta — Catálogo de ejercicios
+- [x] Catálogo base visible para el atleta (pestaña dedicada + player YouTube)
+- [x] Catálogo incluye ejercicios personalizados del coach
 
 ### Atleta — Progreso
 - [x] Historial de entrenamientos (sesiones completadas)
@@ -63,6 +73,21 @@
 - [x] Progresión por ejercicio (gráfico de evolución)
 - [x] Récords personales (1RM estimado, mejor peso/reps)
 - [x] Refresco automático al volver a la pantalla (`useFocusEffect`)
+
+### Atleta — Métricas corporales
+- [x] Registro de métricas: peso, cintura, cadera, % grasa corporal, notas
+- [x] Historial de métricas en tabla con fecha
+- [x] Gráfico de evolución con selector de campo (`BodyMetricChart`)
+- [x] Heatmap de consistencia 12 semanas + racha + stats del mes (`ConsistencyChart`)
+- [x] Eliminación de métricas (long press)
+- [x] Validación: al menos un campo de medición obligatorio
+
+### Atleta — Fotos de progreso
+- [x] Subida de foto desde galería con tag (frontal / espalda / lateral) y notas
+- [x] Timeline de fotos agrupado por mes, eliminación con long press
+- [x] Comparador antes/después con slider (`PhotoComparator`)
+- [x] Bucket privado en Supabase Storage — URLs firmadas (1h), nunca persistidas
+- [x] Flujo comparador: seleccionar foto A → foto B → comparar
 
 ### Atleta — Nutrición
 - [x] Visualización del plan nutricional asignado
@@ -75,19 +100,20 @@
 - [x] Type guards para `ExerciseSet.performance` (`isRepsPerformance`, `isIsometricPerformance`)
 - [x] Eliminación de todos los `as any` sobre performance
 - [x] Eliminación de logs de debug (solo quedan `console.warn` en fallos silenciosos)
-- [x] `useEffect` con dependencias correctas en pantalla de sesión
 - [x] Catálogo de ejercicios estático con IDs estables (20 ejercicios)
+- [x] Config Jest exclusivamente en `jest.config.ts` (sin bloque `"jest"` en `package.json`)
 
 ---
 
 ## 🔲 Pendiente
 
-### Épica: Librería de ejercicios con vídeo
+> No hay historias pendientes en el backlog actual.
+> Proponer nueva épica para continuar el desarrollo.
 
-- [x] **Historia 1** — Catálogo base visible para el atleta (nueva pestaña + player YouTube)
-- [x] **Historia 2** — Vídeo accesible desde ExercisePicker del coach
-- [x] **Historia 3** — El coach crea ejercicios personalizados
-- [x] **Historia 4** — El coach edita y elimina sus ejercicios personalizados
-- [ ] **Historia 5** — Ver vídeo de técnica durante la sesión de entrenamiento (modal sin salir de la sesión)
-
-
+### Ideas para próximas épicas (sin priorizar)
+- **Notificaciones push** — aviso al atleta cuando el coach le asigna rutina o plan
+- **Chat coach ↔ atleta** — mensajería directa dentro de la app
+- **Planificación semanal** — el coach programa qué días entrena el atleta
+- **RPE / feedback de sesión** — el atleta puntúa el esfuerzo percibido al terminar
+- **Compartir progreso** — exportar gráficos o fotos como imagen para redes sociales
+- **Modo coach en tablet** — vista optimizada para pantallas grandes

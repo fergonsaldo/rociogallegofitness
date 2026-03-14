@@ -170,4 +170,100 @@ describe('WorkoutLocalRepository', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('getActiveSession', () => {
+    it('returns a mapped session when an active session exists', async () => {
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'active', startedAt: new Date().toISOString(),
+        finishedAt: null, syncedAt: null,
+      };
+      const setRow = {
+        id: 'set-0001', sessionId: SESSION_ID, exerciseId: EXERCISE_ID,
+        setNumber: 1, performanceType: 'reps', reps: 10, weightKg: 50,
+        durationSeconds: null, completedAt: new Date().toISOString(),
+      };
+      mockLimit
+        .mockResolvedValueOnce([sessionRow])
+        .mockResolvedValueOnce([setRow]);
+
+      const repo = new WorkoutLocalRepository();
+      const session = await repo.getActiveSession(ATHLETE_ID);
+      expect(session).not.toBeNull();
+      expect(session!.id).toBe(SESSION_ID);
+      expect(session!.sets).toHaveLength(1);
+    });
+  });
+
+  describe('getSessionHistory', () => {
+    it('returns empty array when no sessions exist', async () => {
+      mockLimit.mockResolvedValue([]);
+      const repo = new WorkoutLocalRepository();
+      const history = await repo.getSessionHistory(ATHLETE_ID);
+      expect(history).toEqual([]);
+    });
+
+    it('returns mapped sessions with their sets', async () => {
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(), syncedAt: null,
+      };
+      mockLimit
+        .mockResolvedValueOnce([sessionRow])
+        .mockResolvedValueOnce([]);
+      const repo = new WorkoutLocalRepository();
+      const history = await repo.getSessionHistory(ATHLETE_ID, 10);
+      expect(history).toHaveLength(1);
+      expect(history[0].status).toBe('completed');
+    });
+  });
+
+  describe('getUnsyncedSessions (with data)', () => {
+    it('returns sessions that are completed and not synced', async () => {
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(), syncedAt: null,
+      };
+      mockLimit
+        .mockResolvedValueOnce([sessionRow])
+        .mockResolvedValueOnce([]);
+      const repo = new WorkoutLocalRepository();
+      const unsynced = await repo.getUnsyncedSessions(ATHLETE_ID);
+      expect(unsynced).toHaveLength(1);
+    });
+  });
+
+  describe('finishSession', () => {
+    it('returns the finished session when found', async () => {
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
+        finishedAt: new Date().toISOString(), syncedAt: null,
+      };
+      mockLimit
+        .mockResolvedValueOnce([sessionRow])
+        .mockResolvedValueOnce([]);
+      const repo = new WorkoutLocalRepository();
+      const session = await repo.finishSession(SESSION_ID);
+      expect(session.status).toBe('completed');
+    });
+  });
+
+  describe('abandonSession', () => {
+    it('returns the abandoned session when found', async () => {
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'abandoned', startedAt: new Date().toISOString(),
+        finishedAt: null, syncedAt: null,
+      };
+      mockLimit
+        .mockResolvedValueOnce([sessionRow])
+        .mockResolvedValueOnce([]);
+      const repo = new WorkoutLocalRepository();
+      const session = await repo.abandonSession(SESSION_ID);
+      expect(session.status).toBe('abandoned');
+    });
+  });
 });

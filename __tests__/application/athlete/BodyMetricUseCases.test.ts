@@ -9,12 +9,12 @@ import { BodyMetric, CreateBodyMetricInput } from '../../../src/domain/entities/
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const ATHLETE_ID = 'ath-uuid-0001-0000-000000000001';
+const ATHLETE_ID = '00000000-0000-4000-a000-000000000001';
 const NOW        = new Date('2025-01-15T10:00:00Z');
 const LATER      = new Date('2025-03-01T10:00:00Z');
 
 const makeMetric = (overrides: Partial<BodyMetric> = {}): BodyMetric => ({
-  id:        'metr-uuid-001',
+  id:        '00000000-0000-4000-e000-000000000001',
   athleteId: ATHLETE_ID,
   recordedAt: NOW,
   weightKg:   80,
@@ -98,8 +98,8 @@ describe('createBodyMetricUseCase', () => {
 describe('deleteBodyMetricUseCase', () => {
   it('elimina una métrica por id', async () => {
     mockRepo.delete.mockResolvedValue(undefined);
-    await expect(deleteBodyMetricUseCase('metr-uuid-001', mockRepo)).resolves.toBeUndefined();
-    expect(mockRepo.delete).toHaveBeenCalledWith('metr-uuid-001');
+    await expect(deleteBodyMetricUseCase('00000000-0000-4000-e000-000000000001', mockRepo)).resolves.toBeUndefined();
+    expect(mockRepo.delete).toHaveBeenCalledWith('00000000-0000-4000-e000-000000000001');
   });
 
   it('lanza error si id está vacío', async () => {

@@ -6,16 +6,15 @@
 -- ── 1. body_metrics ──────────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS body_metrics (
-  id               uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-  athlete_id       uuid        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  recorded_at      timestamptz NOT NULL,
-  weight_kg        numeric(6,2) CHECK (weight_kg       > 0   AND weight_kg       <= 500),
-  waist_cm         numeric(5,1) CHECK (waist_cm        > 0   AND waist_cm        <= 300),
-  hip_cm           numeric(5,1) CHECK (hip_cm          > 0   AND hip_cm          <= 300),
+  id               uuid         PRIMARY KEY DEFAULT gen_random_uuid(),
+  athlete_id       uuid         NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  recorded_at      timestamptz  NOT NULL,
+  weight_kg        numeric(6,2) CHECK (weight_kg        >  0 AND weight_kg        <= 500),
+  waist_cm         numeric(5,1) CHECK (waist_cm         >  0 AND waist_cm         <= 300),
+  hip_cm           numeric(5,1) CHECK (hip_cm           >  0 AND hip_cm           <= 300),
   body_fat_percent numeric(4,1) CHECK (body_fat_percent >= 1 AND body_fat_percent <= 70),
-  notes            text        CHECK (char_length(notes) <= 300),
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  -- Al menos una métrica debe tener valor
+  notes            text         CHECK (char_length(notes) <= 300),
+  created_at       timestamptz  NOT NULL DEFAULT now(),
   CONSTRAINT at_least_one_metric CHECK (
     weight_kg IS NOT NULL OR waist_cm IS NOT NULL OR
     hip_cm    IS NOT NULL OR body_fat_percent IS NOT NULL
@@ -27,19 +26,23 @@ CREATE INDEX IF NOT EXISTS idx_body_metrics_athlete_id
 
 ALTER TABLE body_metrics ENABLE ROW LEVEL SECURITY;
 
+-- El atleta gestiona sus propias métricas
 CREATE POLICY "athlete_manages_own_body_metrics"
   ON body_metrics FOR ALL TO authenticated
   USING  (athlete_id = auth.uid())
   WITH CHECK (athlete_id = auth.uid());
 
--- Coach can read their athletes' metrics
+-- El coach puede leer las métricas de sus atletas
+-- (routine_assignments solo tiene athlete_id; el coach se llega via routines)
 CREATE POLICY "coach_reads_athlete_body_metrics"
   ON body_metrics FOR SELECT TO authenticated
   USING (
     EXISTS (
-      SELECT 1 FROM routine_assignments ra
-      WHERE ra.athlete_id = body_metrics.athlete_id
-        AND ra.coach_id   = auth.uid()
+      SELECT 1
+      FROM   routine_assignments ra
+      JOIN   routines r ON r.id = ra.routine_id
+      WHERE  ra.athlete_id = body_metrics.athlete_id
+        AND  r.coach_id    = auth.uid()
     )
   );
 
@@ -61,17 +64,19 @@ CREATE INDEX IF NOT EXISTS idx_progress_photos_athlete_id
 
 ALTER TABLE progress_photos ENABLE ROW LEVEL SECURITY;
 
+-- El atleta gestiona sus propias fotos
 CREATE POLICY "athlete_manages_own_progress_photos"
   ON progress_photos FOR ALL TO authenticated
   USING  (athlete_id = auth.uid())
   WITH CHECK (athlete_id = auth.uid());
 
 -- ── 3. Supabase Storage bucket ───────────────────────────────────
--- Ejecutar en Storage → New bucket (o via API):
---
+-- Crear manualmente en: Storage → New bucket
 --   Name:   progress-photos
---   Public: true   (las URLs son públicas pero protegidas por RLS en la tabla)
+--   Public: true
 --
--- Storage policy recomendada (via Dashboard → Storage → Policies):
---   Allow authenticated users to upload to their own folder:
---     bucket_id = 'progress-photos' AND name LIKE (auth.uid() || '/%')
+-- Storage Policy (Dashboard → Storage → Policies → New policy):
+--   Nombre:    "Athletes upload to own folder"
+--   Operation: INSERT
+--   Check:     bucket_id = 'progress-photos'
+--              AND (storage.foldername(name))[1] = auth.uid()::text

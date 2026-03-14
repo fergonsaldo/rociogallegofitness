@@ -4,6 +4,7 @@ import { IWorkoutRepository } from '@/domain/repositories/IWorkoutRepository';
 import { IProgressRepository } from '@/domain/repositories/IProgressRepository';
 import { calculateTotalVolume } from '@/domain/value-objects/Volume';
 import { estimateOneRepMax } from '@/domain/value-objects/OneRepMax';
+import { isRepsPerformance } from '@/domain/entities/ExerciseSet';
 
 // ── GetWorkoutHistory ─────────────────────────────────────────────────────────
 

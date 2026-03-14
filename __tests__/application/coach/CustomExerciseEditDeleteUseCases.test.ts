@@ -11,7 +11,7 @@ const EXERCISE_ID = 'exer-uuid-0001-0000-000000000001';
 
 const UPDATED_EXERCISE: CustomExercise = {
   id:               EXERCISE_ID,
-  coachId:          'coac-uuid-0001-0000-000000000001',
+  coachId:          '00000000-0000-4000-b000-000000000001',
   name:             'Press banca modificado',
   category:         'strength',
   primaryMuscles:   ['chest'],

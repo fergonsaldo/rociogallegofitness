@@ -2,12 +2,12 @@ import { CustomExerciseRemoteRepository } from '../../../src/infrastructure/supa
 
 const { supabase } = require('../../../src/infrastructure/supabase/client');
 
-const EXERCISE_ID = 'exer-uuid-0001-0000-000000000001';
+const EXERCISE_ID = '00000000-0000-4000-e000-000000000001';
 const NOW         = new Date().toISOString();
 
 const RAW_ROW = {
   id:                EXERCISE_ID,
-  coach_id:          'coac-uuid-0001-0000-000000000001',
+  coach_id:          '00000000-0000-4000-b000-000000000001',
   name:              'Press banca actualizado',
   category:          'strength',
   primary_muscles:   ['chest'],
@@ -63,10 +63,10 @@ describe('CustomExerciseRemoteRepository — update / delete / isInUse', () => {
       expect(patchArg).not.toHaveProperty('video_url');
     });
 
-    it('convierte videoUrl undefined a video_url null en el patch', async () => {
+    it('convierte videoUrl null a video_url null en el patch (borra el video)', async () => {
       const chain = mockChain({ data: RAW_ROW, error: null });
       supabase.from.mockReturnValue(chain);
-      await repo.update(EXERCISE_ID, { videoUrl: undefined });
+      await repo.update(EXERCISE_ID, { videoUrl: null });
       const patchArg = chain.update.mock.calls[0][0];
       expect(patchArg.video_url).toBeNull();
     });

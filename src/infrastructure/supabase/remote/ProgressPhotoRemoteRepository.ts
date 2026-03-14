@@ -3,11 +3,24 @@ import { IProgressPhotoRepository } from '@/domain/repositories/IProgressPhotoRe
 import { ProgressPhoto, CreateProgressPhotoInput } from '@/domain/entities/ProgressPhoto';
 import { ProgressPhotoRow } from '../database.types';
 
-const BUCKET = 'progress-photos';
+const BUCKET             = 'progress-photos';
+const SIGNED_URL_EXPIRES = 60 * 60; // 1 hour in seconds
 
 export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
 
-  private mapRow(row: ProgressPhotoRow): ProgressPhoto {
+  private async generateSignedUrl(storagePath: string): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(storagePath, SIGNED_URL_EXPIRES);
+
+    if (error || !data?.signedUrl) {
+      throw error ?? new Error(`Could not generate signed URL for ${storagePath}`);
+    }
+    return data.signedUrl;
+  }
+
+  private async mapRow(row: ProgressPhotoRow): Promise<ProgressPhoto> {
+    const signedUrl = await this.generateSignedUrl(row.storage_path);
     return {
       id:          row.id,
       athleteId:   row.athlete_id,
@@ -15,7 +28,7 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
       tag:         row.tag,
       notes:       row.notes ?? undefined,
       storagePath: row.storage_path,
-      publicUrl:   row.public_url,
+      signedUrl,
       createdAt:   new Date(row.created_at),
     };
   }
@@ -28,29 +41,27 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
       .order('taken_at', { ascending: true });
 
     if (error) throw error;
-    return (data ?? []).map(this.mapRow.bind(this));
+
+    // Generate all signed URLs in parallel
+    return Promise.all((data ?? []).map((row) => this.mapRow(row as ProgressPhotoRow)));
   }
 
   async upload(input: CreateProgressPhotoInput, localUri: string): Promise<ProgressPhoto> {
-    // 1. Read the file as a Blob from the local URI
-    const response  = await fetch(localUri);
-    const blob      = await response.blob();
-    const ext       = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const mimeType  = ext === 'png' ? 'image/png' : 'image/jpeg';
+    // 1. Read file as Blob from local URI
+    const response    = await fetch(localUri);
+    const blob        = await response.blob();
+    const ext         = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
+    const mimeType    = ext === 'png' ? 'image/png' : 'image/jpeg';
     const storagePath = `${input.athleteId}/${Date.now()}.${ext}`;
 
-    // 2. Upload to Supabase Storage
+    // 2. Upload to private Supabase Storage bucket
     const { error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(storagePath, blob, { contentType: mimeType, upsert: false });
 
     if (uploadError) throw uploadError;
 
-    // 3. Get the public URL
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(storagePath);
-    const publicUrl = urlData.publicUrl;
-
-    // 4. Insert metadata row
+    // 3. Insert metadata row (no public_url — bucket is private)
     const { data, error: insertError } = await supabase
       .from('progress_photos')
       .insert({
@@ -59,12 +70,13 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
         tag:          input.tag,
         notes:        input.notes ?? null,
         storage_path: storagePath,
-        public_url:   publicUrl,
       })
       .select()
       .single();
 
     if (insertError || !data) throw insertError ?? new Error('No data returned after insert');
+
+    // 4. Return with a fresh signed URL
     return this.mapRow(data as ProgressPhotoRow);
   }
 

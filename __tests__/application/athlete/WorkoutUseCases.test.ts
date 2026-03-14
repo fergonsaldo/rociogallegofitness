@@ -56,7 +56,7 @@ describe('startWorkoutSessionUseCase', () => {
 
     await expect(
       startWorkoutSessionUseCase({ athleteId: ATHLETE_ID }, mockRepo)
-    ).rejects.toThrow('already have an active workout session');
+    ).rejects.toThrow('Ya tienes una sesión activa');
 
     expect(mockRepo.startSession).not.toHaveBeenCalled();
   });
@@ -112,7 +112,7 @@ describe('logExerciseSetUseCase', () => {
     mockRepo.getSessionById.mockResolvedValue(completed);
 
     await expect(logExerciseSetUseCase(VALID_LOG, mockRepo))
-      .rejects.toThrow('not active');
+      .rejects.toThrow('activa');
   });
 
   it('throws when reps is 0', async () => {
@@ -147,7 +147,7 @@ describe('finishWorkoutSessionUseCase', () => {
     mockRepo.getSessionById.mockResolvedValue(completed);
 
     await expect(finishWorkoutSessionUseCase(UUID, mockRepo))
-      .rejects.toThrow('not active');
+      .rejects.toThrow('activa');
   });
 
   it('throws when sessionId is empty', async () => {
@@ -167,5 +167,71 @@ describe('abandonWorkoutSessionUseCase', () => {
 
   it('throws when sessionId is empty', async () => {
     await expect(abandonWorkoutSessionUseCase('', mockRepo)).rejects.toThrow('sessionId is required');
+  });
+});
+
+// ── Additional branch coverage ────────────────────────────────────────────────
+
+describe('finishWorkoutSessionUseCase (edge cases)', () => {
+  it('handles session with only isometric sets (zero volume)', async () => {
+    const isoSession = {
+      ...ACTIVE_SESSION,
+      status: 'active' as const,
+      sets: [{
+        id: 'set-iso', sessionId: ACTIVE_SESSION.id, exerciseId: EXERCISE_ID,
+        setNumber: 1,
+        performance: { type: 'isometric' as const, durationSeconds: 60 },
+        completedAt: new Date(),
+      }],
+    };
+    const finished = { ...isoSession, status: 'completed' as const, finishedAt: new Date() };
+    mockRepo.getSessionById.mockResolvedValueOnce(isoSession);
+    mockRepo.finishSession.mockResolvedValue(finished);
+    mockRepo.getSessionById.mockResolvedValueOnce(finished);
+
+    const result = await finishWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo);
+    expect(result.totalVolumeKg).toBe(0);
+    expect(result.exerciseSummaries[0].estimatedOneRepMaxKg).toBeUndefined();
+  });
+
+  it('sets durationMinutes to 0 when finishedAt is undefined', async () => {
+    const activeSession = { ...ACTIVE_SESSION, status: 'active' as const };
+    const finishedNoDate = { ...activeSession, status: 'completed' as const, finishedAt: undefined };
+    mockRepo.getSessionById.mockResolvedValueOnce(activeSession);
+    mockRepo.finishSession.mockResolvedValue(finishedNoDate);
+    mockRepo.getSessionById.mockResolvedValueOnce(finishedNoDate);
+
+    const result = await finishWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo);
+    expect(result.durationMinutes).toBe(0);
+  });
+
+  it('skips 1RM when best set has reps > 36', async () => {
+    const highRepsSession = {
+      ...ACTIVE_SESSION,
+      status: 'active' as const,
+      sets: [{
+        id: 'set-hi', sessionId: ACTIVE_SESSION.id, exerciseId: EXERCISE_ID,
+        setNumber: 1,
+        performance: { type: 'reps' as const, reps: 50, weightKg: 10 },
+        completedAt: new Date(),
+      }],
+    };
+    const finished = { ...highRepsSession, status: 'completed' as const, finishedAt: new Date() };
+    mockRepo.getSessionById.mockResolvedValueOnce(highRepsSession);
+    mockRepo.finishSession.mockResolvedValue(finished);
+    mockRepo.getSessionById.mockResolvedValueOnce(finished);
+
+    const result = await finishWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo);
+    expect(result.exerciseSummaries[0].estimatedOneRepMaxKg).toBeUndefined();
+  });
+});
+
+describe('abandonWorkoutSessionUseCase (edge cases)', () => {
+  it('throws when session is not active', async () => {
+    const completedSession = { ...ACTIVE_SESSION, status: 'completed' as const };
+    mockRepo.getSessionById.mockResolvedValue(completedSession);
+    await expect(
+      abandonWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo)
+    ).rejects.toThrow();
   });
 });

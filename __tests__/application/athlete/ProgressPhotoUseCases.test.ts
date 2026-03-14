@@ -8,16 +8,16 @@ import { ProgressPhoto, CreateProgressPhotoInput, CreateProgressPhotoSchema } fr
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const ATHLETE_ID = 'ath-uuid-0001-0000-000000000001';
+const ATHLETE_ID = '00000000-0000-4000-a000-000000000001';
 const NOW        = new Date();
 
 const PHOTO: ProgressPhoto = {
-  id:          'photo-uuid-001',
+  id:          '00000000-0000-4000-f000-000000000001',
   athleteId:   ATHLETE_ID,
   takenAt:     NOW,
   tag:         'front',
   storagePath: 'athlete-id/123456.jpg',
-  publicUrl:   'https://cdn.example.com/athlete-id/123456.jpg',
+  signedUrl:   'https://cdn.example.com/athlete-id/123456.jpg',
   createdAt:   NOW,
 };
 

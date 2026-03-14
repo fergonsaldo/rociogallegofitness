@@ -25,7 +25,7 @@ describe('extractYouTubeVideoId', () => {
     });
 
     it('maneja IDs con guiones y guiones bajos', () => {
-      expect(extractYouTubeVideoId('https://youtu.be/AB_cd-EFghij')).toBe('AB_cd-EFghij');
+      expect(extractYouTubeVideoId('https://youtu.be/AB_cd-EFghi')).toBe('AB_cd-EFghi');
     });
 
     it('ignora parámetros adicionales en la URL', () => {

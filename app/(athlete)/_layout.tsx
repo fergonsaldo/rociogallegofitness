@@ -6,20 +6,16 @@ import { Colors, FontSize } from '../../src/shared/constants/theme';
 import { Strings } from '../../src/shared/constants/strings';
 import { useAuthStore } from '../../src/presentation/stores/authStore';
 import { useWorkoutStore } from '../../src/presentation/stores/workoutStore';
+import { useMessageStore } from '../../src/presentation/stores/messageStore';
+import { BadgeTabIcon } from '../../src/presentation/components/common/BadgeTabIcon';
 
-interface TabIconProps {
-  emoji: string;
-  label: string;
-  focused: boolean;
-}
+interface TabIconProps { emoji: string; label: string; focused: boolean; }
 
 function TabIcon({ emoji, label, focused }: TabIconProps) {
   return (
     <View style={styles.tabIcon}>
       <Text style={styles.tabEmoji}>{emoji}</Text>
-      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>
-        {label}
-      </Text>
+      <Text style={[styles.tabLabel, focused && styles.tabLabelActive]}>{label}</Text>
     </View>
   );
 }
@@ -28,12 +24,16 @@ export default function AthleteLayout() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 64 + insets.bottom;
 
-  const { user } = useAuthStore();
-  const { restoreActiveSession } = useWorkoutStore();
+  const { user }                           = useAuthStore();
+  const { restoreActiveSession }           = useWorkoutStore();
+  const { unreadCount, refreshUnreadCount } = useMessageStore();
 
   useEffect(() => {
     if (user?.id) {
       restoreActiveSession(user.id);
+      refreshUnreadCount(user.id);
+      const interval = setInterval(() => refreshUnreadCount(user.id!), 15000);
+      return () => clearInterval(interval);
     }
   }, [user?.id]);
 
@@ -47,49 +47,42 @@ export default function AthleteLayout() {
         tabBarInactiveTintColor: Colors.tabInactive,
       }}
     >
-      {/* ── Tabs visibles ── */}
       <Tabs.Screen
         name="dashboard"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🏠" label={Strings.tabHome} focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" label={Strings.tabHome} focused={focused} /> }}
       />
       <Tabs.Screen
         name="workout/index"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="💪" label={Strings.tabTrain} focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="💪" label={Strings.tabTrain} focused={focused} /> }}
       />
       <Tabs.Screen
         name="exercises/index"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📚" label={Strings.tabExercises} focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📚" label={Strings.tabExercises} focused={focused} /> }}
       />
       <Tabs.Screen
         name="progress/index"
-        options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="📈" label={Strings.tabProgress} focused={focused} />
-          ),
-        }}
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📈" label={Strings.tabProgress} focused={focused} /> }}
       />
       <Tabs.Screen
         name="nutrition/index"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label={Strings.tabNutrition} focused={focused} /> }}
+      />
+      <Tabs.Screen
+        name="messages/index"
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon emoji="🥗" label={Strings.tabNutrition} focused={focused} />
+            <BadgeTabIcon
+              emoji="💬"
+              label={Strings.tabMessages}
+              focused={focused}
+              badge={unreadCount}
+              accentColor={Colors.athlete}
+            />
           ),
         }}
       />
 
-      {/* ── Rutas sin tab (ocultas de la barra) ── */}
+      {/* Rutas sin tab */}
       <Tabs.Screen name="workout/session"          options={{ href: null }} />
       <Tabs.Screen name="progress/exercise"        options={{ href: null }} />
       <Tabs.Screen name="progress/session"         options={{ href: null }} />
@@ -98,6 +91,7 @@ export default function AthleteLayout() {
       <Tabs.Screen name="progress/photos/add"      options={{ href: null }} />
       <Tabs.Screen name="progress/photos/timeline" options={{ href: null }} />
       <Tabs.Screen name="progress/photos/compare"  options={{ href: null }} />
+      <Tabs.Screen name="messages/[id]"            options={{ href: null }} />
     </Tabs>
   );
 }
@@ -113,8 +107,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  tabIcon: { alignItems: 'center', gap: 2, paddingTop: 6 },
-  tabEmoji: { fontSize: 22 },
-  tabLabel: { fontSize: FontSize.xs, color: Colors.tabInactive, letterSpacing: 0.5 },
+  tabIcon:        { alignItems: 'center', gap: 2, paddingTop: 6 },
+  tabEmoji:       { fontSize: 22 },
+  tabLabel:       { fontSize: FontSize.xs, color: Colors.tabInactive, letterSpacing: 0.5 },
   tabLabelActive: { color: Colors.athlete, fontWeight: '600' },
 });

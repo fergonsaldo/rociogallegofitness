@@ -1,7 +1,12 @@
+import { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize } from '../../src/shared/constants/theme';
+import { Strings } from '../../src/shared/constants/strings';
+import { useAuthStore } from '../../src/presentation/stores/authStore';
+import { useMessageStore } from '../../src/presentation/stores/messageStore';
+import { BadgeTabIcon } from '../../src/presentation/components/common/BadgeTabIcon';
 
 function TabIcon({ emoji, label, focused }: { emoji: string; label: string; focused: boolean }) {
   return (
@@ -16,6 +21,17 @@ export default function CoachLayout() {
   const insets = useSafeAreaInsets();
   const tabBarHeight = 64 + insets.bottom;
 
+  const { user }                           = useAuthStore();
+  const { unreadCount, refreshUnreadCount } = useMessageStore();
+
+  useEffect(() => {
+    if (user?.id) {
+      refreshUnreadCount(user.id);
+      const interval = setInterval(() => refreshUnreadCount(user.id!), 15000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.id]);
+
   return (
     <Tabs
       screenOptions={{
@@ -26,7 +42,6 @@ export default function CoachLayout() {
         tabBarInactiveTintColor: Colors.tabInactive,
       }}
     >
-      {/* ── Tabs visibles ── */}
       <Tabs.Screen
         name="dashboard"
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📊" label="Inicio" focused={focused} /> }}
@@ -47,8 +62,22 @@ export default function CoachLayout() {
         name="nutrition/index"
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label="Nutrición" focused={focused} /> }}
       />
+      <Tabs.Screen
+        name="messages/index"
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <BadgeTabIcon
+              emoji="💬"
+              label={Strings.tabMessages}
+              focused={focused}
+              badge={unreadCount}
+              accentColor={Colors.primary}
+            />
+          ),
+        }}
+      />
 
-      {/* ── Rutas sin tab (ocultas de la barra) ── */}
+      {/* Rutas sin tab */}
       <Tabs.Screen name="clients/[id]"      options={{ href: null }} />
       <Tabs.Screen name="routines/[id]"     options={{ href: null }} />
       <Tabs.Screen name="routines/create"   options={{ href: null }} />
@@ -56,6 +85,7 @@ export default function CoachLayout() {
       <Tabs.Screen name="exercises/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
+      <Tabs.Screen name="messages/[id]"     options={{ href: null }} />
     </Tabs>
   );
 }
@@ -71,8 +101,8 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  tabIcon: { alignItems: 'center', gap: 2, paddingTop: 6 },
-  tabEmoji: { fontSize: 22 },
-  tabLabel: { fontSize: FontSize.xs, color: Colors.tabInactive, letterSpacing: 0.5 },
+  tabIcon:        { alignItems: 'center', gap: 2, paddingTop: 6 },
+  tabEmoji:       { fontSize: 22 },
+  tabLabel:       { fontSize: FontSize.xs, color: Colors.tabInactive, letterSpacing: 0.5 },
   tabLabelActive: { color: Colors.primary, fontWeight: '600' },
 });

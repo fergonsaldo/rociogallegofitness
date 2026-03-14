@@ -38,12 +38,13 @@ const config: Config = {
     'src/application/**/*.ts',
     'src/infrastructure/**/*.ts',
     '!src/**/*.d.ts',
+    '!src/domain/repositories/**/*.ts',
     '!src/infrastructure/supabase/database.types.ts',
     '!src/infrastructure/supabase/client.ts',
     '!src/infrastructure/database/client.ts',
     '!src/infrastructure/database/schema.ts',
   ],
-  coverageThresholds: {
+  coverageThreshold: {
     global: {
       branches:   95,
       functions:  95,

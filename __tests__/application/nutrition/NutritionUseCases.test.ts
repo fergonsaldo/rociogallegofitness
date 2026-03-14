@@ -218,3 +218,95 @@ describe('macroPercentages', () => {
     expect(pct.protein).toBe(0);
   });
 });
+
+// ── getWeeklyAdherenceUseCase ─────────────────────────────────────────────────
+describe('getWeeklyAdherenceUseCase', () => {
+  it('returns 7 days of adherence data', async () => {
+    mockRepo.getLogEntriesForRange.mockResolvedValue([]);
+    const result = await getWeeklyAdherenceUseCase(ATHLETE_ID, MOCK_PLAN, mockRepo);
+    expect(result).toHaveLength(7);
+  });
+
+  it('marks days with entries as logged', async () => {
+    const today = new Date();
+    mockRepo.getLogEntriesForRange.mockResolvedValue([
+      { ...MOCK_LOG_ENTRY, loggedAt: today, actualMacros: MACROS },
+    ]);
+    const result = await getWeeklyAdherenceUseCase(ATHLETE_ID, MOCK_PLAN, mockRepo);
+    const todayEntry = result[result.length - 1];
+    expect(todayEntry.logged).toBe(true);
+  });
+
+  it('clamps calorieProgress to 1.0 when over target', async () => {
+    const today = new Date();
+    const overTarget = { ...MACROS, calories: 99999 };
+    mockRepo.getLogEntriesForRange.mockResolvedValue([
+      { ...MOCK_LOG_ENTRY, loggedAt: today, actualMacros: overTarget },
+    ]);
+    const result = await getWeeklyAdherenceUseCase(ATHLETE_ID, MOCK_PLAN, mockRepo);
+    const todayEntry = result[result.length - 1];
+    expect(todayEntry.calorieProgress).toBe(1);
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(
+      getWeeklyAdherenceUseCase('', MOCK_PLAN, mockRepo)
+    ).rejects.toThrow('athleteId is required');
+  });
+});
+
+// ── unassignNutritionPlanUseCase ──────────────────────────────────────────────
+import { unassignNutritionPlanUseCase } from '../../../src/application/coach/NutritionUseCases';
+
+describe('unassignNutritionPlanUseCase', () => {
+  it('calls unassignFromAthlete with correct args', async () => {
+    mockRepo.unassignFromAthlete.mockResolvedValue();
+    await unassignNutritionPlanUseCase({ planId: UUID, athleteId: ATHLETE_ID }, mockRepo);
+    expect(mockRepo.unassignFromAthlete).toHaveBeenCalledWith(UUID, ATHLETE_ID);
+  });
+
+  it('throws ZodError when planId is not a UUID', async () => {
+    await expect(
+      unassignNutritionPlanUseCase({ planId: 'bad', athleteId: ATHLETE_ID }, mockRepo)
+    ).rejects.toThrow();
+  });
+
+  it('throws ZodError when athleteId is not a UUID', async () => {
+    await expect(
+      unassignNutritionPlanUseCase({ planId: UUID, athleteId: 'bad' }, mockRepo)
+    ).rejects.toThrow();
+  });
+});
+
+// ── getCoachNutritionPlansUseCase ─────────────────────────────────────────────
+describe('getCoachNutritionPlansUseCase', () => {
+  it('returns plans for a coach', async () => {
+    mockRepo.getPlansByCoach.mockResolvedValue([MOCK_PLAN]);
+    const result = await getCoachNutritionPlansUseCase(COACH_ID, mockRepo);
+    expect(result).toHaveLength(1);
+  });
+
+  it('throws when coachId is empty', async () => {
+    await expect(getCoachNutritionPlansUseCase('', mockRepo)).rejects.toThrow('coachId is required');
+  });
+});
+
+// ── deleteNutritionPlanUseCase ────────────────────────────────────────────────
+describe('deleteNutritionPlanUseCase (edge cases)', () => {
+  it('throws when planId is empty', async () => {
+    await expect(deleteNutritionPlanUseCase('', mockRepo)).rejects.toThrow('planId is required');
+  });
+});
+
+// ── getAssignedNutritionPlanUseCase ───────────────────────────────────────────
+describe('getAssignedNutritionPlanUseCase (edge cases)', () => {
+  it('throws when athleteId is empty', async () => {
+    await expect(getAssignedNutritionPlanUseCase('', mockRepo)).rejects.toThrow('athleteId is required');
+  });
+
+  it('returns null when athlete has no plan', async () => {
+    mockRepo.getAssignedPlan.mockResolvedValue(null);
+    const result = await getAssignedNutritionPlanUseCase(ATHLETE_ID, mockRepo);
+    expect(result).toBeNull();
+  });
+});

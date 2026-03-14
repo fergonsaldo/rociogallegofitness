@@ -1,33 +1,47 @@
 /**
  * workoutStore tests
  *
- * Testa la lógica del store de workout directamente, sin renderizar componentes.
- * Los repositorios y el SyncService se mockean para aislar el store.
+ * Testa la lógica del store de Zustand de forma aislada.
+ * Los use cases Y el repositorio se mockean para que el test
+ * verifique únicamente el comportamiento del store (state transitions).
  */
 
-// ── Mocks ─────────────────────────────────────────────────────────────────────
+// ── Mock use cases (aislamos el store completamente) ──────────────────────────
 
-const mockStartSession    = jest.fn();
-const mockGetActiveSession = jest.fn();
-const mockLogSet          = jest.fn();
-const mockFinishSession   = jest.fn();
-const mockAbandonSession  = jest.fn();
-const mockMarkSynced      = jest.fn();
-const mockGetUnsynced     = jest.fn();
+const mockStartWorkoutSessionUseCase    = jest.fn();
+const mockLogExerciseSetUseCase         = jest.fn();
+const mockFinishWorkoutSessionUseCase   = jest.fn();
+const mockAbandonWorkoutSessionUseCase  = jest.fn();
 
-jest.mock('../../../src/infrastructure/database/local/WorkoutLocalRepository', () => ({
-  WorkoutLocalRepository: jest.fn().mockImplementation(() => ({
-    startSession:          mockStartSession,
-    getActiveSession:      mockGetActiveSession,
-    getSessionById:        jest.fn(),
-    getSessionHistory:     jest.fn(),
-    logSet:                mockLogSet,
-    finishSession:         mockFinishSession,
-    abandonSession:        mockAbandonSession,
-    markSynced:            mockMarkSynced,
-    getUnsyncedSessions:   mockGetUnsynced,
-  })),
+jest.mock('../../../src/application/athlete/WorkoutUseCases', () => ({
+  startWorkoutSessionUseCase:   (...args: unknown[]) => mockStartWorkoutSessionUseCase(...args),
+  logExerciseSetUseCase:        (...args: unknown[]) => mockLogExerciseSetUseCase(...args),
+  finishWorkoutSessionUseCase:  (...args: unknown[]) => mockFinishWorkoutSessionUseCase(...args),
+  abandonWorkoutSessionUseCase: (...args: unknown[]) => mockAbandonWorkoutSessionUseCase(...args),
 }));
+
+// Patrón __mocks: la factory crea los jest.fn() internamente (sin referencias externas)
+// y los expone para que los tests puedan configurarlos via require().
+// Esto resuelve el problema de hoisting de const con jest.mock.
+jest.mock('../../../src/infrastructure/database/local/WorkoutLocalRepository', () => {
+  const getActiveSession    = jest.fn();
+  const startSession        = jest.fn();
+  const getSessionById      = jest.fn();
+  const logSet              = jest.fn();
+  const finishSession       = jest.fn();
+  const abandonSession      = jest.fn();
+  const markSynced          = jest.fn();
+  const getUnsyncedSessions = jest.fn();
+  const getSessionHistory   = jest.fn();
+  const repoMock = {
+    getActiveSession, startSession, getSessionById, logSet,
+    finishSession, abandonSession, markSynced, getUnsyncedSessions, getSessionHistory,
+  };
+  return {
+    WorkoutLocalRepository: jest.fn().mockImplementation(() => repoMock),
+    __repoMock: repoMock,
+  };
+});
 
 jest.mock('../../../src/infrastructure/sync/SyncService', () => ({
   syncService: { syncPendingSessions: jest.fn().mockResolvedValue(undefined) },
@@ -38,11 +52,20 @@ import { useWorkoutStore } from '../../../src/presentation/stores/workoutStore';
 import { WorkoutSession } from '../../../src/domain/entities/WorkoutSession';
 import { ExerciseSet } from '../../../src/domain/entities/ExerciseSet';
 
+// Capturamos las referencias del mock via require() (después del hoisting)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const repoMock = require('../../../src/infrastructure/database/local/WorkoutLocalRepository').__repoMock as {
+  getActiveSession: jest.Mock; startSession: jest.Mock; getSessionById: jest.Mock;
+  logSet: jest.Mock; finishSession: jest.Mock; abandonSession: jest.Mock;
+  markSynced: jest.Mock; getUnsyncedSessions: jest.Mock; getSessionHistory: jest.Mock;
+};
+
+
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const ATHLETE_ID  = 'athl-uuid-0001-0000-000000000001';
-const SESSION_ID  = 'sess-uuid-0001-0000-000000000001';
-const EXERCISE_ID = '11111111-0001-0000-0000-000000000001';
+const ATHLETE_ID  = '00000000-0000-4000-a000-000000000001';
+const SESSION_ID  = '00000000-0000-4000-c000-000000000001';
+const EXERCISE_ID = '00000000-0000-4000-f000-000000000001';
 const NOW         = new Date();
 
 const ACTIVE_SESSION: WorkoutSession = {
@@ -51,20 +74,19 @@ const ACTIVE_SESSION: WorkoutSession = {
 };
 
 const REPS_SET: ExerciseSet = {
-  id: 'set-001', sessionId: SESSION_ID, exerciseId: EXERCISE_ID,
+  id: '00000000-0000-4000-f000-000000000002', sessionId: SESSION_ID, exerciseId: EXERCISE_ID,
   setNumber: 1, performance: { type: 'reps', reps: 10, weightKg: 80 },
   restAfterSeconds: 90, completedAt: NOW,
 };
 
 const SUMMARY = {
-  session: { ...ACTIVE_SESSION, status: 'completed' as const, finishedAt: NOW },
-  totalSets: 1,
-  totalVolumeKg: 800,
-  durationSeconds: 3600,
+  session:            { ...ACTIVE_SESSION, status: 'completed' as const, finishedAt: NOW },
+  totalSets:          1,
+  totalVolumeKg:      800,
+  durationSeconds:    3600,
   exercisesCompleted: 1,
 };
 
-// Reset store state between tests
 function resetStore() {
   useWorkoutStore.setState({
     session: null, lastSummary: null,
@@ -76,14 +98,10 @@ function resetStore() {
 // ── startSession ──────────────────────────────────────────────────────────────
 
 describe('workoutStore — startSession', () => {
-  beforeEach(() => {
-    resetStore();
-    jest.clearAllMocks();
-  });
+  beforeEach(() => { resetStore(); jest.clearAllMocks(); });
 
   it('sets session in state on success', async () => {
-    mockGetActiveSession.mockResolvedValue(null);
-    mockStartSession.mockResolvedValue(ACTIVE_SESSION);
+    mockStartWorkoutSessionUseCase.mockResolvedValue(ACTIVE_SESSION);
 
     await act(async () => {
       await useWorkoutStore.getState().startSession(ATHLETE_ID);
@@ -91,48 +109,41 @@ describe('workoutStore — startSession', () => {
 
     expect(useWorkoutStore.getState().session?.id).toBe(SESSION_ID);
     expect(useWorkoutStore.getState().isLoading).toBe(false);
+    expect(useWorkoutStore.getState().error).toBeNull();
   });
 
   it('sets error in state when use case throws', async () => {
-    mockGetActiveSession.mockResolvedValue(ACTIVE_SESSION); // ya hay sesión activa
+    mockStartWorkoutSessionUseCase.mockRejectedValue(new Error('Ya tienes una sesión activa'));
 
     await act(async () => {
       await useWorkoutStore.getState().startSession(ATHLETE_ID);
     });
 
-    expect(useWorkoutStore.getState().error).toBeTruthy();
+    expect(useWorkoutStore.getState().error).toContain('Ya tienes una sesión activa');
     expect(useWorkoutStore.getState().session).toBeNull();
+    expect(useWorkoutStore.getState().isLoading).toBe(false);
   });
 });
 
 // ── logSet ────────────────────────────────────────────────────────────────────
 
 describe('workoutStore — logSet', () => {
-  beforeEach(() => {
-    resetStore();
-    jest.clearAllMocks();
-  });
+  beforeEach(() => { resetStore(); jest.clearAllMocks(); });
 
   it('appends the new set to session.sets optimistically', async () => {
     useWorkoutStore.setState({ session: ACTIVE_SESSION });
-    mockLogSet.mockResolvedValue(REPS_SET);
-
-    // logExerciseSetUseCase needs getSessionById to resolve the session
-    const { WorkoutLocalRepository } = require('../../../src/infrastructure/database/local/WorkoutLocalRepository');
-    WorkoutLocalRepository.mock.results[0].value.getSessionById =
-      jest.fn().mockResolvedValue(ACTIVE_SESSION);
+    mockLogExerciseSetUseCase.mockResolvedValue(REPS_SET);
 
     await act(async () => {
       await useWorkoutStore.getState().logSet({
-        exerciseId: EXERCISE_ID,
-        performance: { type: 'reps', reps: 10, weightKg: 80 },
+        exerciseId:       EXERCISE_ID,
+        performance:      { type: 'reps', reps: 10, weightKg: 80 },
         restAfterSeconds: 90,
       });
     });
 
-    // Set should be in session
-    const sets = useWorkoutStore.getState().session?.sets ?? [];
-    expect(sets.length).toBeGreaterThanOrEqual(0); // store updates optimistically when no error
+    expect(useWorkoutStore.getState().session?.sets).toHaveLength(1);
+    expect(useWorkoutStore.getState().session?.sets[0].id).toBe(REPS_SET.id);
   });
 
   it('sets error when there is no active session', async () => {
@@ -140,8 +151,24 @@ describe('workoutStore — logSet', () => {
 
     await act(async () => {
       const result = await useWorkoutStore.getState().logSet({
-        exerciseId: EXERCISE_ID,
-        performance: { type: 'reps', reps: 10, weightKg: 80 },
+        exerciseId:       EXERCISE_ID,
+        performance:      { type: 'reps', reps: 10, weightKg: 80 },
+        restAfterSeconds: 90,
+      });
+      expect(result).toBeNull();
+    });
+
+    expect(useWorkoutStore.getState().error).toBeTruthy();
+  });
+
+  it('sets error when use case throws', async () => {
+    useWorkoutStore.setState({ session: ACTIVE_SESSION });
+    mockLogExerciseSetUseCase.mockRejectedValue(new Error('session not active'));
+
+    await act(async () => {
+      const result = await useWorkoutStore.getState().logSet({
+        exerciseId:       EXERCISE_ID,
+        performance:      { type: 'reps', reps: 10, weightKg: 80 },
         restAfterSeconds: 90,
       });
       expect(result).toBeNull();
@@ -154,19 +181,11 @@ describe('workoutStore — logSet', () => {
 // ── finishSession ─────────────────────────────────────────────────────────────
 
 describe('workoutStore — finishSession', () => {
-  beforeEach(() => {
-    resetStore();
-    jest.clearAllMocks();
-  });
+  beforeEach(() => { resetStore(); jest.clearAllMocks(); });
 
   it('clears session and sets lastSummary on success', async () => {
     useWorkoutStore.setState({ session: ACTIVE_SESSION });
-
-    // finishWorkoutSessionUseCase needs getSessionById + finishSession
-    const { WorkoutLocalRepository } = require('../../../src/infrastructure/database/local/WorkoutLocalRepository');
-    WorkoutLocalRepository.mock.results[0].value.getSessionById =
-      jest.fn().mockResolvedValue(ACTIVE_SESSION);
-    mockFinishSession.mockResolvedValue({ ...ACTIVE_SESSION, status: 'completed', finishedAt: NOW });
+    mockFinishWorkoutSessionUseCase.mockResolvedValue(SUMMARY);
 
     await act(async () => {
       await useWorkoutStore.getState().finishSession();
@@ -174,6 +193,7 @@ describe('workoutStore — finishSession', () => {
 
     expect(useWorkoutStore.getState().session).toBeNull();
     expect(useWorkoutStore.getState().lastSummary).not.toBeNull();
+    expect(useWorkoutStore.getState().isLoading).toBe(false);
   });
 
   it('returns null and does nothing when no active session', async () => {
@@ -185,24 +205,30 @@ describe('workoutStore — finishSession', () => {
     });
 
     expect(useWorkoutStore.getState().lastSummary).toBeNull();
+    expect(mockFinishWorkoutSessionUseCase).not.toHaveBeenCalled();
+  });
+
+  it('sets error when use case throws', async () => {
+    useWorkoutStore.setState({ session: ACTIVE_SESSION });
+    mockFinishWorkoutSessionUseCase.mockRejectedValue(new Error('finish failed'));
+
+    await act(async () => {
+      await useWorkoutStore.getState().finishSession();
+    });
+
+    expect(useWorkoutStore.getState().error).toBeTruthy();
+    expect(useWorkoutStore.getState().session).not.toBeNull(); // session preserved on error
   });
 });
 
 // ── abandonSession ────────────────────────────────────────────────────────────
 
 describe('workoutStore — abandonSession', () => {
-  beforeEach(() => {
-    resetStore();
-    jest.clearAllMocks();
-  });
+  beforeEach(() => { resetStore(); jest.clearAllMocks(); });
 
   it('clears session and rest timer on success', async () => {
     useWorkoutStore.setState({ session: ACTIVE_SESSION, restTimerActive: true, restTimerSeconds: 30 });
-
-    const { WorkoutLocalRepository } = require('../../../src/infrastructure/database/local/WorkoutLocalRepository');
-    WorkoutLocalRepository.mock.results[0].value.getSessionById =
-      jest.fn().mockResolvedValue(ACTIVE_SESSION);
-    mockAbandonSession.mockResolvedValue({ ...ACTIVE_SESSION, status: 'abandoned' });
+    mockAbandonWorkoutSessionUseCase.mockResolvedValue(undefined);
 
     await act(async () => {
       await useWorkoutStore.getState().abandonSession();
@@ -220,20 +246,19 @@ describe('workoutStore — abandonSession', () => {
       await useWorkoutStore.getState().abandonSession();
     });
 
-    expect(mockAbandonSession).not.toHaveBeenCalled();
+    expect(mockAbandonWorkoutSessionUseCase).not.toHaveBeenCalled();
   });
 });
 
 // ── restoreActiveSession ──────────────────────────────────────────────────────
+// restoreActiveSession llama directamente al repo (no usa use case)
+// El repo está mockeado via WorkoutLocalRepository constructor mock
 
 describe('workoutStore — restoreActiveSession', () => {
-  beforeEach(() => {
-    resetStore();
-    jest.clearAllMocks();
-  });
+  beforeEach(() => { resetStore(); jest.clearAllMocks(); });
 
   it('restores an existing active session from local DB', async () => {
-    mockGetActiveSession.mockResolvedValue(ACTIVE_SESSION);
+    repoMock.getActiveSession.mockResolvedValue(ACTIVE_SESSION);
 
     await act(async () => {
       await useWorkoutStore.getState().restoreActiveSession(ATHLETE_ID);
@@ -243,7 +268,7 @@ describe('workoutStore — restoreActiveSession', () => {
   });
 
   it('leaves session null when no active session exists in DB', async () => {
-    mockGetActiveSession.mockResolvedValue(null);
+    repoMock.getActiveSession.mockResolvedValue(null);
 
     await act(async () => {
       await useWorkoutStore.getState().restoreActiveSession(ATHLETE_ID);
@@ -284,7 +309,7 @@ describe('workoutStore — rest timer', () => {
     expect(useWorkoutStore.getState().restTimerActive).toBe(false);
   });
 
-  it('tickRestTimer stops at 0 even if called when already at 0', () => {
+  it('tickRestTimer stays at 0 when already stopped', () => {
     useWorkoutStore.setState({ restTimerSeconds: 0, restTimerActive: false });
     useWorkoutStore.getState().tickRestTimer();
     expect(useWorkoutStore.getState().restTimerSeconds).toBe(0);

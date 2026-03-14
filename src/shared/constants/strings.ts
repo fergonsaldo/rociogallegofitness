@@ -248,4 +248,19 @@ export const Strings = {
   progressPhotoSelectBefore: 'Selecciona foto "Antes"',
   progressPhotoSelectAfter: 'Selecciona foto "Después"',
   progressPhotoComparing: 'Comparando',
+
+  // ── Mensajería ──────────────────────────────────────────────────────────────
+  tabMessages: 'Mensajes',
+  messagesTitle: 'Mensajes',
+  messagesEmpty: 'No tienes conversaciones aún',
+  messagesEmptySubtitle: 'Inicia una conversación desde el perfil de un atleta',
+  messageInputPlaceholder: 'Escribe un mensaje…',
+  messageSendButton: 'Enviar',
+  messageToday: 'Hoy',
+  messageYesterday: 'Ayer',
+  messageAthleteEmptySubtitle: 'Tu coach puede enviarte mensajes aquí',
+  errorSendMessage: 'No se pudo enviar el mensaje',
+  errorLoadMessages: 'Error al cargar los mensajes',
+  errorLoadConversations: 'Error al cargar las conversaciones',
+  buttonMessage: 'Mensaje',
 } as const;

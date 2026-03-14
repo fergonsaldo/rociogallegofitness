@@ -129,7 +129,27 @@ export interface ProgressPhotoRow {
   tag:          'front' | 'back' | 'side';
   notes:        string | null;
   storage_path: string;
-  public_url:   string;
+  // public_url removed — bucket is private, signed URLs are generated at read time
   created_at:   string;
 }
 export type ProgressPhotoInsert = Omit<ProgressPhotoRow, 'id' | 'created_at'>;
+
+// ── conversations ─────────────────────────────────────────────────────────────
+export interface ConversationRow {
+  id:         string;
+  coach_id:   string;
+  athlete_id: string;
+  created_at: string;
+}
+export type ConversationInsert = Omit<ConversationRow, 'id' | 'created_at'>;
+
+// ── messages ──────────────────────────────────────────────────────────────────
+export interface MessageRow {
+  id:              string;
+  conversation_id: string;
+  sender_id:       string;
+  body:            string;
+  sent_at:         string;
+  read_at:         string | null;
+}
+export type MessageInsert = Omit<MessageRow, 'id' | 'sent_at'>;

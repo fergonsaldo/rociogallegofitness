@@ -10,17 +10,18 @@ export const PHOTO_TAG_LABELS: Record<PhotoTag, string> = {
 };
 
 export const CreateProgressPhotoSchema = z.object({
-  athleteId:  z.string().uuid('Invalid athlete ID'),
-  takenAt:    z.date(),
-  tag:        z.enum(PHOTO_TAGS),
-  notes:      z.string().max(300).optional(),
+  athleteId:   z.string().uuid('Invalid athlete ID'),
+  takenAt:     z.date(),
+  tag:         z.enum(PHOTO_TAGS),
+  notes:       z.string().max(300).optional(),
   /** Storage path returned by Supabase after upload */
   storagePath: z.string().min(1),
 });
 
 export const ProgressPhotoSchema = CreateProgressPhotoSchema.extend({
   id:        z.string().uuid(),
-  publicUrl: z.string().url(),
+  /** Signed URL generated at read time — expires after 1 hour, never persisted */
+  signedUrl: z.string().url(),
   createdAt: z.date(),
 });
 

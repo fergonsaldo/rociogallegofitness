@@ -1,6 +1,6 @@
 import { CreateCustomExerciseSchema } from '../../../src/domain/entities/CustomExercise';
 
-const COACH_ID = 'coac-uuid-0001-0000-000000000001';
+const COACH_ID = '00000000-0000-4000-a000-000000000001';
 
 const VALID = {
   coachId:          COACH_ID,

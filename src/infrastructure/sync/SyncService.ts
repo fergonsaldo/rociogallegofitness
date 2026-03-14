@@ -4,8 +4,6 @@ import { WorkoutLocalRepository } from '../database/local/WorkoutLocalRepository
 import { WorkoutSession } from '@/domain/entities/WorkoutSession';
 import { ExerciseSet, isRepsPerformance, isIsometricPerformance } from '@/domain/entities/ExerciseSet';
 
-const localRepo = new WorkoutLocalRepository();
-
 /**
  * Syncs completed, unsynced sessions from SQLite to Supabase.
  *
@@ -18,6 +16,16 @@ const localRepo = new WorkoutLocalRepository();
  */
 export class SyncService {
 
+  // Lazy instantiation ensures the mock is applied before first use in tests
+  private _repo: WorkoutLocalRepository | null = null;
+
+  private get repo(): WorkoutLocalRepository {
+    if (!this._repo) {
+      this._repo = new WorkoutLocalRepository();
+    }
+    return this._repo;
+  }
+
   /**
    * Attempts to sync all unsynced sessions for an athlete.
    * Silently skips if offline — data is safe in SQLite.
@@ -26,7 +34,7 @@ export class SyncService {
     const netState = await NetInfo.fetch();
     if (!netState.isConnected) return;
 
-    const sessions = await localRepo.getUnsyncedSessions(athleteId);
+    const sessions = await this.repo.getUnsyncedSessions(athleteId);
     await Promise.allSettled(sessions.map((s) => this.syncSession(s)));
   }
 
@@ -36,14 +44,14 @@ export class SyncService {
       const { error: sessionError } = await supabase
         .from('workout_sessions')
         .upsert({
-          id: session.id,
-          athlete_id: session.athleteId,
-          routine_id: session.routineId ?? null,
-          routine_day_id: session.routineDayId ?? null,
-          status: session.status,
-          notes: session.notes ?? null,
-          started_at: session.startedAt.toISOString(),
-          finished_at: session.finishedAt?.toISOString() ?? null,
+          id:             session.id,
+          athlete_id:     session.athleteId,
+          routine_id:     session.routineId     ?? null,
+          routine_day_id: session.routineDayId  ?? null,
+          status:         session.status,
+          notes:          session.notes         ?? null,
+          started_at:     session.startedAt.toISOString(),
+          finished_at:    session.finishedAt?.toISOString() ?? null,
         });
 
       if (sessionError) throw sessionError;
@@ -58,7 +66,7 @@ export class SyncService {
       }
 
       // 3 — Mark as synced locally
-      await localRepo.markSynced(session.id);
+      await this.repo.markSynced(session.id);
 
     } catch (err) {
       // Log but don't throw — other sessions should still attempt sync
@@ -69,16 +77,16 @@ export class SyncService {
   private mapSetToRow(set: ExerciseSet) {
     const isIsometric = set.performance.type === 'isometric';
     return {
-      id: set.id,
-      session_id: set.sessionId,
-      exercise_id: set.exerciseId,
-      set_number: set.setNumber,
-      set_type: set.performance.type,
-      reps: isIsometric ? null : isRepsPerformance(set.performance) ? set.performance.reps : null,
-      weight_kg: isIsometric ? null : isRepsPerformance(set.performance) ? set.performance.weightKg : null,
-      duration_seconds: isIsometric ? isIsometricPerformance(set.performance) ? set.performance.durationSeconds : null : null,
+      id:                 set.id,
+      session_id:         set.sessionId,
+      exercise_id:        set.exerciseId,
+      set_number:         set.setNumber,
+      set_type:           set.performance.type,
+      reps:               isIsometric ? null : isRepsPerformance(set.performance) ? set.performance.reps : null,
+      weight_kg:          isIsometric ? null : isRepsPerformance(set.performance) ? set.performance.weightKg : null,
+      duration_seconds:   isIsometric ? isIsometricPerformance(set.performance) ? set.performance.durationSeconds : null : null,
       rest_after_seconds: set.restAfterSeconds,
-      completed_at: set.completedAt.toISOString(),
+      completed_at:       set.completedAt.toISOString(),
     };
   }
 }

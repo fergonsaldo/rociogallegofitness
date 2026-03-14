@@ -65,7 +65,7 @@ export default function PhotoTimelineScreen() {
                   activeOpacity={0.85}
                 >
                   <Image
-                    source={{ uri: photo.publicUrl }}
+                    source={{ uri: photo.signedUrl }}
                     style={styles.photo}
                     resizeMode="cover"
                   />

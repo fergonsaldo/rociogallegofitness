@@ -199,3 +199,83 @@ describe('RoutineRemoteRepository', () => {
     });
   });
 });
+
+  // ── create ──────────────────────────────────────────────────────────────────
+
+  describe('create', () => {
+    const VALID_INPUT = {
+      coachId: COACH_ID,
+      name: 'Push Day',
+      description: 'Chest focus',
+      durationWeeks: 4,
+      days: [
+        {
+          dayNumber: 1, name: 'Day 1',
+          exercises: [
+            {
+              exerciseId: '11111111-0001-0000-0000-000000000001',
+              order: 1, targetSets: 3, targetReps: 10,
+              targetDurationSeconds: null, restBetweenSetsSeconds: 90, notes: null,
+            },
+          ],
+        },
+      ],
+    };
+
+    it('creates routine with days and exercises', async () => {
+      const routineRow = { id: ROUTINE_ID, coach_id: COACH_ID, name: 'Push Day', description: 'Chest focus', duration_weeks: 4, created_at: NOW, updated_at: NOW };
+      const dayRow     = { id: 'day-0001', routine_id: ROUTINE_ID, day_number: 1, name: 'Day 1' };
+
+      // routine insert
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: routineRow, error: null }))
+        // day insert
+        .mockReturnValueOnce(mockChain({ data: dayRow, error: null }))
+        // exercises insert
+        .mockReturnValueOnce(mockChain({ error: null }))
+        // getById select (returns full routine)
+        .mockReturnValueOnce(mockChain({ data: RAW_ROUTINE_ROW, error: null }));
+
+      const result = await repo.create(VALID_INPUT);
+      expect(result.name).toBe('Push Day');
+    });
+
+    it('creates routine with empty day (no exercises)', async () => {
+      const inputNoExercises = { ...VALID_INPUT, days: [{ dayNumber: 1, name: 'Rest', exercises: [] }] };
+      const routineRow = { id: ROUTINE_ID, coach_id: COACH_ID, name: 'Push Day', description: null, duration_weeks: null, created_at: NOW, updated_at: NOW };
+      const dayRow     = { id: 'day-0001', routine_id: ROUTINE_ID, day_number: 1, name: 'Rest' };
+
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: routineRow, error: null }))
+        .mockReturnValueOnce(mockChain({ data: dayRow, error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_ROUTINE_ROW, error: null }));
+
+      const result = await repo.create(inputNoExercises);
+      expect(result).toBeDefined();
+    });
+
+    it('throws when routine insert fails', async () => {
+      supabase.from.mockReturnValueOnce(mockChain({ data: null, error: new Error('Insert failed') }));
+      await expect(repo.create(VALID_INPUT)).rejects.toThrow();
+    });
+  });
+
+  // ── update ──────────────────────────────────────────────────────────────────
+
+  describe('update', () => {
+    it('updates routine name and returns updated routine', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_ROUTINE_ROW, error: null }));
+
+      const result = await repo.update(ROUTINE_ID, { name: 'Updated Name' });
+      expect(result.name).toBe('Push Day');
+    });
+
+    it('throws when update fails', async () => {
+      supabase.from.mockReturnValueOnce(mockChain({ error: new Error('Update failed') }));
+      await expect(repo.update(ROUTINE_ID, { name: 'X' })).rejects.toThrow('Update failed');
+    });
+  });
+
+});

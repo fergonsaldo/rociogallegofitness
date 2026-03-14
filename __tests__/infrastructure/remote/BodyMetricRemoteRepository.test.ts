@@ -2,30 +2,42 @@ import { BodyMetricRemoteRepository } from '../../../src/infrastructure/supabase
 import { CreateBodyMetricInput } from '../../../src/domain/entities/BodyMetric';
 
 // ── Supabase mock ─────────────────────────────────────────────────────────────
+// jest.mock se hoistea — la factory NO puede referenciar const externas.
+// Solución: factory interna con __mocks expuesto para capturarlo con require().
 
-const mockSingle  = jest.fn();
-const mockSelect  = jest.fn();
-const mockInsert  = jest.fn();
-const mockDelete  = jest.fn();
-const mockEq      = jest.fn();
-const mockOrder   = jest.fn();
+jest.mock('../../../src/infrastructure/supabase/client', () => {
+  const single  = jest.fn();
+  const select  = jest.fn();
+  const insert  = jest.fn();
+  const dbDel   = jest.fn();
+  const eq      = jest.fn();
+  const order   = jest.fn();
 
-jest.mock('../../../src/infrastructure/supabase/client', () => ({
-  supabase: {
-    from: jest.fn(() => ({
-      select: mockSelect.mockReturnThis(),
-      insert: mockInsert.mockReturnThis(),
-      delete: mockDelete.mockReturnThis(),
-      eq:     mockEq.mockReturnThis(),
-      order:  mockOrder.mockReturnThis(),
-      single: mockSingle,
-    })),
-  },
-}));
+  const chain = { select, insert, delete: dbDel, eq, order, single };
+
+  select.mockReturnValue(chain);
+  insert.mockReturnValue(chain);
+  dbDel.mockReturnValue(chain);
+  eq.mockReturnValue(chain);
+  order.mockReturnValue(chain);
+
+  return {
+    supabase: { from: jest.fn(() => chain) },
+    __mocks: { single, select, insert, dbDel, eq, order, chain },
+  };
+});
+
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const clientModule = require('../../../src/infrastructure/supabase/client');
+const { supabase } = clientModule;
+const m = clientModule.__mocks as {
+  single: jest.Mock; select: jest.Mock; insert: jest.Mock; dbDel: jest.Mock;
+  eq: jest.Mock; order: jest.Mock; chain: Record<string, jest.Mock>;
+};
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const ATHLETE_ID = 'ath-uuid-0001-0000-000000000001';
+const ATHLETE_ID = '00000000-0000-4000-a000-000000000001';
 const NOW_ISO    = '2025-01-15T10:00:00.000Z';
 
 const ROW = {
@@ -49,13 +61,22 @@ const VALID_INPUT: CreateBodyMetricInput = {
 
 const repo = new BodyMetricRemoteRepository();
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => {
+  jest.clearAllMocks();
+  // Restaurar encadenamiento y from() tras clearAllMocks
+  m.select.mockReturnValue(m.chain);
+  m.insert.mockReturnValue(m.chain);
+  m.dbDel.mockReturnValue(m.chain);
+  m.eq.mockReturnValue(m.chain);
+  m.order.mockReturnValue(m.chain);
+  supabase.from.mockReturnValue(m.chain);
+});
 
 // ── getByAthleteId ────────────────────────────────────────────────────────────
 
 describe('BodyMetricRemoteRepository.getByAthleteId', () => {
   it('devuelve métricas mapeadas correctamente', async () => {
-    mockOrder.mockResolvedValue({ data: [ROW], error: null });
+    m.order.mockResolvedValue({ data: [ROW], error: null });
     const result = await repo.getByAthleteId(ATHLETE_ID);
     expect(result).toHaveLength(1);
     expect(result[0].weightKg).toBe(80);
@@ -64,20 +85,23 @@ describe('BodyMetricRemoteRepository.getByAthleteId', () => {
   });
 
   it('devuelve array vacío si no hay filas', async () => {
-    mockOrder.mockResolvedValue({ data: [], error: null });
+    m.order.mockResolvedValue({ data: [], error: null });
     expect(await repo.getByAthleteId(ATHLETE_ID)).toEqual([]);
   });
 
   it('mapea campos nullables a undefined', async () => {
-    mockOrder.mockResolvedValue({ data: [{ ...ROW, waist_cm: null, hip_cm: null, body_fat_percent: null }], error: null });
-    const [m] = await repo.getByAthleteId(ATHLETE_ID);
-    expect(m.waistCm).toBeUndefined();
-    expect(m.hipCm).toBeUndefined();
-    expect(m.bodyFatPercent).toBeUndefined();
+    m.order.mockResolvedValue({
+      data: [{ ...ROW, waist_cm: null, hip_cm: null, body_fat_percent: null }],
+      error: null,
+    });
+    const [metric] = await repo.getByAthleteId(ATHLETE_ID);
+    expect(metric.waistCm).toBeUndefined();
+    expect(metric.hipCm).toBeUndefined();
+    expect(metric.bodyFatPercent).toBeUndefined();
   });
 
   it('lanza error si Supabase falla', async () => {
-    mockOrder.mockResolvedValue({ data: null, error: new Error('DB error') });
+    m.order.mockResolvedValue({ data: null, error: new Error('DB error') });
     await expect(repo.getByAthleteId(ATHLETE_ID)).rejects.toThrow('DB error');
   });
 });
@@ -86,7 +110,7 @@ describe('BodyMetricRemoteRepository.getByAthleteId', () => {
 
 describe('BodyMetricRemoteRepository.create', () => {
   it('crea una métrica y la devuelve mapeada', async () => {
-    mockSingle.mockResolvedValue({ data: ROW, error: null });
+    m.single.mockResolvedValue({ data: ROW, error: null });
     const result = await repo.create(VALID_INPUT);
     expect(result.id).toBe('metr-0001');
     expect(result.weightKg).toBe(80);
@@ -94,19 +118,19 @@ describe('BodyMetricRemoteRepository.create', () => {
   });
 
   it('envía null para campos opcionales no presentes', async () => {
-    mockSingle.mockResolvedValue({ data: { ...ROW, waist_cm: null }, error: null });
+    m.single.mockResolvedValue({ data: { ...ROW, waist_cm: null }, error: null });
     const input = { athleteId: ATHLETE_ID, recordedAt: new Date(NOW_ISO), weightKg: 80 };
     await repo.create(input);
-    expect(mockInsert).toHaveBeenCalledWith(expect.objectContaining({ waist_cm: null }));
+    expect(m.insert).toHaveBeenCalledWith(expect.objectContaining({ waist_cm: null }));
   });
 
   it('lanza error si Supabase devuelve error', async () => {
-    mockSingle.mockResolvedValue({ data: null, error: new Error('Insert failed') });
+    m.single.mockResolvedValue({ data: null, error: new Error('Insert failed') });
     await expect(repo.create(VALID_INPUT)).rejects.toThrow('Insert failed');
   });
 
   it('lanza error si data es null sin error explícito', async () => {
-    mockSingle.mockResolvedValue({ data: null, error: null });
+    m.single.mockResolvedValue({ data: null, error: null });
     await expect(repo.create(VALID_INPUT)).rejects.toThrow('No data returned');
   });
 });
@@ -115,12 +139,12 @@ describe('BodyMetricRemoteRepository.create', () => {
 
 describe('BodyMetricRemoteRepository.delete', () => {
   it('elimina la fila sin lanzar errores', async () => {
-    mockEq.mockResolvedValue({ error: null });
+    m.eq.mockResolvedValue({ error: null });
     await expect(repo.delete('metr-0001')).resolves.toBeUndefined();
   });
 
   it('lanza error si Supabase falla al eliminar', async () => {
-    mockEq.mockResolvedValue({ error: new Error('Delete failed') });
+    m.eq.mockResolvedValue({ error: new Error('Delete failed') });
     await expect(repo.delete('metr-0001')).rejects.toThrow('Delete failed');
   });
 });

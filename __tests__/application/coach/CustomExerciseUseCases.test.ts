@@ -7,7 +7,7 @@ import { CustomExercise, CreateCustomExerciseInput } from '../../../src/domain/e
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const COACH_ID = 'coac-uuid-0001-0000-000000000001';
+const COACH_ID = '00000000-0000-4000-b000-000000000001';
 const NOW      = new Date();
 
 const VALID_INPUT: CreateCustomExerciseInput = {

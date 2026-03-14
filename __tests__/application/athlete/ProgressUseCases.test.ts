@@ -151,3 +151,79 @@ describe('saveProgressRecordsUseCase', () => {
     ).rejects.toThrow('completed sessions');
   });
 });
+
+// ── Additional branch coverage ────────────────────────────────────────────────
+
+describe('getWorkoutHistoryUseCase (isometric sets)', () => {
+  it('handles sessions with only isometric sets (no reps performance)', async () => {
+    const isoSession = {
+      ...SESSION_WITH_SETS,
+      sets: [{
+        id: 'set-iso-1', sessionId: SESSION_WITH_SETS.id, exerciseId: EXERCISE_A,
+        setNumber: 1,
+        performance: { type: 'isometric' as const, durationSeconds: 30 },
+        completedAt: new Date(),
+      }],
+    };
+    mockWorkoutRepo.getSessionHistory.mockResolvedValue([isoSession]);
+    const result = await getWorkoutHistoryUseCase(ATHLETE_ID, mockWorkoutRepo);
+    expect(result[0].totalVolumeKg).toBe(0);
+    expect(result[0].totalSets).toBe(1);
+  });
+
+  it('returns durationMinutes as 0 when session has no finishedAt', async () => {
+    const activeSession = { ...SESSION_WITH_SETS, finishedAt: undefined };
+    mockWorkoutRepo.getSessionHistory.mockResolvedValue([activeSession]);
+    const result = await getWorkoutHistoryUseCase(ATHLETE_ID, mockWorkoutRepo);
+    expect(result[0].durationMinutes).toBe(0);
+  });
+});
+
+describe('saveProgressRecordsUseCase (edge cases)', () => {
+  it('skips 1RM estimation when reps exceed 36', async () => {
+    const heavyRepsSession = {
+      ...SESSION_WITH_SETS,
+      status: 'completed' as const,
+      sets: [{
+        id: 'set-heavy', sessionId: SESSION_WITH_SETS.id, exerciseId: EXERCISE_A,
+        setNumber: 1,
+        performance: { type: 'reps' as const, reps: 40, weightKg: 20 },
+        completedAt: new Date(),
+      }],
+    };
+    mockProgressRepo.create.mockResolvedValue({
+      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_ID,
+      sessionId: SESSION_WITH_SETS.id, recordedAt: new Date(),
+      totalVolumeKg: 800, bestWeightKg: 20, bestReps: 40,
+      estimatedOneRepMaxKg: undefined,
+    });
+    const records = await saveProgressRecordsUseCase(heavyRepsSession, mockProgressRepo);
+    // estimatedOneRepMaxKg should be undefined since reps > 36
+    expect(mockProgressRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ estimatedOneRepMaxKg: undefined })
+    );
+    expect(records).toHaveLength(1);
+  });
+
+  it('handles session with only isometric sets (no reps sets)', async () => {
+    const isoSession = {
+      ...SESSION_WITH_SETS,
+      status: 'completed' as const,
+      sets: [{
+        id: 'set-iso', sessionId: SESSION_WITH_SETS.id, exerciseId: EXERCISE_A,
+        setNumber: 1,
+        performance: { type: 'isometric' as const, durationSeconds: 60 },
+        completedAt: new Date(),
+      }],
+    };
+    mockProgressRepo.create.mockResolvedValue({
+      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_ID,
+      sessionId: SESSION_WITH_SETS.id, recordedAt: new Date(),
+      totalVolumeKg: 0,
+    });
+    await saveProgressRecordsUseCase(isoSession, mockProgressRepo);
+    expect(mockProgressRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ totalVolumeKg: 0, bestWeightKg: undefined })
+    );
+  });
+});

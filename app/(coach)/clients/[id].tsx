@@ -13,12 +13,16 @@ import {
   AthleteDetail,
 } from '../../../src/application/coach/ClientUseCases';
 import { AthleteRoutineAssignment, AthleteSession } from '../../../src/domain/repositories/ICoachRepository';
+import { useAuthStore } from '../../../src/presentation/stores/authStore';
+import { useMessageStore } from '../../../src/presentation/stores/messageStore';
 
 const repo = new CoachRemoteRepository();
 
 export default function ClientDetailScreen() {
   const router = useRouter();
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
+  const { user } = useAuthStore();
+  const { getOrOpenConversation } = useMessageStore();
 
   const [detail, setDetail] = useState<AthleteDetail>({ assignments: [], sessions: [] });
   const [loading, setLoading] = useState(true);
@@ -68,6 +72,19 @@ export default function ClientDetailScreen() {
     );
   };
 
+  const handleOpenChat = async () => {
+    if (!user?.id || !id) return;
+    try {
+      const conv = await getOrOpenConversation(user.id, id);
+      router.push({
+        pathname: '/(coach)/messages/[id]',
+        params: { id: conv.id, name: name ?? '' },
+      });
+    } catch {
+      Alert.alert('Error', 'No se pudo abrir la conversación');
+    }
+  };
+
   const getInitials = (n: string) =>
     n.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 
@@ -85,12 +102,17 @@ export default function ClientDetailScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backText}>← Volver</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.assignBtn}
-          onPress={() => router.push({ pathname: '/(coach)/routines', params: { assignTo: id, assignName: name } })}
-        >
-          <Text style={styles.assignBtnText}>Asignar rutina</Text>
-        </TouchableOpacity>
+        <View style={styles.topbarActions}>
+          <TouchableOpacity style={styles.msgBtn} onPress={handleOpenChat}>
+            <Text style={styles.msgBtnText}>💬 {Strings.buttonMessage}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.assignBtn}
+            onPress={() => router.push({ pathname: '/(coach)/routines', params: { assignTo: id, assignName: name } })}
+          >
+            <Text style={styles.assignBtnText}>Asignar rutina</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading ? (
@@ -189,6 +211,9 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg },
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   backText: { color: Colors.textSecondary, fontSize: FontSize.sm },
+  topbarActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  msgBtn: { backgroundColor: Colors.athleteSubtle, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: Colors.border },
+  msgBtnText: { color: Colors.athlete, fontSize: 13, fontWeight: '600' },
   assignBtn: { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
   assignBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
   errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
