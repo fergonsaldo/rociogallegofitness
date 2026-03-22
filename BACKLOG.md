@@ -2,6 +2,22 @@
 
 ## ✅ Completado
 
+#### RF-E2-01 — Listado de clientes segmentado por estado
+
+**Implementado:**
+- Migración SQL: columna `status` (`active` | `archived`) en `coach_athletes`, default `active`
+- `ClientStatus` type en dominio; `updateAthleteStatus` en `ICoachRepository` y `CoachRemoteRepository`
+- `archiveAthleteUseCase` + `restoreAthleteUseCase` en `ClientUseCases`
+- Tabs Activos / Archivados con contador en `clients/index.tsx`
+- Long-press: archiva activos; restaura o elimina archivados
+- Estados vacíos diferenciados por tab
+
+**Métricas finales:**
+- Test Suites: 40/40 ✅ | Tests: 631/631 ✅
+- Statements: 98.07% ✅ | Branches: 91.22% ✅ | Functions: 99.5% ✅ | Lines: 99.84% ✅
+
+---
+
 #### RF-E1-01 — Dashboard consolidado de operación
 
 **Implementado:**
@@ -487,4 +503,4 @@
 
 ---
 
-_Última actualización: 2026-03-22 — RF-E1-01 cerrado. Próxima: RF-E2-01 (listado de clientes segmentado por estado)._
+_Última actualización: 2026-03-22 — RF-E2-01 cerrado. Próxima: RF-E2-02 (búsqueda de clientes)._
