@@ -2,6 +2,26 @@
 
 ## ✅ Completado
 
+#### RF-E2-05 — Etiquetas de clientes (05a CRUD + 05b Asignación)
+
+**Implementado:**
+- SQL: `client_tags` y `athlete_tags` con RLS e índices (migración aplicada en producción)
+- Domain: `ClientTag` entity (Zod), `ITagRepository` con 9 métodos
+- Use cases: getTags, createTag, updateTag, deleteTag, getAthleteTags, assignTag, removeTag
+- `TagRemoteRepository`: bulk queries sin N+1, upsert idempotente para asignación
+- `tagStore` Zustand con lista ordenada, error handling, clearError
+- `TagPickerModal`: bottom-sheet reutilizable con toggle assign/remove y feedback visual
+- `tags.tsx`: pantalla de gestión (lista + crear/editar modal + borrado con confirmación)
+- Botón 🏷️ en cabecera de lista → navega a gestión de etiquetas
+- Long-press en lista → opción "Gestionar etiquetas" abre picker
+- Detalle del cliente: sección ETIQUETAS con chips + botón picker
+- Chips de color en tarjetas de cliente (lista)
+
+**Métricas finales:**
+- Test Suites: 44/44 ✅ | Tests: 725/725 ✅
+
+---
+
 #### RF-E2-03a — Métricas disponibles en tarjeta de cliente
 
 **Implementado:**
@@ -530,4 +550,4 @@
 
 ---
 
-_Última actualización: 2026-03-22 — RF-E2-03a cerrado. Próxima: RF-E2-04 (comunidad por grupos) o RF-E2-05 (etiquetas de clientes)._
+_Última actualización: 2026-03-22 — RF-E2-05 cerrado. Próxima: RF-E2-04 (comunidad por grupos) o RF-E2-03b (métricas avanzadas, requiere schema pagos)._
