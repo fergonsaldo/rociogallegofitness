@@ -78,6 +78,11 @@ describe('ProgressRemoteRepository', () => {
       expect(await repo.getByAthleteAndExercise(ATHLETE_ID, EXERCISE_ID)).toEqual([]);
     });
 
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getByAthleteAndExercise(ATHLETE_ID, EXERCISE_ID)).toEqual([]);
+    });
+
     it('throws on error', async () => {
       supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'DB error' } }));
       await expect(repo.getByAthleteAndExercise(ATHLETE_ID, EXERCISE_ID))
@@ -138,6 +143,27 @@ describe('ProgressRemoteRepository', () => {
       const result = await repo.getPersonalBest(ATHLETE_ID, EXERCISE_ID);
       expect(result?.bestWeightKg).toBeUndefined();
       expect(result?.estimatedOneRepMaxKg).toBeUndefined();
+    });
+
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'Query failed' } }));
+      await expect(repo.getPersonalBest(ATHLETE_ID, EXERCISE_ID))
+        .rejects.toMatchObject({ message: 'Query failed' });
+    });
+  });
+
+  // ── null data branch coverage ─────────────────────────────────────────────
+
+  describe('getLatestPerExercise (branch coverage)', () => {
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getLatestPerExercise(ATHLETE_ID)).toEqual([]);
+    });
+
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'DB error' } }));
+      await expect(repo.getLatestPerExercise(ATHLETE_ID))
+        .rejects.toMatchObject({ message: 'DB error' });
     });
   });
 });

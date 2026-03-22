@@ -113,4 +113,28 @@ describe('CustomExerciseRemoteRepository', () => {
       await expect(repo.create(VALID_INPUT)).rejects.toThrow('No data returned after insert');
     });
   });
+
+  // ── branch coverage ───────────────────────────────────────────────────────
+
+  describe('getByCoachId (branch coverage)', () => {
+    it('maneja null data sin errores', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getByCoachId(COACH_ID)).toEqual([]);
+    });
+
+    it('mapea coach_id null a string vacio', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: [{ ...RAW_ROW, coach_id: null }], error: null }));
+      const result = await repo.getByCoachId(COACH_ID);
+      expect(result[0].coachId).toBe('');
+    });
+  });
+
+  describe('create (branch coverage)', () => {
+    it('mapea description undefined como null en el insert', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: RAW_ROW, error: null }));
+      const input = { ...VALID_INPUT, description: undefined, videoUrl: undefined };
+      const result = await repo.create(input);
+      expect(result.id).toBe(RAW_ROW.id);
+    });
+  });
 });

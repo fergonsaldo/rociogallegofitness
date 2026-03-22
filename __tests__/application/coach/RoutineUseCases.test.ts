@@ -149,6 +149,13 @@ describe('assignRoutineUseCase', () => {
     ).rejects.toThrow('Invalid routine ID');
     expect(mockRepo.assignToAthlete).not.toHaveBeenCalled();
   });
+
+  it('throws a validation error when athleteId is not a UUID', async () => {
+    await expect(
+      assignRoutineUseCase({ routineId: VALID_UUID, athleteId: 'not-a-uuid' }, mockRepo)
+    ).rejects.toThrow('Invalid athlete ID');
+    expect(mockRepo.assignToAthlete).not.toHaveBeenCalled();
+  });
 });
 
 // ── unassignRoutineUseCase ────────────────────────────────────────────────────
@@ -157,6 +164,20 @@ describe('unassignRoutineUseCase', () => {
     mockRepo.unassignFromAthlete.mockResolvedValue();
     await unassignRoutineUseCase({ routineId: VALID_UUID, athleteId: ATHLETE_UUID }, mockRepo);
     expect(mockRepo.unassignFromAthlete).toHaveBeenCalledWith(VALID_UUID, ATHLETE_UUID);
+  });
+
+  it('throws a validation error when routineId is not a UUID', async () => {
+    await expect(
+      unassignRoutineUseCase({ routineId: 'not-a-uuid', athleteId: ATHLETE_UUID }, mockRepo)
+    ).rejects.toThrow('Invalid routine ID');
+    expect(mockRepo.unassignFromAthlete).not.toHaveBeenCalled();
+  });
+
+  it('throws a validation error when athleteId is not a UUID', async () => {
+    await expect(
+      unassignRoutineUseCase({ routineId: VALID_UUID, athleteId: 'bad-id' }, mockRepo)
+    ).rejects.toThrow('Invalid athlete ID');
+    expect(mockRepo.unassignFromAthlete).not.toHaveBeenCalled();
   });
 });
 

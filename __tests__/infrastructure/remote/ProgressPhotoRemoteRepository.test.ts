@@ -194,3 +194,26 @@ describe('ProgressPhotoRemoteRepository.delete', () => {
     await expect(repo.delete(PHOTO)).rejects.toThrow('DB delete error');
   });
 });
+
+// ── branch coverage ───────────────────────────────────────────────────────────
+
+describe('ProgressPhotoRemoteRepository (branch coverage)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    m.select.mockReturnValue(m.dbChain);
+    m.order.mockReturnValue(m.dbChain);
+    supabase.from.mockReturnValue(m.dbChain);
+    supabase.storage.from.mockReturnValue(m.storageChain);
+  });
+
+  it('getByAthleteId handles null data gracefully', async () => {
+    m.order.mockResolvedValue({ data: null, error: null });
+    expect(await repo.getByAthleteId(ATHLETE_ID)).toEqual([]);
+  });
+
+  it('createSignedUrl throws with fallback message when error has no message', async () => {
+    m.order.mockResolvedValue({ data: [ROW], error: null });
+    m.createSignedUrl.mockResolvedValue({ data: null, error: null });
+    await expect(repo.getByAthleteId(ATHLETE_ID)).rejects.toThrow('Could not generate signed URL');
+  });
+});

@@ -310,3 +310,39 @@ describe('getAssignedNutritionPlanUseCase (edge cases)', () => {
     expect(result).toBeNull();
   });
 });
+
+// ── Branch coverage ───────────────────────────────────────────────────────────
+
+describe('getDailyNutritionSummaryUseCase (branch coverage)', () => {
+  it('uses 1 as divisor when target macros are zero (avoids divide by zero)', async () => {
+    const zeroPlan = {
+      ...MOCK_PLAN,
+      dailyTargetMacros: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+    };
+    mockRepo.getLogEntriesForDay.mockResolvedValue([]);
+    const result = await getDailyNutritionSummaryUseCase(ATHLETE_ID, NOW, zeroPlan, mockRepo);
+    expect(result.progress.calories).toBe(0);
+    expect(result.progress.protein).toBe(0);
+  });
+});
+
+describe('getWeeklyAdherenceUseCase (branch coverage)', () => {
+  it('uses 1 as divisor when daily calorie target is zero', async () => {
+    const zeroPlan = {
+      ...MOCK_PLAN,
+      dailyTargetMacros: { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+    };
+    mockRepo.getLogEntriesForRange.mockResolvedValue([]);
+    const result = await getWeeklyAdherenceUseCase(ATHLETE_ID, zeroPlan, mockRepo);
+    expect(result).toHaveLength(7);
+    expect(result[0].calorieProgress).toBe(0);
+  });
+});
+
+describe('deleteNutritionPlanUseCase (branch coverage)', () => {
+  it('resolves when planId is valid', async () => {
+    mockRepo.deletePlan.mockResolvedValue();
+    await expect(deleteNutritionPlanUseCase(UUID, mockRepo)).resolves.toBeUndefined();
+    expect(mockRepo.deletePlan).toHaveBeenCalledWith(UUID);
+  });
+});

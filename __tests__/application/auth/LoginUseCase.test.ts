@@ -92,4 +92,19 @@ describe('loginUseCase', () => {
       loginUseCase({ email: 'coach@example.com', password: 'password123' })
     ).rejects.toBeInstanceOf(AuthError);
   });
+
+  it('throws AuthError when auth returns no user and no error', async () => {
+    mockSignInWithPassword.mockResolvedValue({ data: { user: null }, error: null });
+    await expect(
+      loginUseCase({ email: 'coach@example.com', password: 'password123' })
+    ).rejects.toBeInstanceOf(AuthError);
+  });
+
+  it('throws AuthError when profile is null with no error', async () => {
+    mockSignInWithPassword.mockResolvedValue({ data: { user: VALID_AUTH_USER }, error: null });
+    mockSingle.mockResolvedValue({ data: null, error: null });
+    await expect(
+      loginUseCase({ email: 'coach@example.com', password: 'password123' })
+    ).rejects.toBeInstanceOf(AuthError);
+  });
 });

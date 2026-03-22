@@ -97,7 +97,20 @@ describe('registerUseCase', () => {
     await expect(
       registerUseCase({ ...VALID_INPUT, fullName: '' })
     ).rejects.toThrow('Full name is required');
-
     expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  it('throws AuthError when signUp returns no user and no error', async () => {
+    mockSignUp.mockResolvedValue({ data: { user: null }, error: null });
+    await expect(registerUseCase(VALID_INPUT)).rejects.toBeInstanceOf(AuthError);
+    expect(mockDeleteUser).not.toHaveBeenCalled();
+  });
+
+  it('throws AuthError and rolls back when profile insert returns null with no error', async () => {
+    mockSignUp.mockResolvedValue({ data: { user: VALID_AUTH_USER }, error: null });
+    mockInsertSingle.mockResolvedValue({ data: null, error: null });
+    mockDeleteUser.mockResolvedValue({});
+    await expect(registerUseCase(VALID_INPUT)).rejects.toBeInstanceOf(AuthError);
+    expect(mockDeleteUser).toHaveBeenCalledWith(VALID_AUTH_USER.id);
   });
 });

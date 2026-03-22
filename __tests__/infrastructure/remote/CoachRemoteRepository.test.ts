@@ -153,4 +153,27 @@ describe('CoachRemoteRepository', () => {
         .rejects.toMatchObject({ message: 'Delete failed' });
     });
   });
+
+  // ── null data branch coverage ─────────────────────────────────────────────
+
+  describe('getAthletes (branch coverage)', () => {
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getAthletes(COACH_ID)).toEqual([]);
+    });
+  });
+
+  describe('getAthleteAssignments (branch coverage)', () => {
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getAthleteAssignments(ATHLETE_ID)).toEqual([]);
+    });
+  });
+
+  describe('getAthleteSessions (branch coverage)', () => {
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getAthleteSessions(ATHLETE_ID, 10)).toEqual([]);
+    });
+  });
 });

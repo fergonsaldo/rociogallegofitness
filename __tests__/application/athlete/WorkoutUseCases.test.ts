@@ -38,7 +38,7 @@ const mockRepo: jest.Mocked<IWorkoutRepository> = {
   getUnsyncedSessions: jest.fn(),
 };
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => jest.resetAllMocks());
 
 // ── startWorkoutSessionUseCase ────────────────────────────────────────────────
 describe('startWorkoutSessionUseCase', () => {
@@ -187,7 +187,6 @@ describe('finishWorkoutSessionUseCase (edge cases)', () => {
     const finished = { ...isoSession, status: 'completed' as const, finishedAt: new Date() };
     mockRepo.getSessionById.mockResolvedValueOnce(isoSession);
     mockRepo.finishSession.mockResolvedValue(finished);
-    mockRepo.getSessionById.mockResolvedValueOnce(finished);
 
     const result = await finishWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo);
     expect(result.totalVolumeKg).toBe(0);
@@ -199,7 +198,6 @@ describe('finishWorkoutSessionUseCase (edge cases)', () => {
     const finishedNoDate = { ...activeSession, status: 'completed' as const, finishedAt: undefined };
     mockRepo.getSessionById.mockResolvedValueOnce(activeSession);
     mockRepo.finishSession.mockResolvedValue(finishedNoDate);
-    mockRepo.getSessionById.mockResolvedValueOnce(finishedNoDate);
 
     const result = await finishWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo);
     expect(result.durationMinutes).toBe(0);
@@ -219,7 +217,6 @@ describe('finishWorkoutSessionUseCase (edge cases)', () => {
     const finished = { ...highRepsSession, status: 'completed' as const, finishedAt: new Date() };
     mockRepo.getSessionById.mockResolvedValueOnce(highRepsSession);
     mockRepo.finishSession.mockResolvedValue(finished);
-    mockRepo.getSessionById.mockResolvedValueOnce(finished);
 
     const result = await finishWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo);
     expect(result.exerciseSummaries[0].estimatedOneRepMaxKg).toBeUndefined();
@@ -233,5 +230,38 @@ describe('abandonWorkoutSessionUseCase (edge cases)', () => {
     await expect(
       abandonWorkoutSessionUseCase(ACTIVE_SESSION.id, mockRepo)
     ).rejects.toThrow();
+  });
+});
+
+// ── Branch coverage ───────────────────────────────────────────────────────────
+
+describe('logExerciseSetUseCase (branch coverage)', () => {
+  it('throws when session is not found', async () => {
+    mockRepo.getSessionById.mockResolvedValue(null);
+    const input = {
+      sessionId: UUID, exerciseId: EXERCISE_ID,
+      performance: { type: 'reps' as const, reps: 10, weightKg: 100 },
+      restAfterSeconds: 90,
+    };
+    await expect(logExerciseSetUseCase(input, mockRepo)).rejects.toThrow();
+  });
+});
+
+describe('finishWorkoutSessionUseCase (branch coverage)', () => {
+  it('throws when session is not found', async () => {
+    mockRepo.getSessionById.mockResolvedValue(null);
+    await expect(finishWorkoutSessionUseCase(UUID, mockRepo)).rejects.toThrow();
+  });
+});
+
+describe('abandonWorkoutSessionUseCase (branch coverage)', () => {
+  it('throws when session is not found', async () => {
+    mockRepo.getSessionById.mockResolvedValue(null);
+    await expect(abandonWorkoutSessionUseCase(UUID, mockRepo)).rejects.toThrow();
+  });
+
+  it('throws when session is not active', async () => {
+    mockRepo.getSessionById.mockResolvedValue({ ...ACTIVE_SESSION, status: 'completed' as const });
+    await expect(abandonWorkoutSessionUseCase(UUID, mockRepo)).rejects.toThrow();
   });
 });

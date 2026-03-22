@@ -198,7 +198,6 @@ describe('RoutineRemoteRepository', () => {
         .rejects.toMatchObject({ message: 'Delete failed' });
     });
   });
-});
 
   // ── create ──────────────────────────────────────────────────────────────────
 
@@ -275,6 +274,25 @@ describe('RoutineRemoteRepository', () => {
     it('throws when update fails', async () => {
       supabase.from.mockReturnValueOnce(mockChain({ error: new Error('Update failed') }));
       await expect(repo.update(ROUTINE_ID, { name: 'X' })).rejects.toThrow('Update failed');
+    });
+  });
+
+  // ── null data branch coverage ─────────────────────────────────────────────
+
+  describe('getByCoachId (branch coverage)', () => {
+    it('handles day with null routine_exercises gracefully', async () => {
+      const rowNullExercises = {
+        ...RAW_ROUTINE_ROW,
+        routine_days: [{ id: 'day-0001', routine_id: ROUTINE_ID, day_number: 1, name: 'Day 1', routine_exercises: null }],
+      };
+      supabase.from.mockReturnValue(mockChain({ data: [rowNullExercises], error: null }));
+      const result = await repo.getByCoachId(COACH_ID);
+      expect(result[0].days[0].exercises).toEqual([]);
+    });
+
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getByCoachId(COACH_ID)).toEqual([]);
     });
   });
 

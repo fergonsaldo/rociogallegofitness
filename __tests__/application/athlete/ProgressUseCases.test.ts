@@ -192,7 +192,7 @@ describe('saveProgressRecordsUseCase (edge cases)', () => {
       }],
     };
     mockProgressRepo.create.mockResolvedValue({
-      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_ID,
+      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_A,
       sessionId: SESSION_WITH_SETS.id, recordedAt: new Date(),
       totalVolumeKg: 800, bestWeightKg: 20, bestReps: 40,
       estimatedOneRepMaxKg: undefined,
@@ -217,13 +217,56 @@ describe('saveProgressRecordsUseCase (edge cases)', () => {
       }],
     };
     mockProgressRepo.create.mockResolvedValue({
-      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_ID,
+      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_A,
       sessionId: SESSION_WITH_SETS.id, recordedAt: new Date(),
       totalVolumeKg: 0,
     });
     await saveProgressRecordsUseCase(isoSession, mockProgressRepo);
     expect(mockProgressRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({ totalVolumeKg: 0, bestWeightKg: undefined })
+    );
+  });
+});
+
+// ── Branch coverage ───────────────────────────────────────────────────────────
+
+describe('getWorkoutHistoryUseCase (branch coverage)', () => {
+  it('computes durationMinutes correctly when finishedAt is defined', async () => {
+    const start = new Date('2026-01-01T10:00:00Z');
+    const finish = new Date('2026-01-01T11:00:00Z');
+    const session = { ...SESSION_WITH_SETS, startedAt: start, finishedAt: finish };
+    mockWorkoutRepo.getSessionHistory.mockResolvedValue([session]);
+    const result = await getWorkoutHistoryUseCase(ATHLETE_ID, mockWorkoutRepo);
+    expect(result[0].durationMinutes).toBe(60);
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(getWorkoutHistoryUseCase('', mockWorkoutRepo)).rejects.toThrow();
+  });
+});
+
+describe('getPersonalBestsUseCase (branch coverage)', () => {
+  it('throws when athleteId is empty', async () => {
+    await expect(getPersonalBestsUseCase('', mockProgressRepo)).rejects.toThrow();
+  });
+});
+
+describe('saveProgressRecordsUseCase (branch coverage)', () => {
+  it('uses startedAt as recordedAt when finishedAt is undefined', async () => {
+    const sessionNoFinish = {
+      ...SESSION_WITH_SETS,
+      status: 'completed' as const,
+      finishedAt: undefined,
+    };
+    mockProgressRepo.create.mockResolvedValue({
+      id: 'rec-1', athleteId: ATHLETE_ID, exerciseId: EXERCISE_A,
+      sessionId: SESSION_WITH_SETS.id, recordedAt: new Date(),
+      totalVolumeKg: 100, bestWeightKg: 100, bestReps: 10,
+      estimatedOneRepMaxKg: 133,
+    });
+    await saveProgressRecordsUseCase(sessionNoFinish, mockProgressRepo);
+    expect(mockProgressRepo.create).toHaveBeenCalledWith(
+      expect.objectContaining({ recordedAt: sessionNoFinish.startedAt })
     );
   });
 });

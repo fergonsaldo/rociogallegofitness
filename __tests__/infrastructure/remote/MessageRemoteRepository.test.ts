@@ -246,7 +246,6 @@ describe('MessageRemoteRepository', () => {
       await expect(repo.getUnreadCount(COACH_ID)).rejects.toThrow('Conv error');
     });
   });
-});
 
   // ── getConversations ─────────────────────────────────────────────────────
 
@@ -329,4 +328,60 @@ describe('MessageRemoteRepository', () => {
 
       expect(result[0].id).toBe(CONV_2.id);
     });
+
+    it('sorts by createdAt when no lastMessageAt exists', async () => {
+      m.or.mockResolvedValue({ data: [CONV_WITH_JOINS], error: null });
+      m.order.mockResolvedValueOnce({ data: [], error: null });
+      m.is.mockResolvedValueOnce({ data: [], error: null });
+      const result = await repo.getConversations(COACH_ID);
+      expect(result).toHaveLength(1);
+    });
   });
+
+  // ── branch coverage ───────────────────────────────────────────────────────
+
+  describe('getOrCreateConversation (branch coverage)', () => {
+    it('throws when insert returns no data and no error', async () => {
+      m.maybeSingle.mockResolvedValue({ data: null, error: null });
+      m.eq.mockReturnValue({
+        ...m.chain,
+        eq: jest.fn().mockReturnValue({ ...m.chain, maybeSingle: m.maybeSingle }),
+      });
+      const singleMock = jest.fn().mockResolvedValue({ data: null, error: null });
+      m.select.mockReturnValue({ ...m.chain, single: singleMock });
+      m.insert.mockReturnValue({ select: m.select });
+      await expect(repo.getOrCreateConversation(COACH_ID, ATHLETE_ID)).rejects.toThrow('Failed to create conversation');
+    });
+  });
+
+  describe('getMessages (branch coverage)', () => {
+    it('handles null data gracefully', async () => {
+      m.order.mockResolvedValue({ data: null, error: null });
+      expect(await repo.getMessages(CONV_ID)).toEqual([]);
+    });
+  });
+
+  describe('sendMessage (branch coverage)', () => {
+    it('throws when insert returns null data with no error', async () => {
+      const singleMock = jest.fn().mockResolvedValue({ data: null, error: null });
+      m.select.mockReturnValue({ ...m.chain, single: singleMock });
+      m.insert.mockReturnValue({ select: m.select });
+      await expect(repo.sendMessage({ conversationId: CONV_ID, senderId: COACH_ID, body: 'Hi' }))
+        .rejects.toThrow('Failed to send message');
+    });
+  });
+
+  describe('getUnreadCount (branch coverage)', () => {
+    it('returns 0 when convRows is null', async () => {
+      m.or.mockResolvedValue({ data: null, error: null });
+      expect(await repo.getUnreadCount(COACH_ID)).toBe(0);
+    });
+
+    it('throws when unread count query fails', async () => {
+      m.or.mockResolvedValue({ data: [{ id: CONV_ID }], error: null });
+      m.is.mockResolvedValue({ count: null, error: { message: 'Count failed' } });
+      await expect(repo.getUnreadCount(COACH_ID)).rejects.toMatchObject({ message: 'Count failed' });
+    });
+  });
+
+});

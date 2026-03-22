@@ -158,4 +158,27 @@ describe('SyncService', () => {
       await expect(service.syncPendingSessions(ATHLETE_ID)).resolves.toBeUndefined();
     });
   });
+
+  // ── branch coverage ─────────────────────────────────────────────────────────
+
+  describe('syncPendingSessions (branch coverage)', () => {
+    it('syncs session with undefined finishedAt mapping to null', async () => {
+      (NetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: true });
+      const sessionNoFinish = { ...COMPLETED_SESSION, finishedAt: undefined };
+      mockGetUnsyncedSessions.mockResolvedValue([sessionNoFinish]);
+      mockMarkSynced.mockResolvedValue(undefined);
+      mockSupabaseSuccess();
+      await expect(service.syncPendingSessions(ATHLETE_ID)).resolves.toBeUndefined();
+      expect(mockMarkSynced).toHaveBeenCalledWith(SESSION_ID);
+    });
+
+    it('syncs session with undefined notes mapping to null', async () => {
+      (NetInfo.fetch as jest.Mock).mockResolvedValue({ isConnected: true });
+      const sessionNoNotes = { ...COMPLETED_SESSION, notes: undefined };
+      mockGetUnsyncedSessions.mockResolvedValue([sessionNoNotes]);
+      mockMarkSynced.mockResolvedValue(undefined);
+      mockSupabaseSuccess();
+      await expect(service.syncPendingSessions(ATHLETE_ID)).resolves.toBeUndefined();
+    });
+  });
 });

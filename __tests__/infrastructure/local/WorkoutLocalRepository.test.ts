@@ -19,10 +19,11 @@ const whereResult  = { then: (r: any) => Promise.resolve(undefined).then(r) };
 mockWhere.mockReturnValue(whereResult);
 mockSet.mockReturnValue({ where: mockWhere });
 
-// select chain: db.select().from().where().limit() | .orderBy().limit()
+// select chain: db.select().from().where().limit() | .orderBy().limit() | .orderBy() (thenable)
 mockLimit.mockResolvedValue([]);
-mockOrderBy.mockReturnValue({ limit: mockLimit });
-const whereChain = { limit: mockLimit, orderBy: mockOrderBy };
+const orderByResult = { limit: mockLimit, then: (r: any) => Promise.resolve([]).then(r) };
+mockOrderBy.mockReturnValue(orderByResult);
+const whereChain = { limit: mockLimit, orderBy: mockOrderBy, then: (r: any) => Promise.resolve([]).then(r) };
 mockWhere.mockReturnValue(whereResult); // update
 const fromChain  = { where: jest.fn().mockReturnValue(whereChain) };
 mockFrom.mockReturnValue(fromChain);
@@ -55,9 +56,10 @@ describe('WorkoutLocalRepository', () => {
     jest.clearAllMocks();
     mockValues.mockResolvedValue(undefined);
     mockLimit.mockResolvedValue([]);
+    mockOrderBy.mockReturnValue({ limit: mockLimit, then: (r: any) => Promise.resolve([]).then(r) });
     mockWhere.mockReturnValue(whereResult);
     mockSet.mockReturnValue({ where: mockWhere });
-    mockFrom.mockReturnValue({ where: jest.fn().mockReturnValue(whereChain) });
+    mockFrom.mockReturnValue({ where: jest.fn().mockReturnValue({ limit: mockLimit, orderBy: mockOrderBy, then: (r: any) => Promise.resolve([]).then(r) }) });
   });
 
   // ── startSession ────────────────────────────────────────────────────────────
@@ -180,12 +182,11 @@ describe('WorkoutLocalRepository', () => {
       };
       const setRow = {
         id: 'set-0001', sessionId: SESSION_ID, exerciseId: EXERCISE_ID,
-        setNumber: 1, performanceType: 'reps', reps: 10, weightKg: 50,
-        durationSeconds: null, completedAt: new Date().toISOString(),
+        setNumber: 1, setType: 'reps', reps: 10, weightKg: 50,
+        durationSeconds: null, restAfterSeconds: 90, completedAt: new Date().toISOString(),
       };
-      mockLimit
-        .mockResolvedValueOnce([sessionRow])
-        .mockResolvedValueOnce([setRow]);
+      mockLimit.mockResolvedValueOnce([sessionRow]);
+      mockOrderBy.mockReturnValueOnce({ limit: mockLimit, then: (r: any) => Promise.resolve([setRow]).then(r) });
 
       const repo = new WorkoutLocalRepository();
       const session = await repo.getActiveSession(ATHLETE_ID);
@@ -209,9 +210,7 @@ describe('WorkoutLocalRepository', () => {
         routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
         finishedAt: new Date().toISOString(), syncedAt: null,
       };
-      mockLimit
-        .mockResolvedValueOnce([sessionRow])
-        .mockResolvedValueOnce([]);
+      mockLimit.mockResolvedValueOnce([sessionRow]);
       const repo = new WorkoutLocalRepository();
       const history = await repo.getSessionHistory(ATHLETE_ID, 10);
       expect(history).toHaveLength(1);
@@ -226,9 +225,12 @@ describe('WorkoutLocalRepository', () => {
         routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
         finishedAt: new Date().toISOString(), syncedAt: null,
       };
-      mockLimit
-        .mockResolvedValueOnce([sessionRow])
-        .mockResolvedValueOnce([]);
+      mockFrom.mockReturnValueOnce({
+        where: jest.fn().mockReturnValue({
+          limit: mockLimit, orderBy: mockOrderBy,
+          then: (r: any) => Promise.resolve([sessionRow]).then(r),
+        }),
+      });
       const repo = new WorkoutLocalRepository();
       const unsynced = await repo.getUnsyncedSessions(ATHLETE_ID);
       expect(unsynced).toHaveLength(1);
@@ -242,9 +244,7 @@ describe('WorkoutLocalRepository', () => {
         routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
         finishedAt: new Date().toISOString(), syncedAt: null,
       };
-      mockLimit
-        .mockResolvedValueOnce([sessionRow])
-        .mockResolvedValueOnce([]);
+      mockLimit.mockResolvedValueOnce([sessionRow]);
       const repo = new WorkoutLocalRepository();
       const session = await repo.finishSession(SESSION_ID);
       expect(session.status).toBe('completed');
@@ -258,12 +258,59 @@ describe('WorkoutLocalRepository', () => {
         routineDayId: null, status: 'abandoned', startedAt: new Date().toISOString(),
         finishedAt: null, syncedAt: null,
       };
-      mockLimit
-        .mockResolvedValueOnce([sessionRow])
-        .mockResolvedValueOnce([]);
+      mockLimit.mockResolvedValueOnce([sessionRow]);
       const repo = new WorkoutLocalRepository();
       const session = await repo.abandonSession(SESSION_ID);
       expect(session.status).toBe('abandoned');
+    });
+  });
+
+  // ── branch coverage ───────────────────────────────────────────────────────
+
+  describe('getActiveSession (isometric set branch)', () => {
+    it('maps an isometric set correctly', async () => {
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'active', startedAt: new Date().toISOString(),
+        finishedAt: null, syncedAt: null,
+      };
+      const isoSetRow = {
+        id: 'set-iso', sessionId: SESSION_ID, exerciseId: EXERCISE_ID,
+        setNumber: 1, setType: 'isometric', reps: null, weightKg: null,
+        durationSeconds: 30, restAfterSeconds: 60, completedAt: new Date().toISOString(),
+      };
+      // First limit call returns session, orderBy call returns iso set
+      mockLimit.mockResolvedValueOnce([sessionRow]);
+      mockOrderBy.mockReturnValueOnce({
+        limit: mockLimit,
+        then: (r: any) => Promise.resolve([isoSetRow]).then(r),
+      });
+      const repo = new WorkoutLocalRepository();
+      const session = await repo.getActiveSession(ATHLETE_ID);
+      expect(session!.sets[0].performance.type).toBe('isometric');
+    });
+  });
+
+  describe('mapSession (branch coverage)', () => {
+    it('maps finishedAt and syncedAt when defined', async () => {
+      const finishedAt = new Date().toISOString();
+      const syncedAt = new Date().toISOString();
+      const sessionRow = {
+        id: SESSION_ID, athleteId: ATHLETE_ID, routineId: null,
+        routineDayId: null, status: 'completed', startedAt: new Date().toISOString(),
+        finishedAt, syncedAt,
+      };
+      // First: orderBy().limit() for getSessionHistory → returns [sessionRow]
+      mockLimit.mockResolvedValueOnce([sessionRow]);
+      // Second: getSetsForSession → where().orderBy() resolves [] via then
+      mockOrderBy.mockReturnValueOnce({
+        limit: mockLimit,
+        then: (r: any) => Promise.resolve([]).then(r),
+      });
+      const repo = new WorkoutLocalRepository();
+      const history = await repo.getSessionHistory(ATHLETE_ID);
+      expect(history[0].finishedAt).toBeInstanceOf(Date);
+      expect(history[0].syncedAt).toBeInstanceOf(Date);
     });
   });
 });

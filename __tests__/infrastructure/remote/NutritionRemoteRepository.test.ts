@@ -187,5 +187,122 @@ describe('NutritionRemoteRepository', () => {
       const result = await repo.getLogEntriesForRange(ATHLETE_ID, new Date('2026-01-01'), new Date('2026-01-07'));
       expect(result).toHaveLength(1);
     });
+
+    it('returns empty array when no entries in range', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: [], error: null }));
+      expect(await repo.getLogEntriesForRange(ATHLETE_ID, new Date('2026-01-01'), new Date('2026-01-07'))).toEqual([]);
+    });
+
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'Query failed' } }));
+      await expect(repo.getLogEntriesForRange(ATHLETE_ID, new Date('2026-01-01'), new Date('2026-01-07')))
+        .rejects.toMatchObject({ message: 'Query failed' });
+    });
+  });
+
+  // ── createPlan ────────────────────────────────────────────────────────────
+
+  describe('createPlan', () => {
+    const PLAN_ROW = {
+      id: PLAN_ID, coach_id: COACH_ID, name: 'Plan de volumen',
+      description: 'Desc', calories: 2800, protein_g: 180, carbs_g: 320, fat_g: 80,
+      created_at: NOW, updated_at: NOW,
+    };
+
+    const VALID_INPUT = {
+      coachId: COACH_ID,
+      name: 'Plan de volumen',
+      description: 'Desc',
+      dailyTargetMacros: { calories: 2800, proteinG: 180, carbsG: 320, fatG: 80 },
+      meals: [{
+        name: 'Desayuno', order: 1,
+        targetMacros: { calories: 600, proteinG: 40, carbsG: 70, fatG: 15 },
+      }],
+    };
+
+    it('creates plan with meals and returns the mapped plan', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: PLAN_ROW, error: null }))
+        .mockReturnValueOnce(mockChain({ error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_PLAN_ROW, error: null }));
+      const result = await repo.createPlan(VALID_INPUT);
+      expect(result.id).toBe(PLAN_ID);
+      expect(result.meals).toHaveLength(1);
+    });
+
+    it('throws when plan insert fails', async () => {
+      supabase.from.mockReturnValueOnce(mockChain({ data: null, error: { message: 'Insert failed' } }));
+      await expect(repo.createPlan(VALID_INPUT)).rejects.toMatchObject({ message: 'Insert failed' });
+    });
+
+    it('throws when meals insert fails', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: PLAN_ROW, error: null }))
+        .mockReturnValueOnce(mockChain({ error: { message: 'Meals failed' } }));
+      await expect(repo.createPlan(VALID_INPUT)).rejects.toMatchObject({ message: 'Meals failed' });
+    });
+
+    it('throws when getPlanById returns null after creation', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: PLAN_ROW, error: null }))
+        .mockReturnValueOnce(mockChain({ error: null }))
+        .mockReturnValueOnce(mockChain({ data: null, error: { code: 'PGRST116' } }));
+      await expect(repo.createPlan(VALID_INPUT)).rejects.toThrow('Plan not found after creation');
+    });
+  });
+
+  // ── getAssignedPlan with data ─────────────────────────────────────────────
+
+  describe('getAssignedPlan (branch coverage)', () => {
+    it('returns mapped plan when athlete has an assigned plan', async () => {
+      const joinRow = { nutrition_plans: RAW_PLAN_ROW };
+      supabase.from.mockReturnValue(mockChain({ data: joinRow, error: null }));
+      const result = await repo.getAssignedPlan(ATHLETE_ID);
+      expect(result?.id).toBe(PLAN_ID);
+    });
+
+    it('returns null when nutrition_plans is null in join', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: { nutrition_plans: null }, error: null }));
+      expect(await repo.getAssignedPlan(ATHLETE_ID)).toBeNull();
+    });
+  });
+
+  // ── unassignFromAthlete error ─────────────────────────────────────────────
+
+  describe('unassignFromAthlete (branch coverage)', () => {
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ error: { message: 'Delete failed' } }));
+      await expect(repo.unassignFromAthlete(PLAN_ID, ATHLETE_ID)).rejects.toMatchObject({ message: 'Delete failed' });
+    });
+  });
+
+  // ── getLogEntriesForDay null data ─────────────────────────────────────────
+
+  describe('getLogEntriesForDay (branch coverage)', () => {
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'Query failed' } }));
+      await expect(repo.getLogEntriesForDay(ATHLETE_ID, new Date())).rejects.toMatchObject({ message: 'Query failed' });
+    });
+
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getLogEntriesForDay(ATHLETE_ID, new Date())).toEqual([]);
+    });
+  });
+
+  // ── getPlansByCoach null data ─────────────────────────────────────────────
+
+  describe('getPlansByCoach (branch coverage)', () => {
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getPlansByCoach(COACH_ID)).toEqual([]);
+    });
+
+    it('handles plan with null meals array', async () => {
+      const rowNoMeals = { ...RAW_PLAN_ROW, meals: null };
+      supabase.from.mockReturnValue(mockChain({ data: [rowNoMeals], error: null }));
+      const result = await repo.getPlansByCoach(COACH_ID);
+      expect(result[0].meals).toEqual([]);
+    });
   });
 });
