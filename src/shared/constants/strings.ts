@@ -79,6 +79,27 @@ export const Strings = {
   alertDeleteConfirm: 'Eliminar',
 
   // ── Clientes (Coach) ──────────────────────────────────────────────────────
+  tabClientsActive: 'Activos',
+  tabClientsArchived: 'Archivados',
+
+  alertArchiveClientTitle: 'Archivar cliente',
+  alertArchiveClientMessage: (name: string) =>
+    `¿Archivar a ${name}? Podrás restaurarlo desde la pestaña Archivados.`,
+  alertArchiveCancel: 'Cancelar',
+  alertArchiveConfirm: 'Archivar',
+
+  alertRestoreClientTitle: 'Restaurar cliente',
+  alertRestoreClientMessage: (name: string) => `¿Restaurar a ${name} como cliente activo?`,
+  alertRestoreCancel: 'Cancelar',
+  alertRestoreConfirm: 'Restaurar',
+
+  alertDeleteClientTitle: 'Eliminar cliente',
+  alertDeleteClientMessage: (name: string) =>
+    `¿Eliminar a ${name} definitivamente? Esta acción no se puede deshacer.`,
+
+  errorFailedArchiveClient: 'Error al archivar el cliente',
+  errorFailedRestoreClient: 'Error al restaurar el cliente',
+
   labelRoutines: 'Rutinas',
   labelSessions: 'Sesiones',
   labelLastWorkout: 'Último entrenamiento',

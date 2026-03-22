@@ -6,6 +6,7 @@ import {
   AthleteSession,
   CoachDashboardSummary,
   RecentAthleteSession,
+  ClientStatus,
 } from '@/domain/repositories/ICoachRepository';
 
 export class CoachRemoteRepository implements ICoachRepository {
@@ -69,6 +70,16 @@ export class CoachRemoteRepository implements ICoachRepository {
       .from('routine_assignments')
       .delete()
       .eq('routine_id', routineId)
+      .eq('athlete_id', athleteId);
+
+    if (error) throw error;
+  }
+
+  async updateAthleteStatus(coachId: string, athleteId: string, status: ClientStatus): Promise<void> {
+    const { error } = await supabase
+      .from('coach_athletes')
+      .update({ status })
+      .eq('coach_id', coachId)
       .eq('athlete_id', athleteId);
 
     if (error) throw error;

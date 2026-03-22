@@ -3,6 +3,8 @@
  * Covers data about the coach's athletes and their activity.
  */
 
+export type ClientStatus = 'active' | 'archived';
+
 export interface CoachAthlete {
   id: string;
   fullName: string;
@@ -58,4 +60,7 @@ export interface ICoachRepository {
     since: Date,
     sessionLimit: number,
   ): Promise<CoachDashboardSummary>;
+
+  /** Updates the status of an athlete relationship (active / archived) */
+  updateAthleteStatus(coachId: string, athleteId: string, status: ClientStatus): Promise<void>;
 }

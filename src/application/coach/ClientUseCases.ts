@@ -9,6 +9,7 @@ import {
   AthleteRoutineAssignment,
   AthleteSession,
   CoachDashboardSummary,
+  ClientStatus,
 } from '@/domain/repositories/ICoachRepository';
 
 export interface AthleteDetail {
@@ -50,6 +51,26 @@ export async function unassignRoutineFromAthleteUseCase(
   if (!routineId) throw new Error('routineId is required');
   if (!athleteId) throw new Error('athleteId is required');
   return repo.unassignRoutine(routineId, athleteId);
+}
+
+export async function archiveAthleteUseCase(
+  coachId: string,
+  athleteId: string,
+  repo: ICoachRepository,
+): Promise<void> {
+  if (!coachId) throw new Error('coachId is required');
+  if (!athleteId) throw new Error('athleteId is required');
+  return repo.updateAthleteStatus(coachId, athleteId, 'archived');
+}
+
+export async function restoreAthleteUseCase(
+  coachId: string,
+  athleteId: string,
+  repo: ICoachRepository,
+): Promise<void> {
+  if (!coachId) throw new Error('coachId is required');
+  if (!athleteId) throw new Error('athleteId is required');
+  return repo.updateAthleteStatus(coachId, athleteId, 'active');
 }
 
 export async function getCoachDashboardSummaryUseCase(

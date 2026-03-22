@@ -7,7 +7,7 @@ import {
   getAthleteDetailUseCase,
   unassignRoutineFromAthleteUseCase,
 } from '../../../src/application/coach/ClientUseCases';
-import { ICoachRepository, CoachAthlete, AthleteRoutineAssignment, AthleteSession } from '../../../src/domain/repositories/ICoachRepository';
+import { ICoachRepository, CoachAthlete, AthleteRoutineAssignment, AthleteSession, ClientStatus } from '../../../src/domain/repositories/ICoachRepository';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -34,6 +34,7 @@ const mockRepo: jest.Mocked<ICoachRepository> = {
   getAthleteSessions:     jest.fn(),
   unassignRoutine:        jest.fn(),
   getDashboardSummary:    jest.fn(),
+  updateAthleteStatus:    jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -132,6 +133,64 @@ describe('unassignRoutineFromAthleteUseCase', () => {
     mockRepo.unassignRoutine.mockRejectedValue(new Error('Delete failed'));
     await expect(unassignRoutineFromAthleteUseCase(ROUTINE_ID, ATHLETE_ID, mockRepo))
       .rejects.toThrow('Delete failed');
+  });
+});
+
+// ── archiveAthleteUseCase ─────────────────────────────────────────────────────
+
+import { archiveAthleteUseCase, restoreAthleteUseCase } from '../../../src/application/coach/ClientUseCases';
+
+describe('archiveAthleteUseCase', () => {
+  it('calls repository.updateAthleteStatus with archived', async () => {
+    mockRepo.updateAthleteStatus.mockResolvedValue(undefined);
+    await archiveAthleteUseCase(COACH_ID, ATHLETE_ID, mockRepo);
+    expect(mockRepo.updateAthleteStatus).toHaveBeenCalledWith(COACH_ID, ATHLETE_ID, 'archived');
+  });
+
+  it('throws when coachId is empty', async () => {
+    await expect(archiveAthleteUseCase('', ATHLETE_ID, mockRepo))
+      .rejects.toThrow('coachId is required');
+    expect(mockRepo.updateAthleteStatus).not.toHaveBeenCalled();
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(archiveAthleteUseCase(COACH_ID, '', mockRepo))
+      .rejects.toThrow('athleteId is required');
+    expect(mockRepo.updateAthleteStatus).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.updateAthleteStatus.mockRejectedValue(new Error('RLS error'));
+    await expect(archiveAthleteUseCase(COACH_ID, ATHLETE_ID, mockRepo))
+      .rejects.toThrow('RLS error');
+  });
+});
+
+// ── restoreAthleteUseCase ─────────────────────────────────────────────────────
+
+describe('restoreAthleteUseCase', () => {
+  it('calls repository.updateAthleteStatus with active', async () => {
+    mockRepo.updateAthleteStatus.mockResolvedValue(undefined);
+    await restoreAthleteUseCase(COACH_ID, ATHLETE_ID, mockRepo);
+    expect(mockRepo.updateAthleteStatus).toHaveBeenCalledWith(COACH_ID, ATHLETE_ID, 'active');
+  });
+
+  it('throws when coachId is empty', async () => {
+    await expect(restoreAthleteUseCase('', ATHLETE_ID, mockRepo))
+      .rejects.toThrow('coachId is required');
+    expect(mockRepo.updateAthleteStatus).not.toHaveBeenCalled();
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(restoreAthleteUseCase(COACH_ID, '', mockRepo))
+      .rejects.toThrow('athleteId is required');
+    expect(mockRepo.updateAthleteStatus).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.updateAthleteStatus.mockRejectedValue(new Error('Update failed'));
+    await expect(restoreAthleteUseCase(COACH_ID, ATHLETE_ID, mockRepo))
+      .rejects.toThrow('Update failed');
   });
 });
 

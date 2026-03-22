@@ -177,6 +177,33 @@ describe('CoachRemoteRepository', () => {
     });
   });
 
+  // ── updateAthleteStatus ──────────────────────────────────────────────────
+
+  describe('updateAthleteStatus', () => {
+    function mockUpdateChain(finalResult: object) {
+      const chain: any = {};
+      ['update', 'eq'].forEach((m) => { chain[m] = jest.fn(() => chain); });
+      chain.then = (resolve: any) => Promise.resolve(finalResult).then(resolve);
+      return chain;
+    }
+
+    it('resolves without error when archiving an athlete', async () => {
+      supabase.from.mockReturnValue(mockUpdateChain({ error: null }));
+      await expect(repo.updateAthleteStatus(COACH_ID, ATHLETE_ID, 'archived')).resolves.toBeUndefined();
+    });
+
+    it('resolves without error when restoring an athlete', async () => {
+      supabase.from.mockReturnValue(mockUpdateChain({ error: null }));
+      await expect(repo.updateAthleteStatus(COACH_ID, ATHLETE_ID, 'active')).resolves.toBeUndefined();
+    });
+
+    it('throws when supabase returns an error', async () => {
+      supabase.from.mockReturnValue(mockUpdateChain({ error: { message: 'RLS error' } }));
+      await expect(repo.updateAthleteStatus(COACH_ID, ATHLETE_ID, 'archived'))
+        .rejects.toMatchObject({ message: 'RLS error' });
+    });
+  });
+
   // ── getDashboardSummary ───────────────────────────────────────────────────
 
   describe('getDashboardSummary', () => {

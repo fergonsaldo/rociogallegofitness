@@ -89,6 +89,16 @@ export type Database = {
   };
 };
 
+// ── coach_athletes ────────────────────────────────────────────────────────────
+export type ClientStatus = 'active' | 'archived';
+
+export interface CoachAthleteRow {
+  coach_id:    string;
+  athlete_id:  string;
+  assigned_at: string;
+  status:      ClientStatus;
+}
+
 // ── coach_exercises ───────────────────────────────────────────────────────────
 // Append this block to the Tables object in Database['public']['Tables']
 // (kept separate to avoid regenerating the full file)
