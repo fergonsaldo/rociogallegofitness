@@ -16,9 +16,9 @@ import {
 } from '../../../src/application/coach/ClientUseCases';
 import { ClientStatus } from '../../../src/domain/repositories/ICoachRepository';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Pure helpers ──────────────────────────────────────────────────────────────
 
-interface Athlete {
+export interface Athlete {
   id: string;
   email: string;
   full_name: string;
@@ -26,6 +26,24 @@ interface Athlete {
   assigned_at: string;
   status: ClientStatus;
 }
+
+export function filterAthletes(
+  athletes: Athlete[],
+  tab: ClientStatus,
+  query: string,
+): Athlete[] {
+  const q = query.trim().toLowerCase();
+  return athletes.filter((a) => {
+    if (a.status !== tab) return false;
+    if (!q) return true;
+    return (
+      a.full_name.toLowerCase().includes(q) ||
+      a.email.toLowerCase().includes(q)
+    );
+  });
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 interface AvailableAthlete {
   id: string;
@@ -50,6 +68,7 @@ export default function ClientsScreen() {
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ClientStatus>('active');
+  const [searchQuery, setSearchQuery] = useState('');
   const [modalMode, setModalMode] = useState<ModalMode | null>(null);
 
   // Search / link
@@ -70,7 +89,7 @@ export default function ClientsScreen() {
 
   // ── Derived state ──────────────────────────────────────────────────────────
 
-  const displayed = athletes.filter((a) => a.status === activeTab);
+  const displayed = filterAthletes(athletes, activeTab, searchQuery);
   const counts: Record<ClientStatus, number> = {
     active:   athletes.filter((a) => a.status === 'active').length,
     archived: athletes.filter((a) => a.status === 'archived').length,
@@ -424,7 +443,7 @@ export default function ClientsScreen() {
           <TouchableOpacity
             key={tab.key}
             style={[styles.tab, activeTab === tab.key && styles.tabSelected]}
-            onPress={() => setActiveTab(tab.key)}
+            onPress={() => { setActiveTab(tab.key); setSearchQuery(''); }}
             activeOpacity={0.7}
           >
             <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextSelected]}>
@@ -439,6 +458,20 @@ export default function ClientsScreen() {
         ))}
       </View>
 
+      {/* ── Buscador ── */}
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.searchInput}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder={Strings.clientsSearchPlaceholder}
+          placeholderTextColor={Colors.textMuted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          clearButtonMode="while-editing"
+        />
+      </View>
+
       {/* ── Lista ── */}
       {loading ? (
         <View style={styles.center}>
@@ -446,19 +479,31 @@ export default function ClientsScreen() {
         </View>
       ) : displayed.length === 0 ? (
         <View style={styles.center}>
-          <Text style={styles.emptyEmoji}>{activeTab === 'active' ? '👥' : '📦'}</Text>
-          <Text style={styles.emptyTitle}>
-            {activeTab === 'active' ? 'Sin clientes todavía' : 'Sin clientes archivados'}
-          </Text>
-          <Text style={styles.emptySubtitle}>
-            {activeTab === 'active'
-              ? 'Añade atletas para empezar a gestionarlos'
-              : 'Los clientes archivados aparecerán aquí'}
-          </Text>
-          {activeTab === 'active' && (
-            <TouchableOpacity style={styles.emptyBtn} onPress={() => setModalMode('menu')}>
-              <Text style={styles.emptyBtnText}>Añadir primer cliente</Text>
-            </TouchableOpacity>
+          {searchQuery.trim() ? (
+            <>
+              <Text style={styles.emptyEmoji}>🔍</Text>
+              <Text style={styles.emptyTitle}>{Strings.clientsNoResults}</Text>
+              <Text style={styles.emptySubtitle}>
+                {Strings.clientsNoResultsSubtitle(searchQuery.trim())}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.emptyEmoji}>{activeTab === 'active' ? '👥' : '📦'}</Text>
+              <Text style={styles.emptyTitle}>
+                {activeTab === 'active' ? 'Sin clientes todavía' : 'Sin clientes archivados'}
+              </Text>
+              <Text style={styles.emptySubtitle}>
+                {activeTab === 'active'
+                  ? 'Añade atletas para empezar a gestionarlos'
+                  : 'Los clientes archivados aparecerán aquí'}
+              </Text>
+              {activeTab === 'active' && (
+                <TouchableOpacity style={styles.emptyBtn} onPress={() => setModalMode('menu')}>
+                  <Text style={styles.emptyBtnText}>Añadir primer cliente</Text>
+                </TouchableOpacity>
+              )}
+            </>
           )}
         </View>
       ) : (
@@ -567,6 +612,22 @@ const styles = StyleSheet.create({
   tabBadgeSelected:     { backgroundColor: Colors.primarySubtle },
   tabBadgeText:         { fontSize: FontSize.xs, fontWeight: '700', color: Colors.textSecondary },
   tabBadgeTextSelected: { color: Colors.primary },
+
+  // ── Search bar ────────────────────────────────────────────────────────────
+  searchBar: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.sm,
+  },
+  searchInput: {
+    backgroundColor: Colors.surface,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    fontSize: FontSize.sm,
+    color: Colors.textPrimary,
+  },
 
   // ── List ───────────────────────────────────────────────────────────────────
   list:                { paddingHorizontal: Spacing.lg, gap: Spacing.md, paddingBottom: Spacing.xl },

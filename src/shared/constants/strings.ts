@@ -79,6 +79,10 @@ export const Strings = {
   alertDeleteConfirm: 'Eliminar',
 
   // ── Clientes (Coach) ──────────────────────────────────────────────────────
+  clientsSearchPlaceholder: 'Buscar por nombre o email...',
+  clientsNoResults: 'Sin resultados',
+  clientsNoResultsSubtitle: (query: string) => `No hay clientes que coincidan con "${query}"`,
+
   tabClientsActive: 'Activos',
   tabClientsArchived: 'Archivados',
 
