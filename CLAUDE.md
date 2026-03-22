@@ -44,6 +44,9 @@ Si no estás seguro de cómo resolver algo, dilo explícitamente antes de propon
 **Gestión de contexto:**
 Si la conversación es larga y puedes haber perdido contexto de decisiones anteriores, indícalo antes de implementar. No asumas que recuerdas decisiones tomadas muchos mensajes atrás.
 
+**Tras compactación de memoria:**
+Cada vez que el sistema compacte la conversación (context compaction), vuelve a leer este fichero `CLAUDE.md` y el `BACKLOG.md` antes de continuar. La compactación puede eliminar decisiones de diseño, acuerdos o contexto de historia que son necesarios para continuar correctamente.
+
 
 ## RESTRICCIONES DE TRABAJO
 
