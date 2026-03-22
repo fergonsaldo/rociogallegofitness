@@ -2,6 +2,21 @@
 
 ## ✅ Completado
 
+#### RF-E2-03a — Métricas disponibles en tarjeta de cliente
+
+**Implementado:**
+- `Athlete` extendido con `lastSessionAt: Date | null` y `routineCount: number`
+- `fetchAthletes` hace bulk queries paralelas via `Promise.all` (sin N+1)
+- `formatLastActivity()` exportada como función pura (Hoy/Ayer/Hace N días/Hace N sem./fecha)
+- Tarjeta muestra fila de métricas: ⚡ última actividad + 📋 nº rutinas
+- `linkAthlete` y `createAthlete` inicializan campos con valores neutros
+- Strings centralizados: `clientsLastActivity*`, `clientsRoutineCount`
+
+**Métricas finales:**
+- Test Suites: 4/4 ✅ | Tests: 82/82 ✅
+
+---
+
 #### RF-E2-02 — Búsqueda de clientes
 
 **Implementado:**
@@ -157,15 +172,15 @@
 
 ---
 
-#### RF-E2-03 (P0) Tabla de clientes con métricas clave
-**Requisito:** Exponer columnas de estado operativo (plan, cumplimiento, actividad, pagos).
+#### RF-E2-03b (P1) Métricas avanzadas en tarjeta de cliente
+**Requisito:** Exponer columnas de estado operativo adicionales (plan, cumplimiento, pagos, etiquetas).
 
 **Criterios de aceptación:**
-- Columnas visibles: Cliente, Etiquetas, Profesionales, Activación, Plan, Estado plan, Último pago, Cumplimiento, Última actividad.
+- Columnas visibles: Plan activo, Estado plan, Último pago, Cumplimiento, Etiquetas.
+- Requiere schema de pagos y planes en Supabase.
 - Soporte de ordenación en columnas permitidas.
-- Soporte de selección múltiple mediante checkbox.
 
-**Dependencia de plan:** No observada.
+**Dependencia de plan:** Requiere RF-E2-05 (etiquetas) y schema de pagos.
 
 ---
 
@@ -515,4 +530,4 @@
 
 ---
 
-_Última actualización: 2026-03-22 — RF-E2-02 cerrado. Próxima: RF-E2-03 (tabla de clientes con métricas clave)._
+_Última actualización: 2026-03-22 — RF-E2-03a cerrado. Próxima: RF-E2-04 (comunidad por grupos) o RF-E2-05 (etiquetas de clientes)._
