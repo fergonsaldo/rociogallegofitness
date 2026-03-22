@@ -25,6 +25,18 @@ export interface Athlete {
   avatar_url?: string;
   assigned_at: string;
   status: ClientStatus;
+  lastSessionAt: Date | null;
+  routineCount: number;
+}
+
+export function formatLastActivity(date: Date | null): string {
+  if (!date) return Strings.clientsLastActivityNever;
+  const diffDays = Math.floor((Date.now() - date.getTime()) / 86_400_000);
+  if (diffDays === 0) return Strings.clientsLastActivityToday;
+  if (diffDays === 1) return Strings.clientsLastActivityYesterday;
+  if (diffDays < 7)  return Strings.clientsLastActivityDaysAgo(diffDays);
+  if (diffDays < 30) return Strings.clientsLastActivityWeeksAgo(Math.floor(diffDays / 7));
+  return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 }
 
 export function filterAthletes(
@@ -106,13 +118,54 @@ export default function ClientsScreen() {
         .eq('coach_id', user!.id)
         .order('assigned_at', { ascending: false });
       if (error) throw error;
-      setAthletes((data ?? []).map((row: any) => ({
-        id:          row.users.id,
-        email:       row.users.email,
-        full_name:   row.users.full_name,
-        avatar_url:  row.users.avatar_url,
-        assigned_at: row.assigned_at,
+
+      const base = (data ?? []).map((row: any) => ({
+        id:          row.users.id as string,
+        email:       row.users.email as string,
+        full_name:   row.users.full_name as string,
+        avatar_url:  row.users.avatar_url as string | undefined,
+        assigned_at: row.assigned_at as string,
         status:      row.status as ClientStatus,
+        lastSessionAt: null as Date | null,
+        routineCount:  0,
+      }));
+
+      if (base.length === 0) {
+        setAthletes([]);
+        return;
+      }
+
+      const ids = base.map((a) => a.id);
+
+      const [{ data: sessionRows }, { data: routineRows }] = await Promise.all([
+        supabase
+          .from('workout_sessions')
+          .select('athlete_id, started_at')
+          .in('athlete_id', ids)
+          .eq('status', 'completed')
+          .order('started_at', { ascending: false }),
+        supabase
+          .from('routine_assignments')
+          .select('athlete_id')
+          .in('athlete_id', ids),
+      ]);
+
+      const lastSessionMap = new Map<string, Date>();
+      (sessionRows ?? []).forEach((row: any) => {
+        if (!lastSessionMap.has(row.athlete_id)) {
+          lastSessionMap.set(row.athlete_id, new Date(row.started_at));
+        }
+      });
+
+      const routineCountMap = new Map<string, number>();
+      (routineRows ?? []).forEach((row: any) => {
+        routineCountMap.set(row.athlete_id, (routineCountMap.get(row.athlete_id) ?? 0) + 1);
+      });
+
+      setAthletes(base.map((a) => ({
+        ...a,
+        lastSessionAt: lastSessionMap.get(a.id) ?? null,
+        routineCount:  routineCountMap.get(a.id) ?? 0,
       })));
     } catch {
     } finally {
@@ -216,7 +269,7 @@ export default function ClientsScreen() {
         .insert({ coach_id: user!.id, athlete_id: athlete.id, status: 'active' });
       if (error) throw error;
       setAthletes((prev) => [
-        { ...athlete, assigned_at: new Date().toISOString(), status: 'active' },
+        { ...athlete, assigned_at: new Date().toISOString(), status: 'active', lastSessionAt: null, routineCount: 0 },
         ...prev,
       ]);
       closeModal();
@@ -268,6 +321,7 @@ export default function ClientsScreen() {
       setAthletes((prev) => [{
         id: newUserId, email: newEmail.trim(), full_name: newName.trim(),
         assigned_at: new Date().toISOString(), status: 'active',
+        lastSessionAt: null, routineCount: 0,
       }, ...prev]);
 
       closeModal();
@@ -541,11 +595,15 @@ export default function ClientsScreen() {
                   {item.full_name}
                 </Text>
                 <Text style={styles.athleteEmail}>{item.email}</Text>
-                <Text style={styles.assignedAt}>
-                  Añadido {new Date(item.assigned_at).toLocaleDateString('es', {
-                    month: 'short', day: 'numeric', year: 'numeric',
-                  })}
-                </Text>
+                <View style={styles.metricsRow}>
+                  <Text style={styles.metricText}>
+                    ⚡ {formatLastActivity(item.lastSessionAt)}
+                  </Text>
+                  <Text style={styles.metricSep}>·</Text>
+                  <Text style={styles.metricText}>
+                    📋 {Strings.clientsRoutineCount(item.routineCount)}
+                  </Text>
+                </View>
               </View>
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
@@ -639,7 +697,9 @@ const styles = StyleSheet.create({
   athleteName:         { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary },
   athleteNameArchived: { color: Colors.textSecondary },
   athleteEmail:        { fontSize: FontSize.xs, color: Colors.textSecondary },
-  assignedAt:          { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
+  metricsRow:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  metricText:          { fontSize: FontSize.xs, color: Colors.textMuted },
+  metricSep:           { fontSize: FontSize.xs, color: Colors.borderLight },
   chevron:             { fontSize: 22, color: Colors.textMuted },
 
   // ── Empty state ────────────────────────────────────────────────────────────

@@ -79,6 +79,13 @@ export const Strings = {
   alertDeleteConfirm: 'Eliminar',
 
   // ── Clientes (Coach) ──────────────────────────────────────────────────────
+  clientsLastActivityNever: 'Sin actividad',
+  clientsLastActivityToday: 'Hoy',
+  clientsLastActivityYesterday: 'Ayer',
+  clientsLastActivityDaysAgo: (d: number) => `Hace ${d} días`,
+  clientsLastActivityWeeksAgo: (w: number) => `Hace ${w} sem.`,
+  clientsRoutineCount: (n: number) => `${n} ${n === 1 ? 'rutina' : 'rutinas'}`,
+
   clientsSearchPlaceholder: 'Buscar por nombre o email...',
   clientsNoResults: 'Sin resultados',
   clientsNoResultsSubtitle: (query: string) => `No hay clientes que coincidan con "${query}"`,

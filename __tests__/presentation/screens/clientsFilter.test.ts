@@ -3,16 +3,18 @@
  * Pure function extracted from clients/index.tsx
  */
 
-import { filterAthletes, Athlete } from '../../../app/(coach)/clients/index';
+import { filterAthletes, formatLastActivity, Athlete } from '../../../app/(coach)/clients/index';
 
 const active = (overrides: Partial<Athlete> = {}): Athlete => ({
   id: 'a1', email: 'ana@test.com', full_name: 'Ana García',
-  assigned_at: '2026-01-01', status: 'active', ...overrides,
+  assigned_at: '2026-01-01', status: 'active',
+  lastSessionAt: null, routineCount: 0, ...overrides,
 });
 
 const archived = (overrides: Partial<Athlete> = {}): Athlete => ({
   id: 'a2', email: 'bob@test.com', full_name: 'Bob Martín',
-  assigned_at: '2026-01-02', status: 'archived', ...overrides,
+  assigned_at: '2026-01-02', status: 'archived',
+  lastSessionAt: null, routineCount: 0, ...overrides,
 });
 
 const ATHLETES: Athlete[] = [
@@ -90,5 +92,42 @@ describe('filterAthletes — search query', () => {
     const result = filterAthletes(ATHLETES, 'active', 'arc');
     expect(result).toHaveLength(1);
     expect(result[0].full_name).toBe('Ana García');
+  });
+});
+
+describe('formatLastActivity', () => {
+  const DAY_MS = 86_400_000;
+
+  it('returns "Sin actividad" for null', () => {
+    expect(formatLastActivity(null)).toBe('Sin actividad');
+  });
+
+  it('returns "Hoy" for a date within the current day', () => {
+    const now = new Date(Date.now() - 1000 * 60 * 30); // 30 min ago
+    expect(formatLastActivity(now)).toBe('Hoy');
+  });
+
+  it('returns "Ayer" for a date 1 day ago', () => {
+    const yesterday = new Date(Date.now() - DAY_MS);
+    expect(formatLastActivity(yesterday)).toBe('Ayer');
+  });
+
+  it('returns "Hace N días" for 2–6 days ago', () => {
+    const threeDaysAgo = new Date(Date.now() - 3 * DAY_MS);
+    expect(formatLastActivity(threeDaysAgo)).toBe('Hace 3 días');
+  });
+
+  it('returns "Hace N sem." for 7–29 days ago', () => {
+    const twoWeeksAgo = new Date(Date.now() - 14 * DAY_MS);
+    expect(formatLastActivity(twoWeeksAgo)).toBe('Hace 2 sem.');
+  });
+
+  it('returns a localised date string for dates 30+ days ago', () => {
+    const oldDate = new Date('2025-01-15T12:00:00.000Z');
+    const result = formatLastActivity(oldDate);
+    // Should be a non-empty locale string, not one of the short labels
+    expect(result).not.toBe('Sin actividad');
+    expect(result).not.toMatch(/^Hace/);
+    expect(result.length).toBeGreaterThan(0);
   });
 });
