@@ -26,7 +26,7 @@ const RAW_SESSION_ROW = {
 
 function mockChain(finalResult: object) {
   const chain: any = {};
-  ['select','eq','order','limit','delete'].forEach((m) => { chain[m] = jest.fn(() => chain); });
+  ['select','eq','order','limit','delete','in','gte'].forEach((m) => { chain[m] = jest.fn(() => chain); });
   chain.then = (resolve: any) => Promise.resolve(finalResult).then(resolve);
   return chain;
 }
@@ -36,7 +36,7 @@ describe('CoachRemoteRepository', () => {
 
   beforeEach(() => {
     repo = new CoachRemoteRepository();
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
   // ── getAthletes ─────────────────────────────────────────────────────────────
@@ -174,6 +174,132 @@ describe('CoachRemoteRepository', () => {
     it('handles null data gracefully', async () => {
       supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
       expect(await repo.getAthleteSessions(ATHLETE_ID, 10)).toEqual([]);
+    });
+  });
+
+  // ── getDashboardSummary ───────────────────────────────────────────────────
+
+  describe('getDashboardSummary', () => {
+    const SINCE = new Date('2024-01-01T00:00:00.000Z');
+
+    const RAW_ATHLETE_ROWS = [
+      { users: { id: ATHLETE_ID, full_name: 'Ana García' } },
+    ];
+
+    const RAW_SESSION_ROWS = [
+      { id: 'sess-001', athlete_id: ATHLETE_ID, started_at: NOW, status: 'completed' },
+    ];
+
+    const RAW_ACTIVE_ROWS = [
+      { athlete_id: ATHLETE_ID },
+    ];
+
+    it('returns correct summary when coach has athletes and sessions', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: RAW_ATHLETE_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_SESSION_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_ACTIVE_ROWS, error: null }));
+
+      const result = await repo.getDashboardSummary(COACH_ID, SINCE, 5);
+
+      expect(result.totalAthletes).toBe(1);
+      expect(result.activeAthletesThisWeek).toBe(1);
+      expect(result.recentSessions).toHaveLength(1);
+      expect(result.recentSessions[0].sessionId).toBe('sess-001');
+      expect(result.recentSessions[0].athleteId).toBe(ATHLETE_ID);
+      expect(result.recentSessions[0].athleteName).toBe('Ana García');
+      expect(result.recentSessions[0].startedAt).toBeInstanceOf(Date);
+      expect(result.recentSessions[0].status).toBe('completed');
+    });
+
+    it('returns zero summary when coach has no athletes', async () => {
+      supabase.from.mockReturnValueOnce(mockChain({ data: [], error: null }));
+
+      const result = await repo.getDashboardSummary(COACH_ID, SINCE, 5);
+
+      expect(result.totalAthletes).toBe(0);
+      expect(result.activeAthletesThisWeek).toBe(0);
+      expect(result.recentSessions).toEqual([]);
+    });
+
+    it('returns zero active athletes when none trained this week', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: RAW_ATHLETE_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: [], error: null }))
+        .mockReturnValueOnce(mockChain({ data: [], error: null }));
+
+      const result = await repo.getDashboardSummary(COACH_ID, SINCE, 5);
+
+      expect(result.totalAthletes).toBe(1);
+      expect(result.activeAthletesThisWeek).toBe(0);
+      expect(result.recentSessions).toEqual([]);
+    });
+
+    it('deduplicates athletes that trained multiple times this week', async () => {
+      const twoSessionsSameAthlete = [
+        { athlete_id: ATHLETE_ID },
+        { athlete_id: ATHLETE_ID },
+      ];
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: RAW_ATHLETE_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_SESSION_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: twoSessionsSameAthlete, error: null }));
+
+      const result = await repo.getDashboardSummary(COACH_ID, SINCE, 5);
+
+      expect(result.activeAthletesThisWeek).toBe(1);
+    });
+
+    it('uses fallback name when athlete not found in map', async () => {
+      const unknownAthleteSession = [
+        { id: 'sess-002', athlete_id: 'unknown-id', started_at: NOW, status: 'completed' },
+      ];
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: RAW_ATHLETE_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: unknownAthleteSession, error: null }))
+        .mockReturnValueOnce(mockChain({ data: [], error: null }));
+
+      const result = await repo.getDashboardSummary(COACH_ID, SINCE, 5);
+
+      expect(result.recentSessions[0].athleteName).toBe('Atleta');
+    });
+
+    it('throws when athlete query fails', async () => {
+      supabase.from.mockReturnValueOnce(
+        mockChain({ data: null, error: { message: 'RLS error' } })
+      );
+
+      await expect(repo.getDashboardSummary(COACH_ID, SINCE, 5))
+        .rejects.toMatchObject({ message: 'RLS error' });
+    });
+
+    it('throws when session query fails', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: RAW_ATHLETE_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: null, error: { message: 'Session error' } }));
+
+      await expect(repo.getDashboardSummary(COACH_ID, SINCE, 5))
+        .rejects.toMatchObject({ message: 'Session error' });
+    });
+
+    it('throws when active athletes query fails', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: RAW_ATHLETE_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: RAW_SESSION_ROWS, error: null }))
+        .mockReturnValueOnce(mockChain({ data: null, error: { message: 'Active error' } }));
+
+      await expect(repo.getDashboardSummary(COACH_ID, SINCE, 5))
+        .rejects.toMatchObject({ message: 'Active error' });
+    });
+
+    it('handles null data from supabase gracefully', async () => {
+      supabase.from
+        .mockReturnValueOnce(mockChain({ data: null, error: null }));
+
+      const result = await repo.getDashboardSummary(COACH_ID, SINCE, 5);
+
+      expect(result.totalAthletes).toBe(0);
+      expect(result.recentSessions).toEqual([]);
     });
   });
 });

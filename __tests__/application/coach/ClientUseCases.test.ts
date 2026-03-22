@@ -33,6 +33,7 @@ const mockRepo: jest.Mocked<ICoachRepository> = {
   getAthleteAssignments:  jest.fn(),
   getAthleteSessions:     jest.fn(),
   unassignRoutine:        jest.fn(),
+  getDashboardSummary:    jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -131,5 +132,82 @@ describe('unassignRoutineFromAthleteUseCase', () => {
     mockRepo.unassignRoutine.mockRejectedValue(new Error('Delete failed'));
     await expect(unassignRoutineFromAthleteUseCase(ROUTINE_ID, ATHLETE_ID, mockRepo))
       .rejects.toThrow('Delete failed');
+  });
+});
+
+// ── getCoachDashboardSummaryUseCase ───────────────────────────────────────────
+
+import { getCoachDashboardSummaryUseCase } from '../../../src/application/coach/ClientUseCases';
+import { CoachDashboardSummary } from '../../../src/domain/repositories/ICoachRepository';
+
+const DASHBOARD_SUMMARY: CoachDashboardSummary = {
+  totalAthletes: 3,
+  activeAthletesThisWeek: 2,
+  recentSessions: [
+    {
+      sessionId: 'sess-001',
+      athleteId: ATHLETE_ID,
+      athleteName: 'Ana García',
+      startedAt: NOW,
+      status: 'completed',
+    },
+  ],
+};
+
+describe('getCoachDashboardSummaryUseCase', () => {
+  it('returns dashboard summary for a valid coachId', async () => {
+    mockRepo.getDashboardSummary.mockResolvedValue(DASHBOARD_SUMMARY);
+
+    const result = await getCoachDashboardSummaryUseCase(COACH_ID, mockRepo);
+
+    expect(result.totalAthletes).toBe(3);
+    expect(result.activeAthletesThisWeek).toBe(2);
+    expect(result.recentSessions).toHaveLength(1);
+    expect(mockRepo.getDashboardSummary).toHaveBeenCalledWith(
+      COACH_ID,
+      expect.any(Date),
+      5,
+    );
+  });
+
+  it('passes a `since` date approximately 7 days ago', async () => {
+    mockRepo.getDashboardSummary.mockResolvedValue(DASHBOARD_SUMMARY);
+
+    const before = Date.now();
+    await getCoachDashboardSummaryUseCase(COACH_ID, mockRepo);
+    const after = Date.now();
+
+    const sinceArg: Date = mockRepo.getDashboardSummary.mock.calls[0][1];
+    const diffMs = Date.now() - sinceArg.getTime();
+    const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+
+    expect(diffMs).toBeGreaterThanOrEqual(sevenDaysMs - (after - before));
+    expect(diffMs).toBeLessThanOrEqual(sevenDaysMs + 1000);
+  });
+
+  it('throws when coachId is empty', async () => {
+    await expect(getCoachDashboardSummaryUseCase('', mockRepo))
+      .rejects.toThrow('coachId is required');
+    expect(mockRepo.getDashboardSummary).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.getDashboardSummary.mockRejectedValue(new Error('DB error'));
+    await expect(getCoachDashboardSummaryUseCase(COACH_ID, mockRepo))
+      .rejects.toThrow('DB error');
+  });
+
+  it('returns summary with empty sessions when no athletes trained', async () => {
+    const emptySummary: CoachDashboardSummary = {
+      totalAthletes: 0,
+      activeAthletesThisWeek: 0,
+      recentSessions: [],
+    };
+    mockRepo.getDashboardSummary.mockResolvedValue(emptySummary);
+
+    const result = await getCoachDashboardSummaryUseCase(COACH_ID, mockRepo);
+
+    expect(result.totalAthletes).toBe(0);
+    expect(result.recentSessions).toEqual([]);
   });
 });

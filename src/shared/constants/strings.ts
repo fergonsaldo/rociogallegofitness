@@ -109,6 +109,7 @@ export const Strings = {
   errorFailedAssignPlan: 'Error al asignar el plan',
   errorFailedDeletePlan: 'Error al eliminar el plan',
   errorFailedLoadPlan: 'Error al cargar el plan',
+  errorFailedLoadDashboard: 'Error al cargar el resumen del dashboard',
   errorFailedLoadDailySummary: 'Error al cargar el resumen diario',
   errorFailedLogMeal: 'Error al registrar la comida',
   errorFailedStartSession: 'Error al iniciar la sesión',

@@ -22,6 +22,20 @@ export interface AthleteSession {
   status: 'active' | 'completed' | 'abandoned';
 }
 
+export interface RecentAthleteSession {
+  sessionId: string;
+  athleteId: string;
+  athleteName: string;
+  startedAt: Date;
+  status: 'active' | 'completed' | 'abandoned';
+}
+
+export interface CoachDashboardSummary {
+  totalAthletes: number;
+  activeAthletesThisWeek: number;
+  recentSessions: RecentAthleteSession[];
+}
+
 export interface ICoachRepository {
   /** Returns all athletes linked to a coach */
   getAthletes(coachId: string): Promise<CoachAthlete[]>;
@@ -34,4 +48,14 @@ export interface ICoachRepository {
 
   /** Removes a routine assignment for a specific athlete */
   unassignRoutine(routineId: string, athleteId: string): Promise<void>;
+
+  /**
+   * Returns a summary for the coach dashboard:
+   * total athletes, how many trained since `since`, and the last `sessionLimit` sessions.
+   */
+  getDashboardSummary(
+    coachId: string,
+    since: Date,
+    sessionLimit: number,
+  ): Promise<CoachDashboardSummary>;
 }

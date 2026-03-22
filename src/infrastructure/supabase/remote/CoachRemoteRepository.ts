@@ -4,6 +4,8 @@ import {
   CoachAthlete,
   AthleteRoutineAssignment,
   AthleteSession,
+  CoachDashboardSummary,
+  RecentAthleteSession,
 } from '@/domain/repositories/ICoachRepository';
 
 export class CoachRemoteRepository implements ICoachRepository {
@@ -70,5 +72,68 @@ export class CoachRemoteRepository implements ICoachRepository {
       .eq('athlete_id', athleteId);
 
     if (error) throw error;
+  }
+
+  async getDashboardSummary(
+    coachId: string,
+    since: Date,
+    sessionLimit: number,
+  ): Promise<CoachDashboardSummary> {
+    // 1. Fetch all athletes for this coach
+    const { data: athleteRows, error: athleteError } = await supabase
+      .from('coach_athletes')
+      .select('users!coach_athletes_athlete_id_fkey ( id, full_name )')
+      .eq('coach_id', coachId);
+
+    if (athleteError) throw athleteError;
+
+    const athletes = (athleteRows ?? [])
+      .map((row: any) => row.users)
+      .filter(Boolean)
+      .map((u: any) => ({ id: u.id as string, fullName: u.full_name as string }));
+
+    if (athletes.length === 0) {
+      return { totalAthletes: 0, activeAthletesThisWeek: 0, recentSessions: [] };
+    }
+
+    const athleteIds = athletes.map((a) => a.id);
+    const athleteNameById = new Map(athletes.map((a) => [a.id, a.fullName]));
+
+    // 2. Fetch recent sessions for all athletes in one query
+    const { data: sessionRows, error: sessionError } = await supabase
+      .from('workout_sessions')
+      .select('id, athlete_id, started_at, status')
+      .in('athlete_id', athleteIds)
+      .eq('status', 'completed')
+      .order('started_at', { ascending: false })
+      .limit(sessionLimit);
+
+    if (sessionError) throw sessionError;
+
+    const recentSessions: RecentAthleteSession[] = (sessionRows ?? []).map((row: any) => ({
+      sessionId:   row.id,
+      athleteId:   row.athlete_id,
+      athleteName: athleteNameById.get(row.athlete_id) ?? 'Atleta',
+      startedAt:   new Date(row.started_at),
+      status:      row.status,
+    }));
+
+    // 3. Count athletes active since `since` (from the full recent session set)
+    const { data: activeRows, error: activeError } = await supabase
+      .from('workout_sessions')
+      .select('athlete_id')
+      .in('athlete_id', athleteIds)
+      .eq('status', 'completed')
+      .gte('started_at', since.toISOString());
+
+    if (activeError) throw activeError;
+
+    const activeAthleteIds = new Set((activeRows ?? []).map((r: any) => r.athlete_id));
+
+    return {
+      totalAthletes:           athletes.length,
+      activeAthletesThisWeek:  activeAthleteIds.size,
+      recentSessions,
+    };
   }
 }

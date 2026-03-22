@@ -3,7 +3,13 @@
  * All logic that a coach can perform on / about their athletes lives here.
  */
 
-import { ICoachRepository, CoachAthlete, AthleteRoutineAssignment, AthleteSession } from '@/domain/repositories/ICoachRepository';
+import {
+  ICoachRepository,
+  CoachAthlete,
+  AthleteRoutineAssignment,
+  AthleteSession,
+  CoachDashboardSummary,
+} from '@/domain/repositories/ICoachRepository';
 
 export interface AthleteDetail {
   assignments: AthleteRoutineAssignment[];
@@ -11,6 +17,8 @@ export interface AthleteDetail {
 }
 
 const SESSION_HISTORY_LIMIT = 10;
+const DASHBOARD_SESSION_LIMIT = 5;
+const WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
 export async function getCoachAthletesUseCase(
   coachId: string,
@@ -42,4 +50,14 @@ export async function unassignRoutineFromAthleteUseCase(
   if (!routineId) throw new Error('routineId is required');
   if (!athleteId) throw new Error('athleteId is required');
   return repo.unassignRoutine(routineId, athleteId);
+}
+
+export async function getCoachDashboardSummaryUseCase(
+  coachId: string,
+  repo: ICoachRepository,
+): Promise<CoachDashboardSummary> {
+  if (!coachId) throw new Error('coachId is required');
+
+  const since = new Date(Date.now() - WEEK_IN_MS);
+  return repo.getDashboardSummary(coachId, since, DASHBOARD_SESSION_LIMIT);
 }
