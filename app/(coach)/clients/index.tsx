@@ -484,11 +484,16 @@ export default function ClientsScreen() {
             </Text>
           </View>
         </View>
-        {activeTab === 'active' && (
-          <TouchableOpacity style={styles.addBtn} onPress={() => setModalMode('menu')}>
-            <Text style={styles.addBtnText}>+ Añadir</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.tagsBtn} onPress={() => router.push('/(coach)/clients/tags')} activeOpacity={0.8}>
+            <Text style={styles.tagsBtnText}>🏷️</Text>
           </TouchableOpacity>
-        )}
+          {activeTab === 'active' && (
+            <TouchableOpacity style={styles.addBtn} onPress={() => setModalMode('menu')}>
+              <Text style={styles.addBtnText}>+ Añadir</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* ── Tabs ── */}
@@ -636,8 +641,11 @@ const styles = StyleSheet.create({
   accentBar:  { width: 4, height: 32, backgroundColor: Colors.primary, borderRadius: 2 },
   title:      { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
   subtitle:   { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
-  addBtn:     { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 3 },
-  addBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  tagsBtn:       { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  tagsBtnText:   { fontSize: 16 },
+  addBtn:        { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, shadowColor: Colors.primary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 3 },
+  addBtnText:    { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
 
   // ── Tabs ────────────────────────────────────────────────────────────────────
   tabBar: {

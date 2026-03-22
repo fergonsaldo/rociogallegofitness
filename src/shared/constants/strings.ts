@@ -282,6 +282,38 @@ export const Strings = {
   progressPhotoSelectAfter: 'Selecciona foto "Después"',
   progressPhotoComparing: 'Comparando',
 
+  // ── Etiquetas de clientes (RF-E2-05a) ────────────────────────────────────────
+  tagsTitle: 'Etiquetas',
+  tagsSubtitle: (n: number) => `${n} ${n === 1 ? 'etiqueta' : 'etiquetas'}`,
+  tagsEmpty: 'Sin etiquetas todavía',
+  tagsEmptySubtitle: 'Crea etiquetas para organizar tus clientes',
+  tagsNewButton: '+ Nueva etiqueta',
+  tagClients: (n: number) => `${n} ${n === 1 ? 'cliente' : 'clientes'}`,
+  tagNoAutomations: 'Sin automatizaciones',
+
+  tagFormCreateTitle: 'Nueva etiqueta',
+  tagFormEditTitle: 'Editar etiqueta',
+  tagFormNameLabel: 'Nombre',
+  tagFormNamePlaceholder: 'Ej. VIP, En riesgo, Nuevo...',
+  tagFormColorLabel: 'Color',
+  tagFormSubmitCreate: 'Crear etiqueta',
+  tagFormSubmitEdit: 'Guardar cambios',
+  tagFormCancel: 'Cancelar',
+
+  alertDeleteTagTitle: 'Eliminar etiqueta',
+  alertDeleteTagMessage: (name: string, count: number) =>
+    count > 0
+      ? `¿Eliminar "${name}"? Se quitará de ${count} ${count === 1 ? 'cliente' : 'clientes'}.`
+      : `¿Eliminar "${name}"? Esta acción no se puede deshacer.`,
+  alertDeleteTagCancel: 'Cancelar',
+  alertDeleteTagConfirm: 'Eliminar',
+
+  errorFailedLoadTags: 'Error al cargar las etiquetas',
+  errorFailedCreateTag: 'Error al crear la etiqueta',
+  errorFailedUpdateTag: 'Error al actualizar la etiqueta',
+  errorFailedDeleteTag: 'Error al eliminar la etiqueta',
+  errorTagNameDuplicate: 'Ya existe una etiqueta con ese nombre',
+
   // ── Mensajería ──────────────────────────────────────────────────────────────
   tabMessages: 'Mensajes',
   messagesTitle: 'Mensajes',

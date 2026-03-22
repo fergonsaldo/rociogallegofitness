@@ -144,6 +144,24 @@ export interface ProgressPhotoRow {
 }
 export type ProgressPhotoInsert = Omit<ProgressPhotoRow, 'id' | 'created_at'>;
 
+// ── client_tags ───────────────────────────────────────────────────────────────
+export interface ClientTagRow {
+  id:         string;
+  coach_id:   string;
+  name:       string;
+  color:      string;
+  created_at: string;
+}
+export type ClientTagInsert = Omit<ClientTagRow, 'id' | 'created_at'>;
+export type ClientTagUpdate = Partial<Pick<ClientTagRow, 'name' | 'color'>>;
+
+// ── athlete_tags ──────────────────────────────────────────────────────────────
+export interface AthleteTagRow {
+  tag_id:      string;
+  athlete_id:  string;
+  assigned_at: string;
+}
+
 // ── conversations ─────────────────────────────────────────────────────────────
 export interface ConversationRow {
   id:         string;
