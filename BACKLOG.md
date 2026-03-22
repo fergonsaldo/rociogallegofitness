@@ -2,6 +2,18 @@
 
 ## ✅ Completado
 
+#### RF-E2-02 — Búsqueda de clientes
+
+**Implementado:**
+- `filterAthletes`: función pura exportada — filtra por tab y query (parcial, case-insensitive, nombre y email)
+- Search bar entre tabs y lista, se resetea al cambiar de tab
+- Estado vacío diferenciado: sin clientes vs sin resultados para la búsqueda
+
+**Métricas finales:**
+- Test Suites: 41/41 ✅ | Tests: 644/644 ✅
+
+---
+
 #### RF-E2-01 — Listado de clientes segmentado por estado
 
 **Implementado:**
@@ -503,4 +515,4 @@
 
 ---
 
-_Última actualización: 2026-03-22 — RF-E2-01 cerrado. Próxima: RF-E2-02 (búsqueda de clientes)._
+_Última actualización: 2026-03-22 — RF-E2-02 cerrado. Próxima: RF-E2-03 (tabla de clientes con métricas clave)._
