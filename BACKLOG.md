@@ -2,6 +2,24 @@
 
 ## ✅ Completado
 
+#### RF-E1-01 — Dashboard consolidado de operación
+
+**Implementado:**
+- `ICoachRepository` — contrato con `getDashboardSummary`, `CoachDashboardSummary`, `RecentAthleteSession`
+- `CoachRemoteRepository` — implementación Supabase (3 queries: atletas, sesiones recientes, atletas activos esta semana)
+- `getCoachDashboardSummaryUseCase` — use case en `ClientUseCases.ts`
+- `coachDashboardStore` — store Zustand con `fetchDashboardSummary` y `clearError`
+- `dashboard.tsx` — pantalla con widget de clientes (total + activos esta semana) y widget de actividad reciente
+- Estados vacíos informativos en ambos widgets
+- Fix: `mockChain` en `CoachRemoteRepository.test.ts` añade `.in` y `.gte`; `clearAllMocks` → `resetAllMocks`
+
+**Métricas finales:**
+- Test Suites: 40/40 ✅
+- Tests: 620/620 ✅
+- Statements: 98.04% ✅ | Branches: 91.08% ✅ | Functions: 99.49% ✅ | Lines: 99.84% ✅
+
+---
+
 #### TECH-01 — Saneamiento de tests heredados del prototipo
 
 **Implementado:**
@@ -28,26 +46,6 @@
 ---
 
 ## 🔲 En curso
-
-#### TECH-01 — Saneamiento de tests heredados del prototipo
-
-**Requisito:** Dejar la base de codigo en estado limpio antes de arrancar con historias de negocio. 15 tests fallan y 1 suite no compila.
-
-**Criterios de aceptacion:**
-- Los 517 tests existentes pasan (0 fallos).
-- Ninguna suite falla en compilacion.
-- Cobertura global >= 95% en statements, branches, functions y lines.
-- No se modifica logica de negocio — solo se corrigen tests o el codigo que los rompe.
-- errores_test.log y jest-output.log eliminados del repositorio.
-
-**Suites afectadas:**
-- MessageRemoteRepository.test.ts — 6 fallos (logica de conversaciones)
-- WorkoutLocalRepository.test.ts — 6 fallos (mocks SQLite)
-- WorkoutUseCases.test.ts — 1 fallo (caso borde durationMinutes)
-- ProgressUseCases.test.ts — 2 fallos (casos borde 1RM)
-- RoutineRemoteRepository.test.ts — 1 fallo de compilacion (Babel parse error)
-
-**Fuera de scope:** No se anaden features, no se refactoriza codigo que funciona.
 
 ---
 
@@ -489,4 +487,4 @@
 
 ---
 
-_Última actualización: 2026-03-21 — RF-E1-01 elevado de P1 a P0 (pantalla de entrada sin la cual el resto de módulos carece de contexto de navegación)._
+_Última actualización: 2026-03-22 — RF-E1-01 cerrado. Próxima: RF-E2-01 (listado de clientes segmentado por estado)._
