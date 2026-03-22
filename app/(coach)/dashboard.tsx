@@ -6,7 +6,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/presentation/stores/authStore';
 import { useCoachDashboardStore } from '../../src/presentation/stores/coachDashboardStore';
+import { useCoachCalendarStore } from '../../src/presentation/stores/coachCalendarStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../src/shared/constants/theme';
+import { Strings } from '../../src/shared/constants/strings';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -124,6 +126,67 @@ function ActividadReciente({
   );
 }
 
+// ── Agenda widget ─────────────────────────────────────────────────────────────
+
+function WidgetAgenda({ onPress }: { onPress: () => void }) {
+  const { sessions, fetchMonth } = useCoachCalendarStore();
+  const { user } = useAuthStore();
+
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth() + 1;
+
+  useEffect(() => {
+    if (user?.id) fetchMonth(user.id, year, month);
+  }, [user?.id]);
+
+  const todaySessions = sessions.filter((s) => {
+    const d = s.scheduledAt;
+    return d.getDate() === now.getDate() &&
+      d.getMonth() === now.getMonth() &&
+      d.getFullYear() === now.getFullYear();
+  });
+
+  const nextSessions = sessions
+    .filter((s) => s.scheduledAt > now)
+    .slice(0, 3);
+
+  const displayed = todaySessions.length > 0 ? todaySessions.slice(0, 3) : nextSessions;
+
+  return (
+    <TouchableOpacity style={styles.widget} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.widgetHeader}>
+        <Text style={styles.widgetLabel}>{Strings.calendarWidgetTitle.toUpperCase()}</Text>
+        <Text style={styles.widgetArrow}>→</Text>
+      </View>
+      {displayed.length === 0 ? (
+        <View style={styles.activityEmpty}>
+          <Text style={styles.activityEmptyText}>{Strings.calendarWidgetEmpty}</Text>
+        </View>
+      ) : (
+        displayed.map((s) => {
+          const timeStr = s.scheduledAt.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+          return (
+            <View key={s.id} style={styles.agendaRow}>
+              <View style={[
+                styles.agendaDot,
+                { backgroundColor: s.modality === 'online' ? '#0369A1' : Colors.success },
+              ]} />
+              <Text style={styles.agendaTime}>{timeStr}</Text>
+              <Text style={styles.agendaTitle} numberOfLines={1}>
+                {s.title ?? s.sessionType}
+              </Text>
+              {s.athleteName && (
+                <Text style={styles.agendaAthlete} numberOfLines={1}>· {s.athleteName}</Text>
+              )}
+            </View>
+          );
+        })
+      )}
+    </TouchableOpacity>
+  );
+}
+
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function CoachDashboardScreen() {
@@ -192,6 +255,7 @@ export default function CoachDashboardScreen() {
               activeThisWeek={summary?.activeAthletesThisWeek ?? 0}
               onPress={() => router.push('/(coach)/clients')}
             />
+            <WidgetAgenda onPress={() => router.push('/(coach)/calendar' as any)} />
             <ActividadReciente
               sessions={summary?.recentSessions ?? []}
               onAthletePress={(athleteId) =>
@@ -331,6 +395,17 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   activityBadgeText: { fontSize: FontSize.xs, fontWeight: '600' },
+
+  // ── Widget Agenda ─────────────────────────────────────────────────────────
+  agendaRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.sm,
+    paddingVertical: Spacing.xs,
+    borderTopWidth: 1, borderTopColor: Colors.borderLight,
+  },
+  agendaDot:     { width: 8, height: 8, borderRadius: 4 },
+  agendaTime:    { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '600', minWidth: 36 },
+  agendaTitle:   { flex: 1, fontSize: FontSize.sm, fontWeight: '600', color: Colors.textPrimary },
+  agendaAthlete: { fontSize: FontSize.xs, color: Colors.textMuted },
 
   // ── Acciones rápidas ──────────────────────────────────────────────────────
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },

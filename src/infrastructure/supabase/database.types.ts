@@ -162,6 +162,21 @@ export interface AthleteTagRow {
   assigned_at: string;
 }
 
+// ── coach_sessions ────────────────────────────────────────────────────────────
+export interface CoachSessionRow {
+  id:               string;
+  coach_id:         string;
+  athlete_id:       string | null;
+  title:            string | null;
+  session_type:     string;
+  modality:         'online' | 'in_person';
+  scheduled_at:     string;
+  duration_minutes: number;
+  notes:            string | null;
+  created_at:       string;
+}
+export type CoachSessionInsert = Omit<CoachSessionRow, 'id' | 'created_at'>;
+
 // ── conversations ─────────────────────────────────────────────────────────────
 export interface ConversationRow {
   id:         string;

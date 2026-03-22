@@ -2,6 +2,25 @@
 
 ## ✅ Completado
 
+#### RF-E8-01 + RF-E8-03 — Calendario operativo + Creación de sesiones
+
+**Implementado:**
+- SQL: `coach_sessions` con RLS, índice en `(coach_id, scheduled_at)` (migración aplicada en producción)
+- Domain: `CoachSession` entity (Zod), `ICoachSessionRepository` (4 métodos)
+- Use cases: `getSessionsForMonthUseCase` (valida mes 1-12), `createSessionUseCase` (verifica solapamiento), `deleteSessionUseCase`
+- `CoachSessionRemoteRepository`: `getForMonth` con join a `users` para nombre del atleta, `getOverlapping` con filtro DB + in-memory, `create`, `delete`
+- `coachCalendarStore` Zustand: `fetchMonth`, `addSession` (ordenado), `removeSession`, `setSelectedDate`, `clearError`
+- `calendar/index.tsx`: grid mensual (L–D, semanas ISO), navegación mes, puntos de sesión, selección de día, lista de sesiones con modalidad badge + nombre atleta, confirmación borrado
+- `calendar/create.tsx`: form completo — tipo (chips), modalidad (toggle), DateTimePicker fecha/hora (iOS/Android), presets duración, picker atleta (modal FlatList), notas
+- Dashboard widget "Agenda": muestra sesiones de hoy o próximas, navega a `/calendar`
+- `_layout.tsx`: rutas `calendar/index` y `calendar/create` registradas como `href: null`
+- Strings centralizados en sección `RF-E8-01 + RF-E8-03`
+
+**Métricas finales:**
+- Test Suites: 47/47 ✅ | Tests: 775/775 ✅
+
+---
+
 #### RF-E2-05 — Etiquetas de clientes (05a CRUD + 05b Asignación)
 
 **Implementado:**
@@ -550,4 +569,4 @@
 
 ---
 
-_Última actualización: 2026-03-22 — RF-E2-05 cerrado. Próxima: RF-E2-04 (comunidad por grupos) o RF-E2-03b (métricas avanzadas, requiere schema pagos)._
+_Última actualización: 2026-03-22 — RF-E8-01 + RF-E8-03 cerrados. Próxima: RF-E8-02 (sesiones agendadas — vista lista con filtros) o RF-E2-04 (comunidad por grupos)._

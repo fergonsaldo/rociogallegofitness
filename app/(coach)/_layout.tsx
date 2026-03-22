@@ -86,6 +86,9 @@ export default function CoachLayout() {
       <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
       <Tabs.Screen name="messages/[id]"     options={{ href: null }} />
+      <Tabs.Screen name="clients/tags"      options={{ href: null }} />
+      <Tabs.Screen name="calendar/index"    options={{ href: null }} />
+      <Tabs.Screen name="calendar/create"   options={{ href: null }} />
     </Tabs>
   );
 }
