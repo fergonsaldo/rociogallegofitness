@@ -15,6 +15,13 @@ import {
 import { AthleteRoutineAssignment, AthleteSession } from '../../../src/domain/repositories/ICoachRepository';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { useMessageStore } from '../../../src/presentation/stores/messageStore';
+import { useTagStore } from '../../../src/presentation/stores/tagStore';
+import { TagPickerModal } from '../../../src/presentation/components/coach/TagPickerModal';
+import { ClientTag } from '../../../src/domain/entities/ClientTag';
+import { TagRemoteRepository } from '../../../src/infrastructure/supabase/remote/TagRemoteRepository';
+import { getAthleteTagsUseCase } from '../../../src/application/coach/TagUseCases';
+
+const tagRepo = new TagRemoteRepository();
 
 const repo = new CoachRemoteRepository();
 
@@ -23,23 +30,33 @@ export default function ClientDetailScreen() {
   const { id, name } = useLocalSearchParams<{ id: string; name: string }>();
   const { user } = useAuthStore();
   const { getOrOpenConversation } = useMessageStore();
+  const { tags: coachTags, fetchTags } = useTagStore();
 
   const [detail, setDetail] = useState<AthleteDetail>({ assignments: [], sessions: [] });
+  const [athleteTags, setAthleteTags] = useState<ClientTag[]>([]);
+  const [pickerVisible, setPickerVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
-      if (id) loadAthleteDetail();
-    }, [id]),
+      if (id) {
+        loadAthleteDetail();
+        if (user?.id) fetchTags(user.id);
+      }
+    }, [id, user?.id]),
   );
 
   const loadAthleteDetail = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await getAthleteDetailUseCase(id, repo);
+      const [data, tags] = await Promise.all([
+        getAthleteDetailUseCase(id, repo),
+        getAthleteTagsUseCase(id, tagRepo),
+      ]);
       setDetail(data);
+      setAthleteTags(tags);
     } catch (err) {
       setError(err instanceof Error ? err.message : Strings.errorGeneric);
     } finally {
@@ -98,6 +115,16 @@ export default function ClientDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      <TagPickerModal
+        visible={pickerVisible}
+        athleteId={id}
+        coachTags={coachTags}
+        assignedTagIds={new Set(athleteTags.map((t) => t.id))}
+        onClose={(updatedIds) => {
+          setPickerVisible(false);
+          setAthleteTags(coachTags.filter((t) => updatedIds.has(t.id)));
+        }}
+      />
       <View style={styles.topbar}>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backText}>← Volver</Text>
@@ -138,6 +165,29 @@ export default function ClientDetailScreen() {
                   : '—'}
               />
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionLabel}>{Strings.sectionTags}</Text>
+              <TouchableOpacity onPress={() => setPickerVisible(true)} style={styles.manageBtnSmall}>
+                <Text style={styles.manageBtnSmallText}>{Strings.tagManageButton}</Text>
+              </TouchableOpacity>
+            </View>
+            {athleteTags.length === 0 ? (
+              <View style={styles.emptySection}>
+                <Text style={styles.emptySectionText}>Sin etiquetas asignadas</Text>
+              </View>
+            ) : (
+              <View style={styles.tagsWrap}>
+                {athleteTags.map((tag) => (
+                  <View key={tag.id} style={[styles.tagChip, { backgroundColor: `${tag.color}20`, borderColor: `${tag.color}60` }]}>
+                    <View style={[styles.tagChipDot, { backgroundColor: tag.color }]} />
+                    <Text style={[styles.tagChipText, { color: tag.color }]}>{tag.name}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.section}>
@@ -225,8 +275,15 @@ const styles = StyleSheet.create({
   statPill: { backgroundColor: Colors.surfaceMuted, borderRadius: BorderRadius.md, padding: Spacing.sm, alignItems: 'center', minWidth: 80, borderWidth: 1, borderColor: Colors.border },
   statValue: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.primary },
   statLabel: { fontSize: FontSize.xs, color: Colors.textMuted },
-  section: { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg, gap: Spacing.sm },
-  sectionLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, letterSpacing: 2, fontWeight: '600' },
+  section:            { paddingHorizontal: Spacing.lg, marginBottom: Spacing.lg, gap: Spacing.sm },
+  sectionHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sectionLabel:       { fontSize: FontSize.xs, color: Colors.textSecondary, letterSpacing: 2, fontWeight: '600' },
+  manageBtnSmall:     { backgroundColor: Colors.primarySubtle, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.sm, paddingVertical: 3, borderWidth: 1, borderColor: `${Colors.primary}30` },
+  manageBtnSmallText: { fontSize: 11, fontWeight: '700', color: Colors.primary },
+  tagsWrap:           { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  tagChip:            { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: BorderRadius.full, borderWidth: 1 },
+  tagChipDot:         { width: 8, height: 8, borderRadius: 4 },
+  tagChipText:        { fontSize: FontSize.xs, fontWeight: '700' },
   emptySection: { backgroundColor: Colors.surface, borderRadius: BorderRadius.md, padding: Spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
   emptySectionText: { color: Colors.textMuted, fontSize: FontSize.sm },
   routineCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.border, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },

@@ -7,15 +7,19 @@ import {
   createTagUseCase,
   updateTagUseCase,
   deleteTagUseCase,
+  getAthleteTagsUseCase,
+  assignTagToAthleteUseCase,
+  removeTagFromAthleteUseCase,
 } from '../../../src/application/coach/TagUseCases';
 import { ITagRepository } from '../../../src/domain/repositories/ITagRepository';
 import { ClientTag } from '../../../src/domain/entities/ClientTag';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const COACH_ID = 'coac-uuid-0001-0000-000000000001';
-const TAG_ID   = 'tag1-uuid-0001-0000-000000000001';
-const NOW      = new Date();
+const COACH_ID   = 'coac-uuid-0001-0000-000000000001';
+const ATHLETE_ID = 'athl-uuid-0001-0000-000000000001';
+const TAG_ID     = 'tag1-uuid-0001-0000-000000000001';
+const NOW        = new Date();
 
 const TAG: ClientTag = {
   id: TAG_ID, coachId: COACH_ID, name: 'VIP', color: '#C90960',
@@ -25,11 +29,15 @@ const TAG: ClientTag = {
 // ── Mock repo ─────────────────────────────────────────────────────────────────
 
 const mockRepo: jest.Mocked<ITagRepository> = {
-  getByCoachId:   jest.fn(),
-  create:         jest.fn(),
-  update:         jest.fn(),
-  delete:         jest.fn(),
-  getClientCount: jest.fn(),
+  getByCoachId:        jest.fn(),
+  create:              jest.fn(),
+  update:              jest.fn(),
+  delete:              jest.fn(),
+  getClientCount:      jest.fn(),
+  getTagsForAthlete:   jest.fn(),
+  getTagsForAthletes:  jest.fn(),
+  assignTag:           jest.fn(),
+  removeTag:           jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -143,6 +151,83 @@ describe('updateTagUseCase', () => {
     mockRepo.update.mockRejectedValue(new Error('Not found'));
     await expect(updateTagUseCase(TAG_ID, { name: 'Premium' }, mockRepo))
       .rejects.toThrow('Not found');
+  });
+});
+
+// ── getAthleteTagsUseCase ─────────────────────────────────────────────────────
+
+describe('getAthleteTagsUseCase', () => {
+  it('returns tags for a valid athleteId', async () => {
+    mockRepo.getTagsForAthlete.mockResolvedValue([TAG]);
+    const result = await getAthleteTagsUseCase(ATHLETE_ID, mockRepo);
+    expect(result).toHaveLength(1);
+    expect(mockRepo.getTagsForAthlete).toHaveBeenCalledWith(ATHLETE_ID);
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(getAthleteTagsUseCase('', mockRepo)).rejects.toThrow('athleteId is required');
+    expect(mockRepo.getTagsForAthlete).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.getTagsForAthlete.mockRejectedValue(new Error('DB error'));
+    await expect(getAthleteTagsUseCase(ATHLETE_ID, mockRepo)).rejects.toThrow('DB error');
+  });
+});
+
+// ── assignTagToAthleteUseCase ─────────────────────────────────────────────────
+
+describe('assignTagToAthleteUseCase', () => {
+  it('calls repository.assignTag with correct ids', async () => {
+    mockRepo.assignTag.mockResolvedValue(undefined);
+    await assignTagToAthleteUseCase(TAG_ID, ATHLETE_ID, mockRepo);
+    expect(mockRepo.assignTag).toHaveBeenCalledWith(TAG_ID, ATHLETE_ID);
+  });
+
+  it('throws when tagId is empty', async () => {
+    await expect(assignTagToAthleteUseCase('', ATHLETE_ID, mockRepo))
+      .rejects.toThrow('tagId is required');
+    expect(mockRepo.assignTag).not.toHaveBeenCalled();
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(assignTagToAthleteUseCase(TAG_ID, '', mockRepo))
+      .rejects.toThrow('athleteId is required');
+    expect(mockRepo.assignTag).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.assignTag.mockRejectedValue(new Error('RLS error'));
+    await expect(assignTagToAthleteUseCase(TAG_ID, ATHLETE_ID, mockRepo))
+      .rejects.toThrow('RLS error');
+  });
+});
+
+// ── removeTagFromAthleteUseCase ───────────────────────────────────────────────
+
+describe('removeTagFromAthleteUseCase', () => {
+  it('calls repository.removeTag with correct ids', async () => {
+    mockRepo.removeTag.mockResolvedValue(undefined);
+    await removeTagFromAthleteUseCase(TAG_ID, ATHLETE_ID, mockRepo);
+    expect(mockRepo.removeTag).toHaveBeenCalledWith(TAG_ID, ATHLETE_ID);
+  });
+
+  it('throws when tagId is empty', async () => {
+    await expect(removeTagFromAthleteUseCase('', ATHLETE_ID, mockRepo))
+      .rejects.toThrow('tagId is required');
+    expect(mockRepo.removeTag).not.toHaveBeenCalled();
+  });
+
+  it('throws when athleteId is empty', async () => {
+    await expect(removeTagFromAthleteUseCase(TAG_ID, '', mockRepo))
+      .rejects.toThrow('athleteId is required');
+    expect(mockRepo.removeTag).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.removeTag.mockRejectedValue(new Error('Delete failed'));
+    await expect(removeTagFromAthleteUseCase(TAG_ID, ATHLETE_ID, mockRepo))
+      .rejects.toThrow('Delete failed');
   });
 });
 

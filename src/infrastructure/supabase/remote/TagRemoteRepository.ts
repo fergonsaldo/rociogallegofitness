@@ -94,4 +94,56 @@ export class TagRemoteRepository implements ITagRepository {
     if (error) throw error;
     return count ?? 0;
   }
+
+  async getTagsForAthlete(athleteId: string): Promise<ClientTag[]> {
+    const { data, error } = await supabase
+      .from('athlete_tags')
+      .select('client_tags(id, coach_id, name, color, created_at)')
+      .eq('athlete_id', athleteId);
+
+    if (error) throw error;
+    return (data ?? [])
+      .map((row: any) => row.client_tags)
+      .filter(Boolean)
+      .map((t: ClientTagRow) => this.mapRow(t, 0));
+  }
+
+  async getTagsForAthletes(athleteIds: string[]): Promise<Map<string, ClientTag[]>> {
+    if (athleteIds.length === 0) return new Map();
+
+    const { data, error } = await supabase
+      .from('athlete_tags')
+      .select('athlete_id, client_tags(id, coach_id, name, color, created_at)')
+      .in('athlete_id', athleteIds);
+
+    if (error) throw error;
+
+    const result = new Map<string, ClientTag[]>();
+    for (const row of (data ?? [])) {
+      const tag = (row as any).client_tags;
+      if (!tag) continue;
+      const list = result.get(row.athlete_id) ?? [];
+      list.push(this.mapRow(tag as ClientTagRow, 0));
+      result.set(row.athlete_id, list);
+    }
+    return result;
+  }
+
+  async assignTag(tagId: string, athleteId: string): Promise<void> {
+    const { error } = await supabase
+      .from('athlete_tags')
+      .upsert({ tag_id: tagId, athlete_id: athleteId }, { onConflict: 'tag_id,athlete_id' });
+
+    if (error) throw error;
+  }
+
+  async removeTag(tagId: string, athleteId: string): Promise<void> {
+    const { error } = await supabase
+      .from('athlete_tags')
+      .delete()
+      .eq('tag_id', tagId)
+      .eq('athlete_id', athleteId);
+
+    if (error) throw error;
+  }
 }

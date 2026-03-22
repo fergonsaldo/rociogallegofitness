@@ -8,13 +8,13 @@ import { filterAthletes, formatLastActivity, Athlete } from '../../../app/(coach
 const active = (overrides: Partial<Athlete> = {}): Athlete => ({
   id: 'a1', email: 'ana@test.com', full_name: 'Ana García',
   assigned_at: '2026-01-01', status: 'active',
-  lastSessionAt: null, routineCount: 0, ...overrides,
+  lastSessionAt: null, routineCount: 0, tags: [], ...overrides,
 });
 
 const archived = (overrides: Partial<Athlete> = {}): Athlete => ({
   id: 'a2', email: 'bob@test.com', full_name: 'Bob Martín',
   assigned_at: '2026-01-02', status: 'archived',
-  lastSessionAt: null, routineCount: 0, ...overrides,
+  lastSessionAt: null, routineCount: 0, tags: [], ...overrides,
 });
 
 const ATHLETES: Athlete[] = [

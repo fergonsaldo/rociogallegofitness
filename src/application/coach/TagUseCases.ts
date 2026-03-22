@@ -41,3 +41,31 @@ export async function deleteTagUseCase(
   if (!id) throw new Error('id is required');
   return repo.delete(id);
 }
+
+export async function getAthleteTagsUseCase(
+  athleteId: string,
+  repo: ITagRepository,
+): Promise<ClientTag[]> {
+  if (!athleteId) throw new Error('athleteId is required');
+  return repo.getTagsForAthlete(athleteId);
+}
+
+export async function assignTagToAthleteUseCase(
+  tagId: string,
+  athleteId: string,
+  repo: ITagRepository,
+): Promise<void> {
+  if (!tagId) throw new Error('tagId is required');
+  if (!athleteId) throw new Error('athleteId is required');
+  return repo.assignTag(tagId, athleteId);
+}
+
+export async function removeTagFromAthleteUseCase(
+  tagId: string,
+  athleteId: string,
+  repo: ITagRepository,
+): Promise<void> {
+  if (!tagId) throw new Error('tagId is required');
+  if (!athleteId) throw new Error('athleteId is required');
+  return repo.removeTag(tagId, athleteId);
+}

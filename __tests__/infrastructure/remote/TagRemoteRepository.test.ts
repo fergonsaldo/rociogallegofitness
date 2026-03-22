@@ -17,7 +17,7 @@ const RAW_TAG_ROW = {
 
 function mockChain(finalResult: object) {
   const chain: any = {};
-  ['select', 'eq', 'order', 'limit', 'delete', 'in', 'insert', 'update', 'single'].forEach((m) => {
+  ['select', 'eq', 'order', 'limit', 'delete', 'in', 'insert', 'update', 'upsert', 'single'].forEach((m) => {
     chain[m] = jest.fn(() => chain);
   });
   chain.then = (resolve: any) => Promise.resolve(finalResult).then(resolve);
@@ -154,6 +154,104 @@ describe('TagRemoteRepository', () => {
     it('throws when supabase returns an error', async () => {
       supabase.from.mockReturnValue(mockChain({ error: { message: 'Delete failed' } }));
       await expect(repo.delete(TAG_ID)).rejects.toMatchObject({ message: 'Delete failed' });
+    });
+  });
+
+  // ── getTagsForAthlete ───────────────────────────────────────────────────────
+
+  describe('getTagsForAthlete', () => {
+    it('maps joined rows to ClientTag array', async () => {
+      supabase.from.mockReturnValue(
+        mockChain({ data: [{ client_tags: RAW_TAG_ROW }], error: null })
+      );
+
+      const result = await repo.getTagsForAthlete(ATHLETE_ID);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('VIP');
+      expect(result[0].clientCount).toBe(0);
+    });
+
+    it('filters out null client_tags', async () => {
+      supabase.from.mockReturnValue(
+        mockChain({ data: [{ client_tags: null }, { client_tags: RAW_TAG_ROW }], error: null })
+      );
+      const result = await repo.getTagsForAthlete(ATHLETE_ID);
+      expect(result).toHaveLength(1);
+    });
+
+    it('returns empty array when no tags', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: [], error: null }));
+      expect(await repo.getTagsForAthlete(ATHLETE_ID)).toEqual([]);
+    });
+
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'RLS error' } }));
+      await expect(repo.getTagsForAthlete(ATHLETE_ID)).rejects.toMatchObject({ message: 'RLS error' });
+    });
+  });
+
+  // ── getTagsForAthletes ──────────────────────────────────────────────────────
+
+  describe('getTagsForAthletes', () => {
+    it('returns empty map for empty athleteIds array', async () => {
+      const result = await repo.getTagsForAthletes([]);
+      expect(result.size).toBe(0);
+      expect(supabase.from).not.toHaveBeenCalled();
+    });
+
+    it('returns map of athleteId to tags', async () => {
+      supabase.from.mockReturnValue(
+        mockChain({ data: [{ athlete_id: ATHLETE_ID, client_tags: RAW_TAG_ROW }], error: null })
+      );
+
+      const result = await repo.getTagsForAthletes([ATHLETE_ID]);
+
+      expect(result.get(ATHLETE_ID)).toHaveLength(1);
+      expect(result.get(ATHLETE_ID)![0].name).toBe('VIP');
+    });
+
+    it('filters out null client_tags', async () => {
+      supabase.from.mockReturnValue(
+        mockChain({ data: [{ athlete_id: ATHLETE_ID, client_tags: null }], error: null })
+      );
+      const result = await repo.getTagsForAthletes([ATHLETE_ID]);
+      expect(result.get(ATHLETE_ID)).toBeUndefined();
+    });
+
+    it('throws on error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'DB error' } }));
+      await expect(repo.getTagsForAthletes([ATHLETE_ID])).rejects.toMatchObject({ message: 'DB error' });
+    });
+  });
+
+  // ── assignTag ───────────────────────────────────────────────────────────────
+
+  describe('assignTag', () => {
+    it('resolves without error on success', async () => {
+      supabase.from.mockReturnValue(mockChain({ error: null }));
+      await expect(repo.assignTag(TAG_ID, ATHLETE_ID)).resolves.toBeUndefined();
+    });
+
+    it('throws when supabase returns an error', async () => {
+      supabase.from.mockReturnValue(mockChain({ error: { message: 'Upsert failed' } }));
+      await expect(repo.assignTag(TAG_ID, ATHLETE_ID))
+        .rejects.toMatchObject({ message: 'Upsert failed' });
+    });
+  });
+
+  // ── removeTag ───────────────────────────────────────────────────────────────
+
+  describe('removeTag', () => {
+    it('resolves without error on success', async () => {
+      supabase.from.mockReturnValue(mockChain({ error: null }));
+      await expect(repo.removeTag(TAG_ID, ATHLETE_ID)).resolves.toBeUndefined();
+    });
+
+    it('throws when supabase returns an error', async () => {
+      supabase.from.mockReturnValue(mockChain({ error: { message: 'Delete failed' } }));
+      await expect(repo.removeTag(TAG_ID, ATHLETE_ID))
+        .rejects.toMatchObject({ message: 'Delete failed' });
     });
   });
 

@@ -17,4 +17,19 @@ export interface ITagRepository {
 
   /** Returns how many athletes have this tag assigned */
   getClientCount(tagId: string): Promise<number>;
+
+  /** Returns tags assigned to a single athlete */
+  getTagsForAthlete(athleteId: string): Promise<ClientTag[]>;
+
+  /**
+   * Returns a map of athleteId → ClientTag[] for a list of athletes.
+   * Used for bulk-loading tags in the client list.
+   */
+  getTagsForAthletes(athleteIds: string[]): Promise<Map<string, ClientTag[]>>;
+
+  /** Assigns a tag to an athlete (idempotent) */
+  assignTag(tagId: string, athleteId: string): Promise<void>;
+
+  /** Removes a tag from an athlete */
+  removeTag(tagId: string, athleteId: string): Promise<void>;
 }

@@ -10,11 +10,15 @@ import { supabase } from '../../../src/infrastructure/supabase/client';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
 import { CoachRemoteRepository } from '../../../src/infrastructure/supabase/remote/CoachRemoteRepository';
+import { TagRemoteRepository } from '../../../src/infrastructure/supabase/remote/TagRemoteRepository';
 import {
   archiveAthleteUseCase,
   restoreAthleteUseCase,
 } from '../../../src/application/coach/ClientUseCases';
 import { ClientStatus } from '../../../src/domain/repositories/ICoachRepository';
+import { ClientTag } from '../../../src/domain/entities/ClientTag';
+import { TagPickerModal } from '../../../src/presentation/components/coach/TagPickerModal';
+import { useTagStore } from '../../../src/presentation/stores/tagStore';
 
 // ── Pure helpers ──────────────────────────────────────────────────────────────
 
@@ -27,6 +31,7 @@ export interface Athlete {
   status: ClientStatus;
   lastSessionAt: Date | null;
   routineCount: number;
+  tags: ClientTag[];
 }
 
 export function formatLastActivity(date: Date | null): string {
@@ -70,18 +75,24 @@ const TABS: { key: ClientStatus; label: string }[] = [
   { key: 'archived', label: Strings.tabClientsArchived },
 ];
 
-const repo = new CoachRemoteRepository();
+const repo    = new CoachRemoteRepository();
+const tagRepo = new TagRemoteRepository();
 
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function ClientsScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
+  const { tags: coachTags, fetchTags } = useTagStore();
+
   const [athletes, setAthletes] = useState<Athlete[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ClientStatus>('active');
   const [searchQuery, setSearchQuery] = useState('');
   const [modalMode, setModalMode] = useState<ModalMode | null>(null);
+
+  // Tag picker state
+  const [pickerAthlete, setPickerAthlete] = useState<Athlete | null>(null);
 
   // Search / link
   const [available, setAvailable] = useState<AvailableAthlete[]>([]);
@@ -96,7 +107,10 @@ export default function ClientsScreen() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (user?.id) fetchAthletes();
+    if (user?.id) {
+      fetchAthletes();
+      fetchTags(user.id);
+    }
   }, [user?.id]);
 
   // ── Derived state ──────────────────────────────────────────────────────────
@@ -128,6 +142,7 @@ export default function ClientsScreen() {
         status:      row.status as ClientStatus,
         lastSessionAt: null as Date | null,
         routineCount:  0,
+        tags:          [] as ClientTag[],
       }));
 
       if (base.length === 0) {
@@ -137,7 +152,11 @@ export default function ClientsScreen() {
 
       const ids = base.map((a) => a.id);
 
-      const [{ data: sessionRows }, { data: routineRows }] = await Promise.all([
+      const [
+        { data: sessionRows },
+        { data: routineRows },
+        tagsMap,
+      ] = await Promise.all([
         supabase
           .from('workout_sessions')
           .select('athlete_id, started_at')
@@ -148,6 +167,7 @@ export default function ClientsScreen() {
           .from('routine_assignments')
           .select('athlete_id')
           .in('athlete_id', ids),
+        tagRepo.getTagsForAthletes(ids),
       ]);
 
       const lastSessionMap = new Map<string, Date>();
@@ -166,6 +186,7 @@ export default function ClientsScreen() {
         ...a,
         lastSessionAt: lastSessionMap.get(a.id) ?? null,
         routineCount:  routineCountMap.get(a.id) ?? 0,
+        tags:          tagsMap.get(a.id) ?? [],
       })));
     } catch {
     } finally {
@@ -175,28 +196,39 @@ export default function ClientsScreen() {
 
   // ── Actions ────────────────────────────────────────────────────────────────
 
+  const openTagPicker = (athlete: Athlete) => setPickerAthlete(athlete);
+
+  const handleTagPickerClose = (updatedIds: Set<string>) => {
+    if (!pickerAthlete) return;
+    const updatedTags = coachTags.filter((t) => updatedIds.has(t.id));
+    setAthletes((prev) =>
+      prev.map((a) => a.id === pickerAthlete.id ? { ...a, tags: updatedTags } : a),
+    );
+    setPickerAthlete(null);
+  };
+
   const handleLongPress = (athlete: Athlete) => {
     if (athlete.status === 'active') {
-      Alert.alert(
-        Strings.alertArchiveClientTitle,
-        Strings.alertArchiveClientMessage(athlete.full_name),
-        [
-          { text: Strings.alertArchiveCancel, style: 'cancel' },
-          {
-            text: Strings.alertArchiveConfirm,
-            onPress: async () => {
-              try {
-                await archiveAthleteUseCase(user!.id, athlete.id, repo);
-                setAthletes((prev) =>
-                  prev.map((a) => a.id === athlete.id ? { ...a, status: 'archived' } : a),
-                );
-              } catch {
-                Alert.alert('Error', Strings.errorFailedArchiveClient);
-              }
-            },
+      Alert.alert(athlete.full_name, undefined, [
+        {
+          text: Strings.tagManageButton,
+          onPress: () => openTagPicker(athlete),
+        },
+        {
+          text: Strings.alertArchiveConfirm,
+          onPress: async () => {
+            try {
+              await archiveAthleteUseCase(user!.id, athlete.id, repo);
+              setAthletes((prev) =>
+                prev.map((a) => a.id === athlete.id ? { ...a, status: 'archived' } : a),
+              );
+            } catch {
+              Alert.alert('Error', Strings.errorFailedArchiveClient);
+            }
           },
-        ],
-      );
+        },
+        { text: 'Cancelar', style: 'cancel' },
+      ]);
     } else {
       Alert.alert(athlete.full_name, undefined, [
         {
@@ -269,7 +301,7 @@ export default function ClientsScreen() {
         .insert({ coach_id: user!.id, athlete_id: athlete.id, status: 'active' });
       if (error) throw error;
       setAthletes((prev) => [
-        { ...athlete, assigned_at: new Date().toISOString(), status: 'active', lastSessionAt: null, routineCount: 0 },
+        { ...athlete, assigned_at: new Date().toISOString(), status: 'active', lastSessionAt: null, routineCount: 0, tags: [] },
         ...prev,
       ]);
       closeModal();
@@ -321,7 +353,7 @@ export default function ClientsScreen() {
       setAthletes((prev) => [{
         id: newUserId, email: newEmail.trim(), full_name: newName.trim(),
         assigned_at: new Date().toISOString(), status: 'active',
-        lastSessionAt: null, routineCount: 0,
+        lastSessionAt: null, routineCount: 0, tags: [],
       }, ...prev]);
 
       closeModal();
@@ -349,6 +381,15 @@ export default function ClientsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {pickerAthlete && (
+        <TagPickerModal
+          visible={!!pickerAthlete}
+          athleteId={pickerAthlete.id}
+          coachTags={coachTags}
+          assignedTagIds={new Set(pickerAthlete.tags.map((t) => t.id))}
+          onClose={handleTagPickerClose}
+        />
+      )}
 
       {/* ── Modal menú principal ── */}
       <Modal visible={modalMode === 'menu'} transparent animationType="fade">
@@ -609,6 +650,16 @@ export default function ClientsScreen() {
                     📋 {Strings.clientsRoutineCount(item.routineCount)}
                   </Text>
                 </View>
+                {item.tags.length > 0 && (
+                  <View style={styles.tagsRow}>
+                    {item.tags.map((tag) => (
+                      <View key={tag.id} style={[styles.tagChip, { backgroundColor: `${tag.color}20`, borderColor: `${tag.color}60` }]}>
+                        <View style={[styles.tagChipDot, { backgroundColor: tag.color }]} />
+                        <Text style={[styles.tagChipText, { color: tag.color }]}>{tag.name}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
               <Text style={styles.chevron}>›</Text>
             </TouchableOpacity>
@@ -708,6 +759,10 @@ const styles = StyleSheet.create({
   metricsRow:          { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   metricText:          { fontSize: FontSize.xs, color: Colors.textMuted },
   metricSep:           { fontSize: FontSize.xs, color: Colors.borderLight },
+  tagsRow:             { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  tagChip:             { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: BorderRadius.full, borderWidth: 1 },
+  tagChipDot:          { width: 6, height: 6, borderRadius: 3 },
+  tagChipText:         { fontSize: 10, fontWeight: '700' },
   chevron:             { fontSize: 22, color: Colors.textMuted },
 
   // ── Empty state ────────────────────────────────────────────────────────────

@@ -291,6 +291,15 @@ export const Strings = {
   tagClients: (n: number) => `${n} ${n === 1 ? 'cliente' : 'clientes'}`,
   tagNoAutomations: 'Sin automatizaciones',
 
+  tagPickerTitle: 'Gestionar etiquetas',
+  tagPickerDone: 'Listo',
+  tagPickerEmpty: 'Sin etiquetas. Crea una desde la pantalla de etiquetas.',
+  tagManageButton: 'Gestionar etiquetas',
+  sectionTags: 'ETIQUETAS',
+  errorFailedAssignTag: 'Error al asignar la etiqueta',
+  errorFailedRemoveTag: 'Error al quitar la etiqueta',
+  errorFailedLoadAthleteTagss: 'Error al cargar las etiquetas del cliente',
+
   tagFormCreateTitle: 'Nueva etiqueta',
   tagFormEditTitle: 'Editar etiqueta',
   tagFormNameLabel: 'Nombre',
