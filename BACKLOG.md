@@ -2,6 +2,41 @@
 
 ## ✅ Completado
 
+#### RF-E4-02 — Catálogo de rutinas
+
+**¿Qué hace?**
+Pantalla de rutinas del coach con búsqueda por nombre/descripción y selección múltiple
+para asignar varias rutinas a un atleta de una sola vez. El coach puede hacer long-press
+sobre una rutina para activar el modo selección, marcar las que quiera, y pulsar
+"Asignar seleccionadas" para elegir el atleta destinatario en un modal.
+
+**Pantallas / flujo:**
+- `app/(coach)/routines/index.tsx` — lista con búsqueda + multi-selección
+  - Barra de búsqueda: filtra por nombre o descripción (case-insensitive)
+  - Long-press activa modo selección: checkbox en cada card
+  - Barra de acción con contador + botón "Asignar seleccionadas"
+  - Botón "Cancelar" en cabecera para salir del modo selección
+  - Modal de atletas: lista con avatar de iniciales + nombre + email
+  - Confirmación vía `Alert` tras asignación exitosa
+  - `useFocusEffect` para recargar al volver de otra pantalla
+
+**Decisiones de diseño:**
+- `filterRoutines` es una función pura exportada desde el archivo de pantalla (mismo patrón que `filterAthletes` en clients/index), testeable de forma aislada en `__tests__/presentation/screens/routinesFilter.test.ts`.
+- La lista de atletas se obtiene directamente de Supabase en el modal (igual que en `routines/[id].tsx`), sin store intermedio, para no duplicar lógica de cliente.
+- `assignMultipleRoutinesUseCase` usa `Promise.all` para hacer las N asignaciones en paralelo.
+- `RoutineCard` ampliado con `onLongPress` opcional (sin romper usos existentes).
+
+**Implementación técnica:**
+- `AssignRoutineUseCase.ts`: `assignMultipleRoutinesUseCase(routineIds, athleteId, repo)`
+- `routineStore.ts`: `assignMultipleToAthlete(routineIds, athleteId) → Promise<boolean>`
+- `RoutineCard.tsx`: prop `onLongPress?: (routine: Routine) => void`
+- `strings.ts`: `routineNewButton`, `routineSearchPlaceholder`, `routineSubtitle`, `routineSelectionCount`, `routineBulkAssignButton`, `routineBulkAssignSuccess`, `routineEmpty*`
+
+**Métricas finales:**
+- Test Suites: 50/50 ✅ | Tests: 842/842 ✅ (+21 tests)
+
+---
+
 #### RF-E4-01 — Catálogo de ejercicios
 
 **¿Qué hace?**
