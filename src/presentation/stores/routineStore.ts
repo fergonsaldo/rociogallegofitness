@@ -4,7 +4,7 @@ import { Routine, CreateRoutineInput } from '@/domain/entities/Routine';
 import { RoutineRemoteRepository } from '@/infrastructure/supabase/remote/RoutineRemoteRepository';
 import { createRoutineUseCase } from '@/application/coach/CreateRoutineUseCase';
 import { getCoachRoutinesUseCase, getAthleteRoutinesUseCase, getRoutineByIdUseCase } from '@/application/coach/GetRoutinesUseCase';
-import { assignRoutineUseCase, unassignRoutineUseCase } from '@/application/coach/AssignRoutineUseCase';
+import { assignRoutineUseCase, unassignRoutineUseCase, assignMultipleRoutinesUseCase } from '@/application/coach/AssignRoutineUseCase';
 import { deleteRoutineUseCase } from '@/application/coach/DeleteRoutineUseCase';
 
 const repo = new RoutineRemoteRepository();
@@ -25,6 +25,7 @@ interface RoutineState {
   deleteRoutine: (routineId: string) => Promise<boolean>;
   assignToAthlete: (routineId: string, athleteId: string) => Promise<void>;
   unassignFromAthlete: (routineId: string, athleteId: string) => Promise<void>;
+  assignMultipleToAthlete: (routineIds: string[], athleteId: string) => Promise<boolean>;
 
   // Athlete actions
   fetchAthleteRoutines: (athleteId: string) => Promise<void>;
@@ -115,6 +116,17 @@ export const useRoutineStore = create<RoutineState>((set, get) => ({
       await unassignRoutineUseCase({ routineId, athleteId }, repo);
     } catch (err) {
       set({ error: err instanceof Error ? err.message : Strings.errorFailedUnassignRoutine });
+    }
+  },
+
+  assignMultipleToAthlete: async (routineIds, athleteId) => {
+    set({ error: null });
+    try {
+      await assignMultipleRoutinesUseCase(routineIds, athleteId, repo);
+      return true;
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignRoutine });
+      return false;
     }
   },
 

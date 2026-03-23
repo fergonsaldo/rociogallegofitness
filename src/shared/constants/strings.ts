@@ -165,6 +165,21 @@ export const Strings = {
     'No se puede eliminar esta rutina porque está asignada a uno o más clientes. Desasígnala primero.',
   errorFailedDeleteRoutine: 'Error al eliminar la rutina',
 
+  // ── Catálogo de rutinas (RF-E4-02) ───────────────────────────────────────
+  routineNewButton: '+ Nueva',
+  routineSearchPlaceholder: 'Buscar rutina...',
+  routineSubtitle: (n: number) => `${n} ${n === 1 ? 'rutina' : 'rutinas'}`,
+  routineSelectionCount: (n: number) => `${n} seleccionada${n !== 1 ? 's' : ''}`,
+  routineBulkAssignButton: 'Asignar seleccionadas',
+  routineBulkAssignSuccess: (n: number, athleteName: string) =>
+    `${n} ${n === 1 ? 'rutina asignada' : 'rutinas asignadas'} a ${athleteName}`,
+  routineEmptyTitle: 'Sin rutinas todavía',
+  routineEmptySubtitle: 'Crea tu primer programa de entrenamiento',
+  routineEmptyButton: 'Crear rutina',
+  routineEmptySearch: 'Sin resultados',
+  routineEmptySearchSubtitle: (q: string) => `No hay rutinas que coincidan con "${q}"`,
+  routineLongPressHint: 'Mantén pulsado para seleccionar',
+
   // ── Asignar rutina a cliente ──────────────────────────────────────────────
   assignRoutineTitle: 'Asignar a cliente',
   assignRoutineSubtitle: 'Selecciona el atleta al que quieres asignar esta rutina',

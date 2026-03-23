@@ -5,6 +5,7 @@ import { Colors, Spacing, FontSize, BorderRadius } from '@/shared/constants/them
 interface RoutineCardProps {
   routine: Routine;
   onPress: (routine: Routine) => void;
+  onLongPress?: (routine: Routine) => void;
   accentColor?: string;
   showCoachBadge?: boolean;
 }
@@ -12,6 +13,7 @@ interface RoutineCardProps {
 export function RoutineCard({
   routine,
   onPress,
+  onLongPress,
   accentColor = Colors.primary,
   showCoachBadge = false,
 }: RoutineCardProps) {
@@ -24,6 +26,7 @@ export function RoutineCard({
     <TouchableOpacity
       style={styles.card}
       onPress={() => onPress(routine)}
+      onLongPress={onLongPress ? () => onLongPress(routine) : undefined}
       activeOpacity={0.7}
     >
       {/* Left accent bar */}

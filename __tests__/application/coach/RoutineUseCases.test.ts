@@ -1,6 +1,6 @@
 import { createRoutineUseCase } from '../../../src/application/coach/CreateRoutineUseCase';
 import { getCoachRoutinesUseCase, getAthleteRoutinesUseCase, getRoutineByIdUseCase } from '../../../src/application/coach/GetRoutinesUseCase';
-import { assignRoutineUseCase, unassignRoutineUseCase } from '../../../src/application/coach/AssignRoutineUseCase';
+import { assignRoutineUseCase, unassignRoutineUseCase, assignMultipleRoutinesUseCase } from '../../../src/application/coach/AssignRoutineUseCase';
 import { deleteRoutineUseCase } from '../../../src/application/coach/DeleteRoutineUseCase';
 import { IRoutineRepository } from '../../../src/domain/repositories/IRoutineRepository';
 import { Routine } from '../../../src/domain/entities/Routine';
@@ -178,6 +178,43 @@ describe('unassignRoutineUseCase', () => {
       unassignRoutineUseCase({ routineId: VALID_UUID, athleteId: 'bad-id' }, mockRepo)
     ).rejects.toThrow('Invalid athlete ID');
     expect(mockRepo.unassignFromAthlete).not.toHaveBeenCalled();
+  });
+});
+
+// ── assignMultipleRoutinesUseCase ─────────────────────────────────────────────
+
+describe('assignMultipleRoutinesUseCase', () => {
+  it('calls repo.assignToAthlete once per routineId', async () => {
+    mockRepo.assignToAthlete.mockResolvedValue();
+    const ids = [VALID_UUID, COACH_UUID];
+    await assignMultipleRoutinesUseCase(ids, ATHLETE_UUID, mockRepo);
+    expect(mockRepo.assignToAthlete).toHaveBeenCalledTimes(2);
+    expect(mockRepo.assignToAthlete).toHaveBeenCalledWith(VALID_UUID, ATHLETE_UUID);
+    expect(mockRepo.assignToAthlete).toHaveBeenCalledWith(COACH_UUID, ATHLETE_UUID);
+  });
+
+  it('throws when routineIds is empty', async () => {
+    await expect(assignMultipleRoutinesUseCase([], ATHLETE_UUID, mockRepo))
+      .rejects.toThrow('routineIds must not be empty');
+    expect(mockRepo.assignToAthlete).not.toHaveBeenCalled();
+  });
+
+  it('throws when athleteId is not a valid UUID', async () => {
+    await expect(assignMultipleRoutinesUseCase([VALID_UUID], 'bad-id', mockRepo))
+      .rejects.toThrow('Invalid athlete ID');
+    expect(mockRepo.assignToAthlete).not.toHaveBeenCalled();
+  });
+
+  it('throws when any routineId is not a valid UUID', async () => {
+    await expect(assignMultipleRoutinesUseCase([VALID_UUID, 'not-uuid'], ATHLETE_UUID, mockRepo))
+      .rejects.toThrow('Invalid routine ID');
+    expect(mockRepo.assignToAthlete).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.assignToAthlete.mockRejectedValue(new Error('DB error'));
+    await expect(assignMultipleRoutinesUseCase([VALID_UUID], ATHLETE_UUID, mockRepo))
+      .rejects.toThrow('DB error');
   });
 });
 
