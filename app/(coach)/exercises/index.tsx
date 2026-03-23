@@ -1,6 +1,6 @@
 import {
-  View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, SafeAreaView, ActivityIndicator, Alert, TextInput,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, SafeAreaView, ActivityIndicator, Alert, TextInput,
 } from 'react-native';
 import { useCallback, useState } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -8,69 +8,50 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/con
 import { Strings } from '../../../src/shared/constants/strings';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { useCustomExerciseStore } from '../../../src/presentation/stores/customExerciseStore';
+import { MUSCLE_LABELS, CATEGORY_LABELS } from '../../../src/shared/constants/exercises';
+import {
+  CatalogExercise,
+  applyExerciseFilters,
+} from '../../../src/application/coach/CustomExerciseUseCases';
 import { isValidYouTubeUrl } from '../../../src/shared/utils/youtube';
 import { ExerciseVideoPlayer } from '../../../src/presentation/components/athlete/ExerciseVideoPlayer';
-import { supabase } from '../../../src/infrastructure/supabase/client';
 
-const MUSCLE_LABELS: Record<string, string> = {
-  chest: 'Pecho', back: 'Espalda', shoulders: 'Hombros',
-  biceps: 'Bíceps', triceps: 'Tríceps', forearms: 'Antebrazos',
-  core: 'Core', glutes: 'Glúteos', quadriceps: 'Cuádriceps',
-  hamstrings: 'Isquiotibiales', calves: 'Gemelos', full_body: 'Cuerpo completo',
-};
+// ── Constants ─────────────────────────────────────────────────────────────────
 
-interface Exercise {
-  id:               string;
-  coachId:          string | null;
-  name:             string;
-  category:         string;
-  primaryMuscles:   string[];
-  secondaryMuscles: string[];
-  isIsometric:      boolean;
-  description?:     string;
-  videoUrl?:        string;
-}
+const CATEGORIES = ['strength', 'cardio', 'flexibility', 'isometric'] as const;
+const MUSCLES    = Object.keys(MUSCLE_LABELS);
+
+// ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function CoachExerciseLibraryScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { delete: deleteExercise } = useCustomExerciseStore();
+  const { catalog, isLoading, fetchAll, delete: deleteExercise } = useCustomExerciseStore();
 
-  const [exercises, setExercises]             = useState<Exercise[]>([]);
-  const [loading, setLoading]                 = useState(true);
-  const [search, setSearch]                   = useState('');
-  const [previewExercise, setPreviewExercise] = useState<Exercise | null>(null);
+  const [search,           setSearch]           = useState('');
+  const [activeCategories, setActiveCategories] = useState<string[]>([]);
+  const [activeMuscles,    setActiveMuscles]    = useState<string[]>([]);
+  const [previewExercise,  setPreviewExercise]  = useState<CatalogExercise | null>(null);
 
-  const loadAll = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('exercises')
-        .select('*')
-        .order('name', { ascending: true });
+  useFocusEffect(useCallback(() => {
+    if (user?.id) fetchAll(user.id);
+  }, [user?.id]));
 
-      if (error) throw error;
-      setExercises((data ?? []).map((row: any) => ({
-        id:               row.id,
-        coachId:          row.coach_id ?? null,
-        name:             row.name,
-        category:         row.category,
-        primaryMuscles:   row.primary_muscles ?? [],
-        secondaryMuscles: row.secondary_muscles ?? [],
-        isIsometric:      row.is_isometric,
-        description:      row.description ?? undefined,
-        videoUrl:         row.video_url ?? undefined,
-      })));
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const filtered = applyExerciseFilters(catalog, search, activeCategories, activeMuscles);
 
-  useFocusEffect(useCallback(() => { loadAll(); }, [loadAll]));
+  function toggleCategory(cat: string) {
+    setActiveCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat],
+    );
+  }
 
-  const handleDelete = (exercise: Exercise) => {
+  function toggleMuscle(m: string) {
+    setActiveMuscles((prev) =>
+      prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m],
+    );
+  }
+
+  function confirmDelete(exercise: CatalogExercise) {
     Alert.alert(
       Strings.exerciseDeleteConfirmTitle,
       `${Strings.exerciseDeleteConfirmMessage}\n\n"${exercise.name}"`,
@@ -81,52 +62,90 @@ export default function CoachExerciseLibraryScreen() {
           style: 'destructive',
           onPress: async () => {
             const success = await deleteExercise(exercise.id);
-            if (!success) {
-              Alert.alert('Error', Strings.exerciseDeleteInUseError);
-            } else {
-              setExercises((prev) => prev.filter((e) => e.id !== exercise.id));
-            }
+            if (!success) Alert.alert('Error', Strings.exerciseDeleteInUseError);
           },
         },
       ],
     );
-  };
-
-  const filtered = search.trim().length > 0
-    ? exercises.filter((e) =>
-        e.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.category.toLowerCase().includes(search.toLowerCase())
-      )
-    : exercises;
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>{Strings.coachExerciseLibraryTitle}</Text>
-          <Text style={styles.subtitle}>{exercises.length} ejercicios</Text>
+          <Text style={styles.title}>{Strings.exerciseLibraryTitle}</Text>
+          <Text style={styles.subtitle}>{filtered.length} ejercicios</Text>
         </View>
         <TouchableOpacity
-          style={styles.newButton}
+          style={styles.newBtn}
           onPress={() => router.push('/(coach)/exercises/create')}
           activeOpacity={0.8}
         >
-          <Text style={styles.newButtonText}>{Strings.coachExerciseNewButton}</Text>
+          <Text style={styles.newBtnText}>{Strings.coachExerciseNewButton}</Text>
         </TouchableOpacity>
       </View>
 
+      {/* Search */}
       <View style={styles.searchContainer}>
         <TextInput
           style={styles.searchInput}
           value={search}
           onChangeText={setSearch}
-          placeholder="Buscar ejercicio…"
+          placeholder={Strings.exerciseLibrarySearchPlaceholder}
           placeholderTextColor={Colors.textMuted}
           clearButtonMode="while-editing"
         />
       </View>
 
-      {loading ? (
+      {/* Category filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsRow}
+      >
+        {CATEGORIES.map((cat) => {
+          const active = activeCategories.includes(cat);
+          return (
+            <TouchableOpacity
+              key={cat}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => toggleCategory(cat)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {CATEGORY_LABELS[cat]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Muscle filter chips */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chipsRow}
+      >
+        {MUSCLES.map((m) => {
+          const active = activeMuscles.includes(m);
+          return (
+            <TouchableOpacity
+              key={m}
+              style={[styles.chip, active && styles.chipActive]}
+              onPress={() => toggleMuscle(m)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                {MUSCLE_LABELS[m]}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* List */}
+      {isLoading ? (
         <View style={styles.center}>
           <ActivityIndicator color={Colors.primary} size="large" />
         </View>
@@ -135,22 +154,19 @@ export default function CoachExerciseLibraryScreen() {
           {filtered.length === 0 ? (
             <View style={styles.center}>
               <Text style={styles.emptyEmoji}>🔍</Text>
-              <Text style={styles.emptyText}>Sin resultados para "{search}"</Text>
+              <Text style={styles.emptyText}>Sin resultados</Text>
             </View>
           ) : (
-            filtered.map((ex) => {
-              const isOwn = ex.coachId === user?.id;
-              return (
-                <ExerciseCard
-                  key={ex.id}
-                  exercise={ex}
-                  isOwn={isOwn}
-                  onPress={() => router.push(`/(coach)/exercises/${ex.id}`)}
-                  onVideoPress={() => setPreviewExercise(ex)}
-                  onDelete={() => handleDelete(ex)}
-                />
-              );
-            })
+            filtered.map((ex) => (
+              <ExerciseCard
+                key={ex.id}
+                exercise={ex}
+                isOwn={ex.coachId === user?.id}
+                onPress={() => router.push(`/(coach)/exercises/${ex.id}`)}
+                onVideoPress={() => setPreviewExercise(ex)}
+                onDelete={() => confirmDelete(ex)}
+              />
+            ))
           )}
           <View style={{ height: Spacing.xxl }} />
         </ScrollView>
@@ -173,7 +189,7 @@ export default function CoachExerciseLibraryScreen() {
 function ExerciseCard({
   exercise, isOwn, onPress, onVideoPress, onDelete,
 }: {
-  exercise:     Exercise;
+  exercise:     CatalogExercise;
   isOwn:        boolean;
   onPress:      () => void;
   onVideoPress: () => void;
@@ -190,7 +206,9 @@ function ExerciseCard({
             <Text style={styles.cardName}>{exercise.name}</Text>
             <View style={styles.badgeRow}>
               <View style={styles.categoryBadge}>
-                <Text style={styles.categoryBadgeText}>{exercise.category}</Text>
+                <Text style={styles.categoryBadgeText}>
+                  {CATEGORY_LABELS[exercise.category] ?? exercise.category}
+                </Text>
               </View>
               {exercise.isIsometric && (
                 <View style={styles.isometricBadge}>
@@ -203,20 +221,20 @@ function ExerciseCard({
           <View style={styles.cardActions}>
             {hasVideo && (
               <TouchableOpacity
-                style={styles.videoButton}
+                style={styles.videoBtn}
                 onPress={(e) => { e.stopPropagation?.(); onVideoPress(); }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.videoButtonText}>▶</Text>
+                <Text style={styles.videoBtnText}>▶</Text>
               </TouchableOpacity>
             )}
             {isOwn && (
               <TouchableOpacity
-                style={styles.deleteButton}
+                style={styles.deleteBtn}
                 onPress={(e) => { e.stopPropagation?.(); onDelete(); }}
                 activeOpacity={0.8}
               >
-                <Text style={styles.deleteButtonText}>🗑</Text>
+                <Text style={styles.deleteBtnText}>🗑</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -244,19 +262,30 @@ function ExerciseCard({
   );
 }
 
+// ── Styles ────────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
   safe:              { flex: 1, backgroundColor: Colors.background },
   header:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: Spacing.md },
   title:             { fontSize: FontSize.xxl, fontWeight: '800', color: Colors.textPrimary },
   subtitle:          { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
-  newButton:         { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
-  newButtonText:     { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+  newBtn:            { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
+  newBtnText:        { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+
   searchContainer:   { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm },
   searchInput:       { backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, fontSize: FontSize.md, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border },
+
+  chipsRow:          { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm, gap: Spacing.xs, flexDirection: 'row' },
+  chip:              { borderRadius: BorderRadius.full, paddingHorizontal: Spacing.md, paddingVertical: 6, backgroundColor: Colors.surfaceMuted, borderWidth: 1, borderColor: Colors.border },
+  chipActive:        { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  chipText:          { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
+  chipTextActive:    { color: '#fff' },
+
   center:            { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md, padding: Spacing.lg },
   emptyEmoji:        { fontSize: 36 },
   emptyText:         { fontSize: FontSize.md, color: Colors.textSecondary, textAlign: 'center' },
   list:              { paddingHorizontal: Spacing.lg, paddingTop: Spacing.xs, gap: Spacing.sm },
+
   card:              { backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.border, flexDirection: 'row', overflow: 'hidden', elevation: 1 },
   cardAccent:        { width: 4, alignSelf: 'stretch', backgroundColor: Colors.primary },
   cardBody:          { flex: 1, padding: Spacing.md, gap: Spacing.xs },
@@ -269,10 +298,10 @@ const styles = StyleSheet.create({
   isometricBadge:    { backgroundColor: `${Colors.success}15`, borderRadius: BorderRadius.full, paddingHorizontal: 8, paddingVertical: 2 },
   isometricBadgeText:{ fontSize: 11, fontWeight: '600', color: Colors.success },
   cardActions:       { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  videoButton:       { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.athlete, alignItems: 'center', justifyContent: 'center' },
-  videoButtonText:   { fontSize: 11, color: '#fff', fontWeight: '700' },
-  deleteButton:      { width: 32, height: 32, borderRadius: 16, backgroundColor: `${Colors.error}12`, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${Colors.error}40` },
-  deleteButtonText:  { fontSize: 14 },
+  videoBtn:          { width: 32, height: 32, borderRadius: 16, backgroundColor: Colors.athlete, alignItems: 'center', justifyContent: 'center' },
+  videoBtnText:      { fontSize: 11, color: '#fff', fontWeight: '700' },
+  deleteBtn:         { width: 32, height: 32, borderRadius: 16, backgroundColor: `${Colors.error}12`, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: `${Colors.error}40` },
+  deleteBtnText:     { fontSize: 14 },
   musclesRow:        { flexDirection: 'row', flexWrap: 'wrap' },
   musclesLabel:      { fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: '600' },
   musclesValue:      { fontSize: FontSize.xs, color: Colors.textSecondary },

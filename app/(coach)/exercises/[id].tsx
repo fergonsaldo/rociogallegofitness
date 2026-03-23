@@ -9,14 +9,8 @@ import { ExerciseForm } from '../../../src/presentation/components/coach/Exercis
 import { CreateCustomExerciseInput, CustomExercise } from '../../../src/domain/entities/CustomExercise';
 import { ExerciseVideoPlayer } from '../../../src/presentation/components/athlete/ExerciseVideoPlayer';
 import { isValidYouTubeUrl } from '../../../src/shared/utils/youtube';
+import { MUSCLE_LABELS } from '../../../src/shared/constants/exercises';
 import { supabase } from '../../../src/infrastructure/supabase/client';
-
-const MUSCLE_LABELS: Record<string, string> = {
-  chest: 'Pecho', back: 'Espalda', shoulders: 'Hombros',
-  biceps: 'Bíceps', triceps: 'Tríceps', forearms: 'Antebrazos',
-  core: 'Core', glutes: 'Glúteos', quadriceps: 'Cuádriceps',
-  hamstrings: 'Isquiotibiales', calves: 'Gemelos', full_body: 'Cuerpo completo',
-};
 
 export default function ExerciseDetailScreen() {
   const router              = useRouter();

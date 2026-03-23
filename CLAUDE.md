@@ -47,6 +47,9 @@ Si la conversación es larga y puedes haber perdido contexto de decisiones anter
 **Tras compactación de memoria:**
 Cada vez que el sistema compacte la conversación (context compaction), vuelve a leer este fichero `CLAUDE.md` y el `BACKLOG.md` antes de continuar. La compactación puede eliminar decisiones de diseño, acuerdos o contexto de historia que son necesarios para continuar correctamente.
 
+**Al finalizar cada historia:**
+Cuando una historia quede completamente cerrada (código + tests + BACKLOG.md actualizado), haz push de todos los cambios al repositorio remoto con un commit descriptivo antes de continuar con la siguiente historia.
+
 
 ## RESTRICCIONES DE TRABAJO
 

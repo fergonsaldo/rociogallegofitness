@@ -2,6 +2,45 @@
 
 ## ✅ Completado
 
+#### RF-E4-01 — Catálogo de ejercicios
+
+**¿Qué hace?**
+Pantalla de librería unificada de ejercicios. Muestra en una sola lista los ejercicios
+del catálogo base (20 ejercicios predefinidos) y los ejercicios personalizados creados
+por el coach. El coach puede filtrar por categoría (Fuerza, Cardio, Flexibilidad,
+Isométrico) y por grupo muscular (12 chips en scroll horizontal), buscar por nombre
+o por músculo traducido, y crear nuevos ejercicios personalizados. Solo puede
+editar/borrar los que ha creado él mismo.
+
+**Pantallas / flujo:**
+- `app/(coach)/exercises/index.tsx` — lista unificada con búsqueda + filtros
+  - Chips de categoría (4): Fuerza / Cardio / Flexibilidad / Isométrico
+  - Chips de músculo (12, scroll horizontal): Pecho, Espalda, Hombros…
+  - Filtros acumulables: vacío = sin filtro, múltiple selección permitida
+  - Búsqueda por nombre y por nombre de músculo traducido (ej. "pecho" filtra chest)
+  - Contador "N ejercicios" sobre los resultados filtrados
+  - Botón borrar solo en ejercicios propios, con confirmación + check de rutinas activas
+- `app/(coach)/exercises/create.tsx` — formulario de alta (sin cambios)
+- `app/(coach)/exercises/[id].tsx` — detalle y edición (sin cambios)
+
+**Decisiones de diseño:**
+- `CatalogExercise = Exercise & { coachId: string | null }` — tipo unificado: `coachId: null` = catálogo base (solo lectura), `coachId: uuid` = ejercicio del coach (editable).
+- El catálogo base (`EXERCISE_CATALOG`) se funde con los custom exercises en el use case `getAllExercisesUseCase`, ordenado alfabéticamente. Sin cambios en BD.
+- `applyExerciseFilters` vive en la capa de use cases (no en UI) para ser testeable de forma aislada.
+- `MUSCLE_LABELS` y `CATEGORY_LABELS` centralizados en `src/shared/constants/exercises.ts`, eliminando la duplicación que había en `index.tsx` y `[id].tsx`.
+- El store sincroniza `catalog` al borrar un ejercicio para evitar una recarga extra de red.
+
+**Implementación técnica:**
+- `CustomExerciseUseCases.ts`: `CatalogExercise` type, `getAllExercisesUseCase`, `applyExerciseFilters`
+- `customExerciseStore.ts`: `catalog: CatalogExercise[]`, `fetchAll(coachId)`, `delete` sincroniza `catalog`
+- `exercises/index.tsx`: reescrito usando store + filter chips (sin acceso directo a Supabase)
+- `exercises.ts`: `MUSCLE_LABELS` y `CATEGORY_LABELS` exportados
+
+**Métricas finales:**
+- Test Suites: 48/48 ✅ | Tests: 821/821 ✅
+
+---
+
 #### RF-E8-02 — Vista lista de sesiones agendadas
 
 **¿Qué hace?**
@@ -662,4 +701,4 @@ calidad antes de continuar con el desarrollo productivo.
 
 ---
 
-_Última actualización: 2026-03-23 — RF-E8-02 cerrado. Formato de entradas actualizado a modelo con ¿Qué hace? / Pantallas / Decisiones / Técnica._
+_Última actualización: 2026-03-23 — RF-E4-01 cerrado._

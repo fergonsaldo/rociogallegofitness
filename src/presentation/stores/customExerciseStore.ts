@@ -7,16 +7,20 @@ import {
   createCustomExerciseUseCase,
   updateCustomExerciseUseCase,
   deleteCustomExerciseUseCase,
+  getAllExercisesUseCase,
+  CatalogExercise,
 } from '@/application/coach/CustomExerciseUseCases';
 
 const repo = new CustomExerciseRemoteRepository();
 
 interface CustomExerciseState {
   exercises:  CustomExercise[];
+  catalog:    CatalogExercise[];
   isLoading:  boolean;
   error:      string | null;
 
   fetchByCoach(coachId: string): Promise<void>;
+  fetchAll(coachId: string): Promise<void>;
   create(input: CreateCustomExerciseInput): Promise<CustomExercise | null>;
   update(id: string, input: UpdateCustomExerciseInput): Promise<CustomExercise | null>;
   delete(id: string): Promise<boolean>;
@@ -25,6 +29,7 @@ interface CustomExerciseState {
 
 export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
   exercises:  [],
+  catalog:    [],
   isLoading:  false,
   error:      null,
 
@@ -33,6 +38,16 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
     try {
       const exercises = await getCoachCustomExercisesUseCase(coachId, repo);
       set({ exercises, isLoading: false });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : 'Error al cargar ejercicios', isLoading: false });
+    }
+  },
+
+  async fetchAll(coachId) {
+    set({ isLoading: true, error: null });
+    try {
+      const catalog = await getAllExercisesUseCase(coachId, repo);
+      set({ catalog, isLoading: false });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Error al cargar ejercicios', isLoading: false });
     }
@@ -71,6 +86,7 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
       await deleteCustomExerciseUseCase(id, repo);
       set((state) => ({
         exercises: state.exercises.filter((ex) => ex.id !== id),
+        catalog:   state.catalog.filter((ex) => ex.id !== id),
         isLoading: false,
       }));
       return true;

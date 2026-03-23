@@ -1,5 +1,27 @@
 import { Exercise } from '@/domain/entities/Exercise';
 
+export const MUSCLE_LABELS: Record<string, string> = {
+  chest:       'Pecho',
+  back:        'Espalda',
+  shoulders:   'Hombros',
+  biceps:      'Bíceps',
+  triceps:     'Tríceps',
+  forearms:    'Antebrazos',
+  core:        'Core',
+  glutes:      'Glúteos',
+  quadriceps:  'Cuádriceps',
+  hamstrings:  'Isquiotibiales',
+  calves:      'Gemelos',
+  full_body:   'Cuerpo completo',
+};
+
+export const CATEGORY_LABELS: Record<string, string> = {
+  strength:    'Fuerza',
+  cardio:      'Cardio',
+  flexibility: 'Flexibilidad',
+  isometric:   'Isométrico',
+};
+
 /**
  * Predefined exercise catalog.
  * IDs are stable UUIDs — do not change them as they are
