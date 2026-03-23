@@ -141,3 +141,36 @@ Mantén siempre actualizado el fichero `BACKLOG.md` con tres secciones:
 - Completado (con detalle de qué se implementó)
 - En curso
 - Pendiente / ideas futuras
+
+### Formato obligatorio para entradas completadas
+
+Cada historia cerrada debe documentarse con esta estructura exacta:
+
+```markdown
+#### RF-XX-YY — Nombre de la historia
+
+**¿Qué hace?**
+Descripción en lenguaje de producto, sin jerga técnica. Qué ve el usuario,
+qué puede hacer, qué problema resuelve.
+
+**Pantallas / flujo:**
+- `ruta/fichero.tsx` — descripción breve de la pantalla
+  - Acción o elemento visible relevante
+  - Acción o elemento visible relevante
+- Navegación entre pantallas si aplica
+
+**Decisiones de diseño:**
+- Decisiones no obvias tomadas durante el desarrollo (patrón elegido, trade-off asumido)
+
+**Implementación técnica:**
+- Resumen conciso de capas tocadas (domain, use cases, repo, store, UI)
+
+**Métricas finales:**
+- Test Suites: X/X ✅ | Tests: Y/Y ✅
+```
+
+**Reglas:**
+- La sección `¿Qué hace?` es obligatoria y debe poder entenderse sin leer código.
+- `Pantallas / flujo` debe listar todas las pantallas nuevas o modificadas con sus acciones clave.
+- `Decisiones de diseño` solo incluye lo no obvio — omítela si no hay nada que documentar.
+- `Implementación técnica` es un resumen de 3-5 bullets, no una lista exhaustiva de ficheros.

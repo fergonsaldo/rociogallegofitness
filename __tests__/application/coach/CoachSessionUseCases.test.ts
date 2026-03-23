@@ -4,6 +4,7 @@
 
 import {
   getSessionsForMonthUseCase,
+  getSessionsForRangeUseCase,
   createSessionUseCase,
   deleteSessionUseCase,
 } from '../../../src/application/coach/CoachSessionUseCases';
@@ -45,6 +46,7 @@ const CREATE_INPUT: CreateCoachSessionInput = {
 
 const mockRepo: jest.Mocked<ICoachSessionRepository> = {
   getForMonth:    jest.fn(),
+  getForRange:    jest.fn(),
   getOverlapping: jest.fn(),
   create:         jest.fn(),
   delete:         jest.fn(),
@@ -165,5 +167,48 @@ describe('deleteSessionUseCase', () => {
   it('propagates repository errors', async () => {
     mockRepo.delete.mockRejectedValue(new Error('Delete failed'));
     await expect(deleteSessionUseCase(SESSION_ID, mockRepo)).rejects.toThrow('Delete failed');
+  });
+});
+
+// ── getSessionsForRangeUseCase ────────────────────────────────────────────────
+
+describe('getSessionsForRangeUseCase', () => {
+  const FROM = new Date('2026-03-01T00:00:00Z');
+  const TO   = new Date('2026-04-01T00:00:00Z');
+
+  it('returns sessions for a valid range', async () => {
+    mockRepo.getForRange.mockResolvedValue([SESSION]);
+    const result = await getSessionsForRangeUseCase(COACH_ID, FROM, TO, mockRepo);
+    expect(result).toHaveLength(1);
+    expect(mockRepo.getForRange).toHaveBeenCalledWith(COACH_ID, FROM, TO);
+  });
+
+  it('returns empty array when no sessions', async () => {
+    mockRepo.getForRange.mockResolvedValue([]);
+    expect(await getSessionsForRangeUseCase(COACH_ID, FROM, TO, mockRepo)).toEqual([]);
+  });
+
+  it('throws when coachId is empty', async () => {
+    await expect(getSessionsForRangeUseCase('', FROM, TO, mockRepo))
+      .rejects.toThrow('coachId is required');
+    expect(mockRepo.getForRange).not.toHaveBeenCalled();
+  });
+
+  it('throws when from is equal to to', async () => {
+    await expect(getSessionsForRangeUseCase(COACH_ID, FROM, FROM, mockRepo))
+      .rejects.toThrow('from must be before to');
+    expect(mockRepo.getForRange).not.toHaveBeenCalled();
+  });
+
+  it('throws when from is after to', async () => {
+    await expect(getSessionsForRangeUseCase(COACH_ID, TO, FROM, mockRepo))
+      .rejects.toThrow('from must be before to');
+    expect(mockRepo.getForRange).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.getForRange.mockRejectedValue(new Error('DB error'));
+    await expect(getSessionsForRangeUseCase(COACH_ID, FROM, TO, mockRepo))
+      .rejects.toThrow('DB error');
   });
 });

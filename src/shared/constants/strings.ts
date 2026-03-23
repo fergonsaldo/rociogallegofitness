@@ -363,6 +363,23 @@ export const Strings = {
   errorFailedDeleteSession: 'Error al eliminar la sesión',
   errorSessionOverlap: 'La sesión se solapa con otra ya programada',
 
+  // ── Lista de sesiones (RF-E8-02) ──────────────────────────────────────────
+  calendarTabCalendar: 'Calendario',
+  calendarTabList: 'Lista',
+  listSubtabList: 'Lista',
+  listSubtabMetrics: 'Métricas',
+  listRangeFrom: 'Desde',
+  listRangeTo: 'Hasta',
+  listFilterType: 'Tipo',
+  listFilterModality: 'Modalidad',
+  listEmpty: 'Sin sesiones en el rango y filtros seleccionados',
+  listMetricsTotalSessions: 'Sesiones',
+  listMetricsTotalHours: 'Horas totales',
+  listMetricsByType: 'Por tipo',
+  listMetricsByModality: 'Por modalidad',
+  listMetricsOnline: 'Online',
+  listMetricsInPerson: 'Presencial',
+
   // ── Mensajería ──────────────────────────────────────────────────────────────
   tabMessages: 'Mensajes',
   messagesTitle: 'Mensajes',

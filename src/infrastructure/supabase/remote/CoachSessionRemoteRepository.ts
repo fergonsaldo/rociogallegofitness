@@ -39,6 +39,21 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
     );
   }
 
+  async getForRange(coachId: string, from: Date, to: Date): Promise<CoachSession[]> {
+    const { data, error } = await supabase
+      .from('coach_sessions')
+      .select('*, athlete:users!coach_sessions_athlete_id_fkey(full_name)')
+      .eq('coach_id', coachId)
+      .gte('scheduled_at', from.toISOString())
+      .lt('scheduled_at', to.toISOString())
+      .order('scheduled_at', { ascending: true });
+
+    if (error) throw error;
+    return (data ?? []).map((row: any) =>
+      this.mapRow(row as CoachSessionRow, row.athlete?.full_name ?? null),
+    );
+  }
+
   async getOverlapping(coachId: string, start: Date, end: Date): Promise<CoachSession[]> {
     // Two intervals [A,B) and [C,D) overlap iff A < D && C < B
     const { data, error } = await supabase

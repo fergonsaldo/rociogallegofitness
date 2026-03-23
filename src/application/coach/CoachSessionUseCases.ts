@@ -33,6 +33,17 @@ export async function createSessionUseCase(
   return repo.create(input);
 }
 
+export async function getSessionsForRangeUseCase(
+  coachId: string,
+  from: Date,
+  to: Date,
+  repo: ICoachSessionRepository,
+): Promise<CoachSession[]> {
+  if (!coachId) throw new Error('coachId is required');
+  if (from >= to) throw new Error('from must be before to');
+  return repo.getForRange(coachId, from, to);
+}
+
 export async function deleteSessionUseCase(
   id: string,
   repo: ICoachSessionRepository,

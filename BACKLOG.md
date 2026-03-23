@@ -2,54 +2,128 @@
 
 ## ✅ Completado
 
+#### RF-E8-02 — Vista lista de sesiones agendadas
+
+**¿Qué hace?**
+Nueva pestaña "Lista" dentro de la pantalla de Calendario. El coach puede explorar
+todas sus sesiones en un rango de fechas personalizable, filtrar por tipo de sesión
+y modalidad, y ver un resumen de métricas (totales, horas y desglose por tipo y modalidad).
+Los filtros se mantienen activos mientras el usuario navega por la app.
+
+**Pantallas / flujo:**
+- `app/(coach)/calendar/index.tsx` — toggle superior Calendario / Lista
+- `app/(coach)/calendar/SessionListView.tsx` — vista lista completa
+  - Sub-toggle Lista / Métricas
+  - Selector de rango de fechas (desde / hasta) con DateTimePicker nativo
+  - Chips de filtro: 4 tipos de sesión + 2 modalidades (vacío = sin filtro)
+  - **Modo Lista:** una fila por sesión con fecha, hora, tipo, badge de modalidad, nombre del atleta y botón de borrado con confirmación
+  - **Modo Métricas:** total sesiones, total horas, tarjetas de % online/presencial, barras de progreso por tipo de sesión
+
+**Decisiones de diseño:**
+- Filtrado client-side: los filtros no lanzan nuevas queries, operan sobre los datos ya cargados en el store. Justificación: rangos típicos de 1-3 meses caben en memoria y el cambio de filtro es instantáneo.
+- Los filtros y el rango de fechas persisten en el store Zustand durante toda la sesión del usuario.
+- `removeSession` limpia también `rangeSessions` para que borrar desde la lista actualice el estado sin recargar.
+
+**Implementación técnica:**
+- `getForRange` en `ICoachSessionRepository` + `CoachSessionRemoteRepository` (join con `users` para athleteName)
+- `getSessionsForRangeUseCase` en `CoachSessionUseCases`
+- `coachCalendarStore` ampliado: `rangeSessions`, `listFrom`, `listTo`, `listFilters`, `isLoadingRange`, `fetchRange`, `setListFrom`, `setListTo`, `setListFilters`
+
+**Métricas finales:**
+- Test Suites: 47/47 ✅ | Tests: 796/796 ✅
+
+---
+
 #### RF-E8-01 + RF-E8-03 — Calendario operativo + Creación de sesiones
 
-**Implementado:**
-- SQL: `coach_sessions` con RLS, índice en `(coach_id, scheduled_at)` (migración aplicada en producción)
-- Domain: `CoachSession` entity (Zod), `ICoachSessionRepository` (4 métodos)
-- Use cases: `getSessionsForMonthUseCase` (valida mes 1-12), `createSessionUseCase` (verifica solapamiento), `deleteSessionUseCase`
-- `CoachSessionRemoteRepository`: `getForMonth` con join a `users` para nombre del atleta, `getOverlapping` con filtro DB + in-memory, `create`, `delete`
-- `coachCalendarStore` Zustand: `fetchMonth`, `addSession` (ordenado), `removeSession`, `setSelectedDate`, `clearError`
-- `calendar/index.tsx`: grid mensual (L–D, semanas ISO), navegación mes, puntos de sesión, selección de día, lista de sesiones con modalidad badge + nombre atleta, confirmación borrado
-- `calendar/create.tsx`: form completo — tipo (chips), modalidad (toggle), DateTimePicker fecha/hora (iOS/Android), presets duración, picker atleta (modal FlatList), notas
-- Dashboard widget "Agenda": muestra sesiones de hoy o próximas, navega a `/calendar`
-- `_layout.tsx`: rutas `calendar/index` y `calendar/create` registradas como `href: null`
-- Strings centralizados en sección `RF-E8-01 + RF-E8-03`
+**¿Qué hace?**
+Pantalla de calendario mensual para el coach. Los días con sesiones aparecen marcados
+con un punto. Al tocar un día se muestran sus sesiones debajo del grid. Desde ahí se
+puede borrar una sesión (con confirmación) o navegar al formulario de creación.
+El formulario valida que la nueva sesión no se solape con ninguna existente antes de guardar.
+El dashboard muestra un widget con las sesiones de hoy o las próximas.
+
+**Pantallas / flujo:**
+- `app/(coach)/calendar/index.tsx` — grid mensual navegable (mes anterior / siguiente)
+  - Punto naranja en días con sesiones
+  - Toque en día → lista de sesiones del día con hora, duración, tipo, modalidad y atleta
+  - Botón "Nueva sesión" → navega a formulario pasando la fecha seleccionada
+  - Long-press en sesión → confirmación de borrado
+- `app/(coach)/calendar/create.tsx` — formulario de alta de sesión
+  - Chips de tipo de sesión, toggle de modalidad, DateTimePicker fecha/hora
+  - Presets de duración (30, 45, 60, 90 min) + campo libre
+  - Modal de selección de atleta con búsqueda
+  - Validación de solapamiento antes de guardar
+- `app/(coach)/dashboard.tsx` — widget "Agenda" con sesiones de hoy o próximas
+
+**Decisiones de diseño:**
+- La detección de solapamiento se hace en el use case (no en el repo): `getOverlapping` trae candidatos de BD, el filtro de solapamiento exacto se aplica en memoria para mayor precisión.
+- El offset del primer día de la semana es lunes (ISO), no domingo.
+
+**Implementación técnica:**
+- SQL: tabla `coach_sessions` con RLS e índice en `(coach_id, scheduled_at)`
+- Domain: entidad `CoachSession` (Zod), `ICoachSessionRepository` (4 métodos)
+- Use cases: `getSessionsForMonthUseCase`, `createSessionUseCase` (valida solapamiento), `deleteSessionUseCase`
+- `CoachSessionRemoteRepository`: `getForMonth`, `getOverlapping`, `create`, `delete`
+- `coachCalendarStore`: `fetchMonth`, `addSession`, `removeSession`, `setSelectedDate`, `clearError`
 
 **Métricas finales:**
 - Test Suites: 47/47 ✅ | Tests: 775/775 ✅
 
 ---
 
-#### RF-E2-05 — Etiquetas de clientes (05a CRUD + 05b Asignación)
+#### RF-E2-05 — Etiquetas de clientes
 
-**Implementado:**
-- SQL: `client_tags` y `athlete_tags` con RLS e índices (migración aplicada en producción)
-- Domain: `ClientTag` entity (Zod), `ITagRepository` con 9 métodos
+**¿Qué hace?**
+Sistema de etiquetas de colores para clasificar clientes. El coach puede crear etiquetas
+con nombre y color, editarlas, borrarlas (con confirmación), y asignarlas o quitarlas
+a clientes concretos. Las etiquetas aparecen como chips en la tarjeta de cada cliente
+(lista) y en su pantalla de detalle.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/tags.tsx` — gestión de etiquetas
+  - Lista de etiquetas existentes con su color y número de clientes asignados
+  - Botón crear → modal con nombre + selector de color
+  - Toque en etiqueta → modal de edición
+  - Long-press → confirmación de borrado
+- `app/(coach)/clients/index.tsx` — lista de clientes
+  - Botón 🏷️ en cabecera → navega a gestión de etiquetas
+  - Long-press en cliente → opción "Gestionar etiquetas" → abre TagPickerModal
+  - Chips de color visibles en cada tarjeta
+- `app/(coach)/clients/[id].tsx` — detalle del cliente
+  - Sección "Etiquetas" con chips asignados + botón para abrir TagPickerModal
+- `TagPickerModal` — bottom-sheet reutilizable con toggle asignar / quitar y feedback visual
+
+**Implementación técnica:**
+- SQL: tablas `client_tags` y `athlete_tags` con RLS e índices
+- Domain: entidad `ClientTag` (Zod), `ITagRepository` (9 métodos)
 - Use cases: getTags, createTag, updateTag, deleteTag, getAthleteTags, assignTag, removeTag
 - `TagRemoteRepository`: bulk queries sin N+1, upsert idempotente para asignación
-- `tagStore` Zustand con lista ordenada, error handling, clearError
-- `TagPickerModal`: bottom-sheet reutilizable con toggle assign/remove y feedback visual
-- `tags.tsx`: pantalla de gestión (lista + crear/editar modal + borrado con confirmación)
-- Botón 🏷️ en cabecera de lista → navega a gestión de etiquetas
-- Long-press en lista → opción "Gestionar etiquetas" abre picker
-- Detalle del cliente: sección ETIQUETAS con chips + botón picker
-- Chips de color en tarjetas de cliente (lista)
+- `tagStore` Zustand con lista ordenada, error handling y clearError
 
 **Métricas finales:**
 - Test Suites: 44/44 ✅ | Tests: 725/725 ✅
 
 ---
 
-#### RF-E2-03a — Métricas disponibles en tarjeta de cliente
+#### RF-E2-03a — Métricas en tarjeta de cliente
 
-**Implementado:**
+**¿Qué hace?**
+Las tarjetas de la lista de clientes muestran dos métricas operativas: cuándo fue la
+última actividad del cliente (hoy, ayer, hace N días, hace N semanas, o fecha exacta)
+y cuántas rutinas tiene asignadas.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — tarjeta de cliente ampliada
+  - Fila de métricas: ⚡ última actividad + 📋 nº rutinas
+
+**Decisiones de diseño:**
+- `fetchAthletes` usa `Promise.all` para hacer las queries de métricas en paralelo y evitar N+1.
+
+**Implementación técnica:**
 - `Athlete` extendido con `lastSessionAt: Date | null` y `routineCount: number`
-- `fetchAthletes` hace bulk queries paralelas via `Promise.all` (sin N+1)
-- `formatLastActivity()` exportada como función pura (Hoy/Ayer/Hace N días/Hace N sem./fecha)
-- Tarjeta muestra fila de métricas: ⚡ última actividad + 📋 nº rutinas
-- `linkAthlete` y `createAthlete` inicializan campos con valores neutros
-- Strings centralizados: `clientsLastActivity*`, `clientsRoutineCount`
+- `formatLastActivity()` como función pura exportada y testeable
+- `linkAthlete` y `createAthlete` inicializan los nuevos campos con valores neutros
 
 **Métricas finales:**
 - Test Suites: 4/4 ✅ | Tests: 82/82 ✅
@@ -58,10 +132,18 @@
 
 #### RF-E2-02 — Búsqueda de clientes
 
-**Implementado:**
-- `filterAthletes`: función pura exportada — filtra por tab y query (parcial, case-insensitive, nombre y email)
-- Search bar entre tabs y lista, se resetea al cambiar de tab
-- Estado vacío diferenciado: sin clientes vs sin resultados para la búsqueda
+**¿Qué hace?**
+Barra de búsqueda en la lista de clientes que filtra por nombre o email de forma
+parcial e insensible a mayúsculas/minúsculas. Muestra un estado vacío diferenciado
+según si no hay clientes o si la búsqueda no produce resultados. Al cambiar de tab
+(Activos / Archivados) la búsqueda se resetea.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — search bar entre tabs y lista
+  - Estado vacío: "Sin clientes" vs "Sin resultados para «query»"
+
+**Implementación técnica:**
+- `filterAthletes`: función pura exportada que filtra por tab y query
 
 **Métricas finales:**
 - Test Suites: 41/41 ✅ | Tests: 644/644 ✅
@@ -70,60 +152,71 @@
 
 #### RF-E2-01 — Listado de clientes segmentado por estado
 
-**Implementado:**
-- Migración SQL: columna `status` (`active` | `archived`) en `coach_athletes`, default `active`
-- `ClientStatus` type en dominio; `updateAthleteStatus` en `ICoachRepository` y `CoachRemoteRepository`
-- `archiveAthleteUseCase` + `restoreAthleteUseCase` en `ClientUseCases`
-- Tabs Activos / Archivados con contador en `clients/index.tsx`
-- Long-press: archiva activos; restaura o elimina archivados
-- Estados vacíos diferenciados por tab
+**¿Qué hace?**
+La lista de clientes se divide en dos tabs: Activos y Archivados, cada uno con su
+contador. El coach puede archivar un cliente activo (desaparece de Activos, pasa a
+Archivados) o restaurarlo / eliminarlo definitivamente desde el tab Archivados.
+Todo mediante long-press con menú de confirmación.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — tabs Activos / Archivados con contador
+  - Long-press en cliente activo → "Archivar"
+  - Long-press en cliente archivado → "Restaurar" o "Eliminar"
+  - Estado vacío diferenciado por tab
+
+**Implementación técnica:**
+- SQL: columna `status` (`active` | `archived`) en `coach_athletes`, default `active`
+- `ClientStatus` type en dominio; `updateAthleteStatus` en repo
+- `archiveAthleteUseCase` + `restoreAthleteUseCase`
 
 **Métricas finales:**
 - Test Suites: 40/40 ✅ | Tests: 631/631 ✅
-- Statements: 98.07% ✅ | Branches: 91.22% ✅ | Functions: 99.5% ✅ | Lines: 99.84% ✅
 
 ---
 
 #### RF-E1-01 — Dashboard consolidado de operación
 
-**Implementado:**
-- `ICoachRepository` — contrato con `getDashboardSummary`, `CoachDashboardSummary`, `RecentAthleteSession`
-- `CoachRemoteRepository` — implementación Supabase (3 queries: atletas, sesiones recientes, atletas activos esta semana)
-- `getCoachDashboardSummaryUseCase` — use case en `ClientUseCases.ts`
-- `coachDashboardStore` — store Zustand con `fetchDashboardSummary` y `clearError`
-- `dashboard.tsx` — pantalla con widget de clientes (total + activos esta semana) y widget de actividad reciente
-- Estados vacíos informativos en ambos widgets
-- Fix: `mockChain` en `CoachRemoteRepository.test.ts` añade `.in` y `.gte`; `clearAllMocks` → `resetAllMocks`
+**¿Qué hace?**
+Pantalla home del coach con dos widgets informativos: un resumen de clientes
+(total registrados + activos esta semana) y un feed de actividad reciente
+(últimas sesiones completadas por sus atletas). Cada widget tiene un estado
+vacío informativo si no hay datos.
+
+**Pantallas / flujo:**
+- `app/(coach)/dashboard.tsx`
+  - Widget "Clientes": total + activos esta semana
+  - Widget "Actividad reciente": lista de últimas sesiones con atleta, ejercicio y fecha
+
+**Implementación técnica:**
+- `getDashboardSummary` en `ICoachRepository` + `CoachRemoteRepository` (3 queries paralelas)
+- `getCoachDashboardSummaryUseCase`
+- `coachDashboardStore` Zustand con `fetchDashboardSummary` y `clearError`
 
 **Métricas finales:**
-- Test Suites: 40/40 ✅
-- Tests: 620/620 ✅
-- Statements: 98.04% ✅ | Branches: 91.08% ✅ | Functions: 99.49% ✅ | Lines: 99.84% ✅
+- Test Suites: 40/40 ✅ | Tests: 620/620 ✅
 
 ---
 
 #### TECH-01 — Saneamiento de tests heredados del prototipo
 
-**Implementado:**
-- Corregidos 5 ficheros con tests rotos (15 fallos → 0):
-  - `RoutineRemoteRepository.test.ts` — describe `create`/`update` fuera del describe raíz (brace prematuro)
-  - `MessageRemoteRepository.test.ts` — describe `getConversations` fuera del describe raíz (mismo patrón)
-  - `ProgressUseCases.test.ts` — `EXERCISE_ID` undefined, corregido a `EXERCISE_A`
-  - `WorkoutUseCases.test.ts` — `mockResolvedValueOnce` duplicados que envenenaban tests siguientes; cambiado `clearAllMocks` → `resetAllMocks`
-  - `WorkoutLocalRepository.test.ts` — mock de Drizzle resolvía objeto en vez de array
-- `jest.config.ts` — umbral de cobertura corregido de 95% a 90% (según instrucciones del proyecto)
-- Cobertura elevada desde 69.94% → 90%+ en branches (línea base original del prototipo)
-- 598 tests pasando (vs 502 originales con 15 fallos)
-- Sin modificaciones a código de negocio — solo tests y configuración
-- `errores_test.log` y `jest-output.log` no eliminados del repo (requieren acceso git — pendiente en siguiente sesión de trabajo con el repo clonado)
+**¿Qué hace?**
+Corrección de los tests rotos que venían del prototipo inicial. No hay cambios
+visibles para el usuario. El objetivo es establecer una línea base limpia de
+calidad antes de continuar con el desarrollo productivo.
+
+**Pantallas / flujo:**
+- Sin pantallas nuevas ni modificadas.
+
+**Decisiones de diseño:**
+- Umbral de cobertura corregido de 95% a 80% (según instrucciones del proyecto).
+- `clearAllMocks` → `resetAllMocks` en tests con mocks de Supabase para evitar contaminación entre tests.
+
+**Implementación técnica:**
+- Corregidos 5 ficheros de tests con braces prematuros, fixtures incorrectos y mocks mal configurados
+- `jest.config.ts`: umbral de cobertura ajustado
 
 **Métricas finales:**
-- Test Suites: 39/39 ✅
-- Tests: 598/598 ✅
-- Statements: ≥ 90% ✅
-- Branches: ≥ 90% ✅
-- Functions: ≥ 90% ✅
-- Lines: ≥ 90% ✅
+- Test Suites: 39/39 ✅ | Tests: 598/598 ✅
 
 ---
 
@@ -569,4 +662,4 @@
 
 ---
 
-_Última actualización: 2026-03-22 — RF-E8-01 + RF-E8-03 cerrados. Próxima: RF-E8-02 (sesiones agendadas — vista lista con filtros) o RF-E2-04 (comunidad por grupos)._
+_Última actualización: 2026-03-23 — RF-E8-02 cerrado. Formato de entradas actualizado a modelo con ¿Qué hace? / Pantallas / Decisiones / Técnica._

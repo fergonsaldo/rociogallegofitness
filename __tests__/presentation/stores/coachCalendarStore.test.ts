@@ -9,9 +9,10 @@ import { CoachSession, CreateCoachSessionInput } from '../../../src/domain/entit
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 jest.mock('../../../src/application/coach/CoachSessionUseCases', () => ({
-  getSessionsForMonthUseCase: jest.fn(),
-  createSessionUseCase:       jest.fn(),
-  deleteSessionUseCase:       jest.fn(),
+  getSessionsForMonthUseCase:  jest.fn(),
+  getSessionsForRangeUseCase:  jest.fn(),
+  createSessionUseCase:        jest.fn(),
+  deleteSessionUseCase:        jest.fn(),
 }));
 
 jest.mock('../../../src/infrastructure/supabase/remote/CoachSessionRemoteRepository', () => ({
@@ -20,13 +21,15 @@ jest.mock('../../../src/infrastructure/supabase/remote/CoachSessionRemoteReposit
 
 import {
   getSessionsForMonthUseCase,
+  getSessionsForRangeUseCase,
   createSessionUseCase,
   deleteSessionUseCase,
 } from '../../../src/application/coach/CoachSessionUseCases';
 
 const mockGetSessions = getSessionsForMonthUseCase as jest.MockedFunction<typeof getSessionsForMonthUseCase>;
-const mockCreate      = createSessionUseCase       as jest.MockedFunction<typeof createSessionUseCase>;
-const mockDelete      = deleteSessionUseCase       as jest.MockedFunction<typeof deleteSessionUseCase>;
+const mockGetRange    = getSessionsForRangeUseCase  as jest.MockedFunction<typeof getSessionsForRangeUseCase>;
+const mockCreate      = createSessionUseCase        as jest.MockedFunction<typeof createSessionUseCase>;
+const mockDelete      = deleteSessionUseCase        as jest.MockedFunction<typeof deleteSessionUseCase>;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -73,10 +76,13 @@ const CREATE_INPUT: CreateCoachSessionInput = {
 
 function resetStore() {
   useCoachCalendarStore.setState({
-    sessions:     [],
-    selectedDate: new Date(),
-    isLoading:    false,
-    error:        null,
+    sessions:       [],
+    selectedDate:   new Date(),
+    isLoading:      false,
+    rangeSessions:  [],
+    isLoadingRange: false,
+    listFilters:    { sessionTypes: [], modalities: [] },
+    error:          null,
   });
 }
 
@@ -303,5 +309,118 @@ describe('useCoachCalendarStore — clearError', () => {
     const state = useCoachCalendarStore.getState();
     expect(state.sessions).toHaveLength(1);
     expect(state.isLoading).toBe(false);
+  });
+});
+
+// ── fetchRange ────────────────────────────────────────────────────────────────
+
+const FROM = new Date('2026-03-01T00:00:00Z');
+const TO   = new Date('2026-04-01T00:00:00Z');
+
+describe('useCoachCalendarStore — fetchRange', () => {
+  it('sets rangeSessions on success', async () => {
+    mockGetRange.mockResolvedValue([SESSION_A, SESSION_B]);
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().fetchRange(COACH_ID, FROM, TO);
+    });
+
+    const { rangeSessions, isLoadingRange, error } = useCoachCalendarStore.getState();
+    expect(rangeSessions).toHaveLength(2);
+    expect(isLoadingRange).toBe(false);
+    expect(error).toBeNull();
+  });
+
+  it('sets isLoadingRange true while fetching then false after', async () => {
+    let resolve!: (v: CoachSession[]) => void;
+    mockGetRange.mockReturnValue(new Promise((res) => { resolve = res; }));
+
+    act(() => { useCoachCalendarStore.getState().fetchRange(COACH_ID, FROM, TO); });
+    expect(useCoachCalendarStore.getState().isLoadingRange).toBe(true);
+
+    await act(async () => { resolve([SESSION_A]); });
+    expect(useCoachCalendarStore.getState().isLoadingRange).toBe(false);
+  });
+
+  it('sets error on failure', async () => {
+    mockGetRange.mockRejectedValue(new Error('Range error'));
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().fetchRange(COACH_ID, FROM, TO);
+    });
+
+    expect(useCoachCalendarStore.getState().error).toBe('Range error');
+    expect(useCoachCalendarStore.getState().isLoadingRange).toBe(false);
+  });
+
+  it('sets fallback error string when thrown value has no message', async () => {
+    mockGetRange.mockRejectedValue('unexpected');
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().fetchRange(COACH_ID, FROM, TO);
+    });
+
+    expect(useCoachCalendarStore.getState().error).toBe('Error al cargar las sesiones');
+  });
+
+  it('calls use case with correct arguments', async () => {
+    mockGetRange.mockResolvedValue([]);
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().fetchRange(COACH_ID, FROM, TO);
+    });
+
+    expect(mockGetRange).toHaveBeenCalledWith(COACH_ID, FROM, TO, expect.anything());
+  });
+});
+
+// ── removeSession also clears rangeSessions ───────────────────────────────────
+
+describe('useCoachCalendarStore — removeSession clears rangeSessions', () => {
+  it('removes session from both sessions and rangeSessions', async () => {
+    useCoachCalendarStore.setState({
+      sessions:      [SESSION_A, SESSION_B],
+      rangeSessions: [SESSION_A, SESSION_C],
+    });
+    mockDelete.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().removeSession('id-a');
+    });
+
+    const state = useCoachCalendarStore.getState();
+    expect(state.sessions.find((s) => s.id === 'id-a')).toBeUndefined();
+    expect(state.rangeSessions.find((s) => s.id === 'id-a')).toBeUndefined();
+  });
+});
+
+// ── setListFrom / setListTo / setListFilters ──────────────────────────────────
+
+describe('useCoachCalendarStore — list state setters', () => {
+  it('setListFrom updates listFrom', () => {
+    const date = new Date('2026-05-01T00:00:00Z');
+    act(() => { useCoachCalendarStore.getState().setListFrom(date); });
+    expect(useCoachCalendarStore.getState().listFrom).toEqual(date);
+  });
+
+  it('setListTo updates listTo', () => {
+    const date = new Date('2026-06-01T00:00:00Z');
+    act(() => { useCoachCalendarStore.getState().setListTo(date); });
+    expect(useCoachCalendarStore.getState().listTo).toEqual(date);
+  });
+
+  it('setListFilters updates filters', () => {
+    const filters = { sessionTypes: ['Entrenamiento'], modalities: ['online' as const] };
+    act(() => { useCoachCalendarStore.getState().setListFilters(filters); });
+    expect(useCoachCalendarStore.getState().listFilters).toEqual(filters);
+  });
+
+  it('setListFilters with empty arrays means no filter', () => {
+    act(() => {
+      useCoachCalendarStore.getState().setListFilters({ sessionTypes: [], modalities: [] });
+    });
+    const { listFilters } = useCoachCalendarStore.getState();
+    expect(listFilters.sessionTypes).toHaveLength(0);
+    expect(listFilters.modalities).toHaveLength(0);
   });
 });

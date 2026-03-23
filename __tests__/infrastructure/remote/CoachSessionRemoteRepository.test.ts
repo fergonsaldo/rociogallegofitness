@@ -182,6 +182,47 @@ describe('CoachSessionRemoteRepository', () => {
     });
   });
 
+  // ── getForRange ─────────────────────────────────────────────────────────────
+
+  describe('getForRange', () => {
+    const FROM = new Date('2026-03-01T00:00:00.000Z');
+    const TO   = new Date('2026-04-01T00:00:00.000Z');
+
+    it('maps rows to CoachSession entities', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: [RAW_ROW], error: null }));
+
+      const result = await repo.getForRange(COACH_ID, FROM, TO);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(SESSION_ID);
+      expect(result[0].athleteName).toBeNull();
+    });
+
+    it('populates athleteName from join', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: [RAW_ROW_WITH_ATHLETE], error: null }));
+
+      const result = await repo.getForRange(COACH_ID, FROM, TO);
+
+      expect(result[0].athleteName).toBe('Ana García');
+    });
+
+    it('returns empty array when no sessions', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: [], error: null }));
+      expect(await repo.getForRange(COACH_ID, FROM, TO)).toEqual([]);
+    });
+
+    it('handles null data gracefully', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: null }));
+      expect(await repo.getForRange(COACH_ID, FROM, TO)).toEqual([]);
+    });
+
+    it('throws on supabase error', async () => {
+      supabase.from.mockReturnValue(mockChain({ data: null, error: { message: 'RLS error' } }));
+      await expect(repo.getForRange(COACH_ID, FROM, TO))
+        .rejects.toMatchObject({ message: 'RLS error' });
+    });
+  });
+
   // ── delete ──────────────────────────────────────────────────────────────────
 
   describe('delete', () => {

@@ -9,6 +9,7 @@ import { useCoachCalendarStore } from '../../../src/presentation/stores/coachCal
 import { CoachSession } from '../../../src/domain/entities/CoachSession';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
+import { SessionListView } from './SessionListView';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export default function CalendarScreen() {
     useCoachCalendarStore();
 
   const today = new Date();
+  const [activeTab, setActiveTab] = useState<'calendar' | 'list'>('calendar');
   const [year,  setYear]  = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth() + 1);
 
@@ -122,7 +124,35 @@ export default function CalendarScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
+      {/* View toggle */}
+      <View style={styles.viewToggle}>
+        <TouchableOpacity
+          style={[styles.viewTab, activeTab === 'calendar' && styles.viewTabActive]}
+          onPress={() => setActiveTab('calendar')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.viewTabText, activeTab === 'calendar' && styles.viewTabTextActive]}>
+            {Strings.calendarTabCalendar}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.viewTab, activeTab === 'list' && styles.viewTabActive]}
+          onPress={() => setActiveTab('list')}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.viewTabText, activeTab === 'list' && styles.viewTabTextActive]}>
+            {Strings.calendarTabList}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* List view */}
+      {activeTab === 'list' && user?.id && (
+        <SessionListView coachId={user.id} />
+      )}
+
+      {/* Calendar view */}
+      {activeTab !== 'list' && <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* Month navigation */}
         <View style={styles.monthNav}>
@@ -251,7 +281,7 @@ export default function CalendarScreen() {
         </View>
 
         <View style={{ height: Spacing.xxl }} />
-      </ScrollView>
+      </ScrollView>}
     </SafeAreaView>
   );
 }
@@ -275,6 +305,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
   },
   newBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+
+  viewToggle: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.surfaceMuted,
+    borderRadius: BorderRadius.md,
+    padding: 3,
+  },
+  viewTab: {
+    flex: 1, paddingVertical: Spacing.sm, alignItems: 'center',
+    borderRadius: BorderRadius.sm,
+  },
+  viewTabActive: {
+    backgroundColor: Colors.surface,
+    shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
+  },
+  viewTabText:       { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textMuted },
+  viewTabTextActive: { color: Colors.textPrimary },
 
   monthNav: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
