@@ -395,6 +395,63 @@ export const Strings = {
   listMetricsOnline: 'Online',
   listMetricsInPerson: 'Presencial',
 
+  // ── Catálogo de cardios (RF-E4-04) ───────────────────────────────────────
+  cardioTitle: 'Cardio',
+  cardioSubtitle: (n: number) => `${n} ${n === 1 ? 'sesión' : 'sesiones'}`,
+  cardioNewButton: '+ Nueva',
+  cardioSearchPlaceholder: 'Buscar cardio...',
+  cardioEmptyTitle: 'Sin cardios todavía',
+  cardioEmptySubtitle: 'Crea tu primera sesión de cardio',
+  cardioEmptyButton: 'Crear cardio',
+  cardioEmptySearch: 'Sin resultados',
+  cardioEmptySearchSubtitle: (q: string) => `No hay cardios que coincidan con "${q}"`,
+  cardioSelectionCount: (n: number) => `${n} seleccionado${n !== 1 ? 's' : ''}`,
+  cardioBulkAssignButton: 'Asignar seleccionados',
+  cardioBulkAssignSuccess: (n: number, athleteName: string) =>
+    `${n} ${n === 1 ? 'cardio asignado' : 'cardios asignados'} a ${athleteName}`,
+  cardioDeleteConfirmTitle: 'Eliminar cardio',
+  cardioDeleteConfirmMessage: (name: string) =>
+    `¿Eliminar "${name}"? Esta acción no se puede deshacer.`,
+  cardioDeleteConfirm: 'Eliminar',
+  cardioDeleteCancel: 'Cancelar',
+
+  // Tipos de cardio
+  cardioTypeRunning:      'Correr',
+  cardioTypeCycling:      'Ciclismo',
+  cardioTypeSwimming:     'Natación',
+  cardioTypeElliptical:   'Elíptica',
+  cardioTypeRowing:       'Remo',
+  cardioTypeJumpRope:     'Comba',
+  cardioTypeWalking:      'Caminar',
+  cardioTypeStairClimbing:'Escaleras',
+  cardioTypeOther:        'Otro',
+
+  // Intensidades
+  cardioIntensityLow:    'Baja',
+  cardioIntensityMedium: 'Media',
+  cardioIntensityHigh:   'Alta',
+
+  // Formulario
+  cardioFormTitle:               'Nuevo cardio',
+  cardioFormLabelName:           'Nombre',
+  cardioFormPlaceholderName:     'Ej. Carrera continua 30 min...',
+  cardioFormLabelType:           'Tipo',
+  cardioFormLabelIntensity:      'Intensidad',
+  cardioFormLabelDurationMin:    'Duración mínima (min)',
+  cardioFormLabelDurationMax:    'Duración máxima (min)',
+  cardioFormLabelDescription:    'Descripción (opcional)',
+  cardioFormPlaceholderDesc:     'Instrucciones, notas...',
+  cardioFormSubmit:              'Crear cardio',
+  cardioFormCancel:              'Cancelar',
+  cardioFormSuccess:             'Cardio creado correctamente',
+  cardioFormErrorDurationRange:  'La duración máxima debe ser mayor o igual a la mínima',
+
+  // Errores de store
+  errorFailedLoadCardios:   'Error al cargar los cardios',
+  errorFailedCreateCardio:  'Error al crear el cardio',
+  errorFailedDeleteCardio:  'Error al eliminar el cardio',
+  errorFailedAssignCardio:  'Error al asignar el cardio',
+
   // ── Mensajería ──────────────────────────────────────────────────────────────
   tabMessages: 'Mensajes',
   messagesTitle: 'Mensajes',

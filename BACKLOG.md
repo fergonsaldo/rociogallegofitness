@@ -2,6 +2,42 @@
 
 ## ✅ Completado
 
+#### RF-E4-04 — Catálogo de cardios
+
+**¿Qué hace?**
+Pantalla de cardios del coach con catálogo base de 12 sesiones predefinidas más las
+creadas por cada coach. Permite buscar por nombre/descripción, filtrar por tipo de
+actividad (9 tipos) e intensidad (3 niveles), y seleccionar múltiples cardios para
+asignarlos en bloque a un atleta. El coach puede crear nuevos cardios propios y
+eliminar solo los suyos.
+
+**Pantallas / flujo:**
+- `app/(coach)/cardios/index.tsx` — lista unificada + búsqueda + chips tipo/intensidad + multi-select
+  - Chips de tipo (9, scroll horizontal): Correr, Ciclismo, Natación, Elíptica...
+  - Chips de intensidad (3): Baja / Media / Alta con color semántico (verde/naranja/rojo)
+  - Long-press activa modo selección; barra de acción para asignar en bloque
+  - Botón borrar solo en cardios propios del coach, con confirmación
+  - `useFocusEffect` para recargar al volver de creación
+- `app/(coach)/cardios/create.tsx` — formulario: nombre, tipo, intensidad, rango duración, descripción
+
+**Decisiones de diseño:**
+- El catálogo base se siembra en la BD (`coach_id NULL`) en lugar de ser estático en cliente. Así el assignment funciona de forma uniforme para todos los cardios (base o propios) sin lógica especial en cliente.
+- RLS: SELECT permite `coach_id = auth.uid() OR coach_id IS NULL`; INSERT/UPDATE/DELETE solo en filas propias.
+- `filterCardios` vive en la capa de use cases (patrón idéntico a `applyExerciseFilters`).
+- El schema Zod usa dos objetos separados (`CardioBaseSchema` → `CreateCardioSchema` con refine, `CardioSchema` con extend) para evitar el error de `.omit()` en `ZodEffects`.
+
+**Implementación técnica:**
+- `Cardio.ts`: entidad con `CardioType` (9 valores), `CardioIntensity` (3), rango de duración, Zod schema con validación de rango
+- `ICardioRepository` + `CardioRemoteRepository`: `getAll`, `create`, `delete`, `assignToAthlete`, `unassignFromAthlete`
+- `CardioUseCases.ts`: `getAllCardiosUseCase`, `createCardioUseCase`, `deleteCardioUseCase`, `assignCardioToAthleteUseCase`, `assignMultipleCardiosUseCase`, `filterCardios`
+- `cardioStore.ts`: `fetchAll`, `create`, `delete`, `assignMultipleToAthlete`
+- Migración SQL: tablas `cardios` + `cardio_assignments` + seed 12 cardios base
+
+**Métricas finales:**
+- Test Suites: 52/52 ✅ | Tests: 890/890 ✅ (+48 tests)
+
+---
+
 #### RF-E4-02 — Catálogo de rutinas
 
 **¿Qué hace?**
