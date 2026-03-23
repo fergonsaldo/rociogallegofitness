@@ -2,6 +2,41 @@
 
 ## ✅ Completado
 
+#### RF-E5-01 — Biblioteca de vídeos
+
+**¿Qué hace?**
+Pantalla de vídeos del coach donde puede gestionar su biblioteca personal de vídeos de YouTube.
+Permite buscar por título o descripción, filtrar por etiquetas mediante chips (derivados del propio
+catálogo), añadir nuevos vídeos (título + URL YouTube + etiquetas + descripción) y eliminarlos con
+confirmación. El estado vacío invita a añadir el primer vídeo.
+
+**Pantallas / flujo:**
+- `app/(coach)/videos/index.tsx` — lista + buscador + chips de etiquetas dinámicos
+  - Chips generados dinámicamente a partir de las etiquetas del catálogo (`flatMap` + `Set`)
+  - Filtrado OR: vídeo visible si contiene alguna de las etiquetas activas
+  - Long-press no aplica; borrado directo con icono 🗑 + Alert de confirmación
+  - `useFocusEffect` para recargar al volver del formulario
+- `app/(coach)/videos/create.tsx` — formulario: título, URL YouTube, etiquetas (multi-tag input), descripción
+
+**Decisiones de diseño:**
+- Las etiquetas se almacenan como `text[]` en PostgreSQL directamente en la fila del vídeo (sin tabla separada). Suficiente para el volumen esperado y evita joins.
+- Los chips de filtro se derivan en cliente con `[...new Set(catalog.flatMap(v => v.tags))].sort()` — sin estado adicional ni query extra.
+- Filtrado OR entre etiquetas activas (si "fuerza" y "cardio" están activos, muestra vídeos con cualquiera de los dos).
+- La validación de URL YouTube se hace mediante regex en el schema Zod (`CreateVideoSchema`), no en la pantalla.
+- No hay catálogo base Harbiz (a diferencia de cardios/ejercicios): todos los vídeos son propios del coach.
+
+**Implementación técnica:**
+- `Video.ts`: entidad con `CreateVideoSchema` (valida URL YouTube via regex) + `VideoSchema` (extiende con id/createdAt)
+- `IVideoRepository` + `VideoRemoteRepository`: `getAll`, `create`, `delete`
+- `VideoUseCases.ts`: `getAllVideosUseCase`, `createVideoUseCase`, `deleteVideoUseCase`, `filterVideos(items, query, tags)`
+- `videoStore.ts`: `fetchAll`, `create` (inserta ordenado alfabéticamente), `delete`, `clearError`
+- Migración SQL: tabla `videos` + RLS (coach solo ve/gestiona sus propios vídeos) + índice en `(coach_id, created_at desc)`
+
+**Métricas finales:**
+- Test Suites: 54/54 ✅ | Tests: 931/931 ✅ (+41 tests)
+
+---
+
 #### RF-E4-04 — Catálogo de cardios
 
 **¿Qué hace?**
@@ -772,4 +807,4 @@ calidad antes de continuar con el desarrollo productivo.
 
 ---
 
-_Última actualización: 2026-03-23 — RF-E4-01 cerrado._
+_Última actualización: 2026-03-23 — RF-E5-01 cerrado._

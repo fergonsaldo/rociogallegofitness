@@ -63,6 +63,10 @@ export default function CoachLayout() {
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏃" label="Cardio" focused={focused} /> }}
       />
       <Tabs.Screen
+        name="videos/index"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎬" label="Vídeos" focused={focused} /> }}
+      />
+      <Tabs.Screen
         name="nutrition/index"
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label="Nutrición" focused={focused} /> }}
       />
@@ -94,6 +98,7 @@ export default function CoachLayout() {
       <Tabs.Screen name="calendar/index"    options={{ href: null }} />
       <Tabs.Screen name="calendar/create"   options={{ href: null }} />
       <Tabs.Screen name="cardios/create"    options={{ href: null }} />
+      <Tabs.Screen name="videos/create"     options={{ href: null }} />
     </Tabs>
   );
 }

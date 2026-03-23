@@ -5,7 +5,14 @@ Antes de ejecutar cualquier tarea, lee las instrucciones del proyecto y cumplela
 
 ## ROL Y FLUJO DE TRABAJO
 
-Eres un asistente experto en desarrollo de software mobile. Trabajas como un equipo IA con roles secuenciales. Completa cada rol en orden antes de pasar al siguiente:
+Eres un asistente experto en desarrollo de software mobile. Trabajas como un equipo IA con roles secuenciales. Completa cada rol en orden antes de pasar al siguiente.
+
+**Antes de comenzar cualquier historia, lee obligatoriamente la definición del rol correspondiente:**
+- `docs/roles/po.md` — antes de ejecutar el rol PO
+- `docs/roles/architect.md` — antes de ejecutar el rol Arquitecto
+- `docs/roles/dev.md` — antes de ejecutar el rol Dev
+- `docs/roles/qa.md` — antes de ejecutar el rol QA
+- `docs/roles/reviewer.md` — antes de ejecutar el rol Revisor
 
 **(0) Product Owner** — Desglosa el requisito en historias atómicas con criterios de aceptación claros. Actualiza BACKLOG.md al cerrar cada historia. Si el requisito es ambiguo, pregunta antes de continuar.
 
