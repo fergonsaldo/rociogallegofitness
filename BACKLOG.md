@@ -365,6 +365,43 @@ calidad antes de continuar con el desarrollo productivo.
 
 ---
 
+#### RF-E6-01 — Planes nutricionales: catálogo
+
+**¿Qué hace?**
+Pantalla de planes nutricionales del coach con lista de todos sus planes. Permite buscar
+por nombre o descripción, filtrar por tipo (Déficit / Mantenimiento / Superávit / Otro)
+mediante chips, crear nuevos planes con nombre, tipo, objetivos de macros diarios y comidas,
+y borrar planes propios con confirmación.
+
+**Pantallas / flujo:**
+- `app/(coach)/nutrition/index.tsx` — lista + buscador + chips de tipo + estado vacío
+  - Chips de tipo (4): Déficit, Mantenimiento, Superávit, Otro
+  - `MacroPill` por plan: Cal / P / C / G con color semántico
+  - Borrado con icono 🗑 + Alert de confirmación
+  - `useFocusEffect` para recargar al volver del formulario
+- `app/(coach)/nutrition/create.tsx` — formulario 2 pasos: (1) datos + tipo + macros; (2) comidas
+  - Paso 1: selector de tipo por chips + macros diarios con auto-cálculo de kcal (fórmula 4-4-9)
+  - Paso 2: comidas con macros individuales y presets (Desayuno, Almuerzo, Cena, Snack)
+  - Todos los textos localizados al español mediante `Strings`
+
+**Decisiones de diseño:**
+- Migración SQL corrige esquema del prototipo: rename columnas `daily_*` → planas, hace `athlete_id` nullable, añade columna `type` y crea tablas `meals` y `nutrition_assignments`.
+- El tipo de plan (`PlanType`) se gestiona como enum en dominio, no como string libre.
+- `filterNutritionPlans` es función pura en capa application (testeable sin infraestructura).
+- `TYPE_LABELS` se define localmente en cada pantalla que lo necesita (sin abstracción prematura).
+
+**Implementación técnica:**
+- `NutritionPlan.ts`: añade `PLAN_TYPES`, `PlanType`, campo `type` a schemas
+- `NutritionUseCases.ts`: añade `filterNutritionPlans(items, query, types)` pura
+- `NutritionRemoteRepository.ts`: `mapPlan` + `createPlan` incluyen `type` y `description`
+- `strings.ts`: sección completa de literales para catálogo y formulario de planes nutricionales
+- `nutritionStore.ts`, `INutritionRepository.ts`: sin cambios (infraestructura ya preparada)
+
+**Métricas finales:**
+- Test Suites: 1/1 ✅ | Tests: 43/43 ✅ (+12 tests `filterNutritionPlans`)
+
+---
+
 ## 🔲 En curso
 
 ---
@@ -599,15 +636,40 @@ calidad antes de continuar con el desarrollo productivo.
 
 ### ÉPICA E6 — Librería: nutrición (Planes, Recetas, Alimentos, Agrupaciones)
 
-#### RF-E6-01 (P0) Planes nutricionales
-**Requisito:** Crear y gestionar planes con kcal/macros y metadata.
+
+#### RF-E6-07 (P1) Duplicado de planes nutricionales
+**Requisito:** Copiar un plan existente para crear uno nuevo a partir de él.
 
 **Criterios de aceptación:**
-- Tabla con columnas: nombre, descripción, tipo, kcal/día, propietario, fecha de creación.
-- Búsqueda, ordenación y paginación.
-- Soporte de duplicado y versionado.
+- Acción "Duplicar" accesible desde la lista de planes.
+- El plan duplicado se crea con el mismo contenido y nombre "(Copia) Nombre original".
+- El duplicado aparece en la lista sin recargar manualmente.
 
-**Dependencia de plan:** No observada.
+**Dependencia:** RF-E6-01 completado.
+
+---
+
+#### RF-E6-08 (P1) Asignación de planes nutricionales a atletas
+**Requisito:** Asignar uno o varios planes a un atleta desde el catálogo.
+
+**Criterios de aceptación:**
+- Selección múltiple con long-press (mismo patrón que cardios/rutinas).
+- Modal de selección de atleta.
+- Confirmación tras asignación exitosa.
+
+**Dependencia:** RF-E6-01 completado.
+
+---
+
+#### RF-E6-09 (P2) Versionado de planes nutricionales
+**Requisito:** Historial de cambios por plan para trazabilidad.
+
+**Criterios de aceptación:**
+- Al editar un plan se crea una nueva versión en lugar de sobrescribir.
+- Vista de historial de versiones por plan con fecha y autor.
+- Posibilidad de restaurar una versión anterior.
+
+**Dependencia:** RF-E6-01 + RF-E6-07 completados.
 
 ---
 

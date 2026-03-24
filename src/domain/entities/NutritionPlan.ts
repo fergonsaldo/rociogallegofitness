@@ -1,5 +1,10 @@
 import { z } from 'zod';
 
+// ── Plan type ─────────────────────────────────────────────────────────────────
+
+export const PLAN_TYPES = ['deficit', 'maintenance', 'surplus', 'other'] as const;
+export type PlanType = typeof PLAN_TYPES[number];
+
 // ── Macros value object ───────────────────────────────────────────────────────
 
 export const MacrosSchema = z.object({
@@ -42,6 +47,7 @@ export const NutritionPlanSchema = z.object({
   id: z.string(),
   coachId: z.string(),
   name: z.string().min(1).max(100),
+  type: z.enum(PLAN_TYPES),
   description: z.string().max(500).optional(),
   dailyTargetMacros: MacrosSchema,
   meals: z.array(MealSchema),
@@ -53,7 +59,8 @@ export type NutritionPlan = z.infer<typeof NutritionPlanSchema>;
 
 export const CreateNutritionPlanSchema = z.object({
   coachId: z.string().uuid(),
-  name: z.string().min(1, 'Plan name is required').max(100),
+  name: z.string().min(1, 'El nombre del plan es obligatorio').max(100),
+  type: z.enum(PLAN_TYPES),
   description: z.string().max(500).optional(),
   dailyTargetMacros: MacrosSchema,
   meals: z.array(z.object({

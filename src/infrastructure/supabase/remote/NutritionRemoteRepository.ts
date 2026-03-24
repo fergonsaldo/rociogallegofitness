@@ -2,7 +2,7 @@ import { supabase } from '../client';
 import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 import {
   NutritionPlan, CreateNutritionPlanInput,
-  MealLogEntry, CreateMealLogEntryInput, Macros,
+  MealLogEntry, CreateMealLogEntryInput, Macros, PlanType,
 } from '@/domain/entities/NutritionPlan';
 
 export class NutritionRemoteRepository implements INutritionRepository {
@@ -23,6 +23,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
       id: row.id,
       coachId: row.coach_id,
       name: row.name,
+      type: (row.type ?? 'other') as PlanType,
       description: row.description ?? undefined,
       dailyTargetMacros: this.mapMacros(row),
       meals: (row.meals ?? [])
@@ -62,13 +63,14 @@ export class NutritionRemoteRepository implements INutritionRepository {
     const { data: plan, error } = await supabase
       .from('nutrition_plans')
       .insert({
-        coach_id: input.coachId,
-        name: input.name,
-        description: input.description,
-        calories: input.dailyTargetMacros.calories,
-        protein_g: input.dailyTargetMacros.proteinG,
-        carbs_g: input.dailyTargetMacros.carbsG,
-        fat_g: input.dailyTargetMacros.fatG,
+        coach_id:    input.coachId,
+        name:        input.name,
+        type:        input.type,
+        description: input.description ?? null,
+        calories:    input.dailyTargetMacros.calories,
+        protein_g:   input.dailyTargetMacros.proteinG,
+        carbs_g:     input.dailyTargetMacros.carbsG,
+        fat_g:       input.dailyTargetMacros.fatG,
       })
       .select()
       .single();

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NutritionPlan, CreateNutritionPlanSchema } from '@/domain/entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanSchema, PlanType } from '@/domain/entities/NutritionPlan';
 import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 
 // ── CreateNutritionPlan ───────────────────────────────────────────────────────
@@ -61,4 +61,29 @@ export async function deleteNutritionPlanUseCase(
 ): Promise<void> {
   if (!planId) throw new Error('planId is required');
   await repo.deletePlan(planId);
+}
+
+// ── Pure filter (exported for testing) ───────────────────────────────────────
+
+export function filterNutritionPlans(
+  items: NutritionPlan[],
+  query: string,
+  types: PlanType[],
+): NutritionPlan[] {
+  let result = items;
+
+  if (query.trim()) {
+    const q = query.toLowerCase().trim();
+    result = result.filter(
+      (p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.description ?? '').toLowerCase().includes(q),
+    );
+  }
+
+  if (types.length > 0) {
+    result = result.filter((p) => types.includes(p.type));
+  }
+
+  return result;
 }

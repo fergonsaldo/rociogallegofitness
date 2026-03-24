@@ -8,6 +8,14 @@ import { useNutritionStore } from '../../../src/presentation/stores/nutritionSto
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
+import { PLAN_TYPES, PlanType } from '../../../src/domain/entities/NutritionPlan';
+
+const TYPE_LABELS: Record<PlanType, string> = {
+  deficit:     Strings.nutritionPlanTypeDeficit,
+  maintenance: Strings.nutritionPlanTypeMaintenance,
+  surplus:     Strings.nutritionPlanTypeSurplus,
+  other:       Strings.nutritionPlanTypeOther,
+};
 
 interface MealDraft {
   name: string;
@@ -37,6 +45,7 @@ export default function CreateNutritionPlanScreen() {
 
   // Step 1 - plan info
   const [name, setName] = useState('');
+  const [planType, setPlanType] = useState<PlanType>('other');
   const [description, setDescription] = useState('');
   const [totalProtein, setTotalProtein] = useState('');
   const [totalCarbs, setTotalCarbs] = useState('');
@@ -78,6 +87,7 @@ export default function CreateNutritionPlanScreen() {
     const plan = await createPlan({
       coachId: user.id,
       name: name.trim(),
+      type: planType,
       description: description.trim() || undefined,
       dailyTargetMacros: { calories: totalCals, proteinG: p, carbsG: c, fatG: f },
       meals: meals.map((m, idx) => ({
@@ -101,20 +111,20 @@ export default function CreateNutritionPlanScreen() {
       {/* Topbar */}
       <View style={styles.topbar}>
         <TouchableOpacity onPress={() => step === 1 ? router.back() : setStep(1)}>
-          <Text style={styles.backText}>{step === 1 ? '✕ Cancel' : '← Back'}</Text>
+          <Text style={styles.backText}>{step === 1 ? Strings.nutritionPlanFormCancel : Strings.nutritionPlanFormBack}</Text>
         </TouchableOpacity>
         <View style={styles.stepDots}>
           {[1, 2].map((s) => <View key={s} style={[styles.dot, step >= s && styles.dotActive]} />)}
         </View>
         {step === 1 ? (
           <TouchableOpacity style={styles.nextBtn} onPress={() => {
-            if (!name.trim()) { Alert.alert('Name required', 'Give your plan a name.'); return; }
+            if (!name.trim()) { Alert.alert(Strings.nutritionPlanFormNameRequired); return; }
             if (!totalProtein && !totalCarbs && !totalFat) {
-              Alert.alert('Macros required', 'Set daily macro targets.'); return;
+              Alert.alert(Strings.nutritionPlanFormMacrosRequired); return;
             }
             setStep(2);
           }}>
-            <Text style={styles.nextBtnText}>Next →</Text>
+            <Text style={styles.nextBtnText}>{Strings.nutritionPlanFormNext}</Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
@@ -124,7 +134,7 @@ export default function CreateNutritionPlanScreen() {
           >
             {isSubmitting
               ? <ActivityIndicator color="#fff" size="small" />
-              : <Text style={styles.nextBtnText}>Save</Text>
+              : <Text style={styles.nextBtnText}>{Strings.nutritionPlanFormSave}</Text>
             }
           </TouchableOpacity>
         )}
@@ -135,11 +145,27 @@ export default function CreateNutritionPlanScreen() {
         {/* ── STEP 1 ── */}
         {step === 1 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Plan Details</Text>
+            <Text style={styles.sectionTitle}>{Strings.nutritionPlanFormStep1Title}</Text>
 
-            <Field label="NOMBRE *">
+            <Field label={Strings.nutritionPlanFormLabelName}>
               <TextInput style={styles.input} value={name} onChangeText={setName}
                 placeholder="ej. Volumen limpio fase 1" placeholderTextColor={Colors.textMuted} />
+            </Field>
+
+            <Field label={Strings.nutritionPlanFormLabelType}>
+              <View style={styles.typeChipsRow}>
+                {PLAN_TYPES.map((t) => (
+                  <TouchableOpacity
+                    key={t}
+                    style={[styles.typeChip, planType === t && styles.typeChipActive]}
+                    onPress={() => setPlanType(t)}
+                  >
+                    <Text style={[styles.typeChipText, planType === t && styles.typeChipTextActive]}>
+                      {TYPE_LABELS[t]}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </Field>
 
             <Field label={Strings.labelDescription}>
@@ -148,8 +174,8 @@ export default function CreateNutritionPlanScreen() {
                 placeholder="Notas opcionales para tu atleta..." placeholderTextColor={Colors.textMuted} />
             </Field>
 
-            <Text style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>Daily Macro Targets</Text>
-            <Text style={styles.hint}>Calories are auto-calculated (4-4-9 formula)</Text>
+            <Text style={[styles.sectionTitle, { marginTop: Spacing.lg }]}>{Strings.nutritionPlanFormMacrosTitle}</Text>
+            <Text style={styles.hint}>{Strings.nutritionPlanFormMacrosHint}</Text>
 
             <View style={styles.macroInputRow}>
               <MacroField label={Strings.labelProteinG} value={totalProtein} onChange={setTotalProtein} color={Colors.primary} />
@@ -158,7 +184,7 @@ export default function CreateNutritionPlanScreen() {
             </View>
 
             <View style={styles.calsPreview}>
-              <Text style={styles.calsPreviewLabel}>TOTAL DAILY CALORIES</Text>
+              <Text style={styles.calsPreviewLabel}>{Strings.nutritionPlanFormTotalCals}</Text>
               <Text style={styles.calsPreviewValue}>{totalCals} kcal</Text>
             </View>
           </View>
@@ -167,11 +193,11 @@ export default function CreateNutritionPlanScreen() {
         {/* ── STEP 2 ── */}
         {step === 2 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Meals</Text>
+            <Text style={styles.sectionTitle}>{Strings.nutritionPlanFormStep2Title}</Text>
 
             {/* Macros coverage indicator */}
             <View style={styles.coverageBanner}>
-              <Text style={styles.coverageLabel}>MEALS TOTAL</Text>
+              <Text style={styles.coverageLabel}>{Strings.nutritionPlanFormMealsCoverage}</Text>
               <Text style={[
                 styles.coverageValue,
                 mealsCals > totalCals * 1.1 && styles.coverageOver,
@@ -216,7 +242,7 @@ export default function CreateNutritionPlanScreen() {
             ))}
 
             {/* Presets */}
-            <Text style={styles.presetsLabel}>ADD MEAL</Text>
+            <Text style={styles.presetsLabel}>{Strings.nutritionPlanFormAddMeal}</Text>
             <View style={styles.presetsRow}>
               {MEAL_PRESETS.map((p) => (
                 <TouchableOpacity key={p.name} style={styles.presetBtn} onPress={() => addMeal(p)}>
@@ -224,7 +250,7 @@ export default function CreateNutritionPlanScreen() {
                 </TouchableOpacity>
               ))}
               <TouchableOpacity style={styles.presetBtn} onPress={() => addMeal()}>
-                <Text style={styles.presetBtnText}>+ Custom</Text>
+                <Text style={styles.presetBtnText}>{Strings.nutritionPlanFormCustomMeal}</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -331,6 +357,16 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: Colors.border,
     padding: Spacing.sm, fontSize: FontSize.xs, color: Colors.textSecondary,
   },
+  typeChipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs },
+  typeChip: {
+    paddingHorizontal: Spacing.md, paddingVertical: 6,
+    borderRadius: BorderRadius.full, borderWidth: 1,
+    borderColor: Colors.border, backgroundColor: Colors.surface,
+  },
+  typeChipActive:     { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  typeChipText:       { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '500' },
+  typeChipTextActive: { color: '#fff' },
+
   presetsLabel: {
     fontSize: FontSize.xs, color: Colors.textSecondary,
     letterSpacing: 2, fontWeight: '600', marginTop: Spacing.sm,

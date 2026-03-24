@@ -3,6 +3,7 @@ import {
   assignNutritionPlanUseCase,
   getCoachNutritionPlansUseCase,
   deleteNutritionPlanUseCase,
+  filterNutritionPlans,
 } from '../../../src/application/coach/NutritionUseCases';
 import {
   getAssignedNutritionPlanUseCase,
@@ -33,6 +34,7 @@ const MOCK_MEAL = {
 const MOCK_PLAN: NutritionPlan = {
   id: UUID, coachId: COACH_ID,
   name: 'Lean Bulk Phase 1',
+  type: 'surplus',
   dailyTargetMacros: DAILY_MACROS,
   meals: [MOCK_MEAL],
   createdAt: NOW, updatedAt: NOW,
@@ -63,6 +65,7 @@ beforeEach(() => jest.clearAllMocks());
 describe('createNutritionPlanUseCase', () => {
   const VALID_INPUT = {
     coachId: COACH_ID, name: 'Lean Bulk Phase 1',
+    type: 'surplus' as const,
     dailyTargetMacros: DAILY_MACROS,
     meals: [{ name: 'Breakfast', order: 1, targetMacros: MACROS }],
   };
@@ -344,5 +347,80 @@ describe('deleteNutritionPlanUseCase (branch coverage)', () => {
     mockRepo.deletePlan.mockResolvedValue();
     await expect(deleteNutritionPlanUseCase(UUID, mockRepo)).resolves.toBeUndefined();
     expect(mockRepo.deletePlan).toHaveBeenCalledWith(UUID);
+  });
+});
+
+// ── filterNutritionPlans ──────────────────────────────────────────────────────
+
+const makePlan = (overrides: Partial<NutritionPlan>): NutritionPlan => ({
+  ...MOCK_PLAN, ...overrides,
+});
+
+const PLAN_DEFICIT = makePlan({ id: 'p1', name: 'Cut Phase', type: 'deficit', description: 'Low calorie' });
+const PLAN_SURPLUS = makePlan({ id: 'p2', name: 'Lean Bulk', type: 'surplus', description: undefined });
+const PLAN_MAINT   = makePlan({ id: 'p3', name: 'Maintenance Plan', type: 'maintenance' });
+
+describe('filterNutritionPlans', () => {
+  const ALL = [PLAN_DEFICIT, PLAN_SURPLUS, PLAN_MAINT];
+
+  it('returns all plans when query is empty and no types selected', () => {
+    expect(filterNutritionPlans(ALL, '', [])).toHaveLength(3);
+  });
+
+  it('filters by name substring (case-insensitive)', () => {
+    const result = filterNutritionPlans(ALL, 'lean', []);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('p2');
+  });
+
+  it('filters by description substring', () => {
+    const result = filterNutritionPlans(ALL, 'low calorie', []);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('p1');
+  });
+
+  it('is case-insensitive on query', () => {
+    const result = filterNutritionPlans(ALL, 'CUT', []);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('p1');
+  });
+
+  it('filters by a single type', () => {
+    const result = filterNutritionPlans(ALL, '', ['deficit']);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('p1');
+  });
+
+  it('filters by multiple types', () => {
+    const result = filterNutritionPlans(ALL, '', ['deficit', 'surplus']);
+    expect(result).toHaveLength(2);
+    expect(result.map((p) => p.id)).toEqual(expect.arrayContaining(['p1', 'p2']));
+  });
+
+  it('combines query and type filters', () => {
+    const result = filterNutritionPlans(ALL, 'plan', ['maintenance']);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('p3');
+  });
+
+  it('returns empty array when query matches nothing', () => {
+    expect(filterNutritionPlans(ALL, 'zzznomatch', [])).toHaveLength(0);
+  });
+
+  it('returns empty array when type filter matches nothing', () => {
+    expect(filterNutritionPlans(ALL, '', ['other'])).toHaveLength(0);
+  });
+
+  it('returns empty array for empty input', () => {
+    expect(filterNutritionPlans([], 'lean', ['deficit'])).toHaveLength(0);
+  });
+
+  it('ignores whitespace-only query', () => {
+    expect(filterNutritionPlans(ALL, '   ', [])).toHaveLength(3);
+  });
+
+  it('handles plan with no description without crashing', () => {
+    const result = filterNutritionPlans([PLAN_SURPLUS], 'bulk', []);
+    expect(result).toHaveLength(1);
   });
 });
