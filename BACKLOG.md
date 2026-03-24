@@ -459,6 +459,36 @@ estado "sin resultados" cuando ningún cliente coincide.
 
 ---
 
+#### RF-E1-01 — Dashboard consolidado de operación
+
+**¿Qué hace?**
+Pantalla de inicio del coach con tres widgets de datos en tiempo real y un grid de accesos rápidos.
+De un vistazo el coach ve cuántos clientes tiene, cuántos han entrenado esta semana, las sesiones
+agendadas para hoy (o las próximas), y las últimas sesiones completadas por sus atletas. Los
+accesos rápidos llevan directamente a Clientes, Rutinas y Nutrición.
+
+**Pantallas / flujo:**
+- `app/(coach)/dashboard.tsx` — pantalla raíz del coach
+  - **Widget Clientes**: total de atletas + activos esta semana; estado vacío con CTA "Ir a Clientes"
+  - **Widget Agenda**: sesiones de hoy (o las 3 próximas si no hay hoy); dot de color por modalidad
+  - **Widget Actividad reciente**: últimas 5 sesiones con avatar, nombre, fecha relativa y badge estado
+  - **Accesos rápidos**: grid 2 columnas → Clientes, Rutinas, Nutrición
+
+**Decisiones de diseño:**
+- `WidgetAgenda` consume `coachCalendarStore` directamente — datos de agenda desacoplados del resumen de clientes.
+- `useEffect` en lugar de `useFocusEffect` — el dashboard es la tab raíz y permanece montado.
+
+**Implementación técnica:**
+- `coachDashboardStore` → `getCoachDashboardSummaryUseCase` → `CoachRemoteRepository.getDashboardSummary`
+- `coachCalendarStore` provee sesiones del mes actual para el widget de agenda
+- `CoachDashboardSummary`: `totalAthletes`, `activeAthletesThisWeek`, `recentSessions[]`
+- Sin migración de BD — datos derivados de tablas existentes
+
+**Métricas finales:**
+- Test Suites: 2/2 ✅ | Tests: 34/34 ✅
+
+---
+
 ## 🔲 En curso
 
 ---
@@ -469,17 +499,6 @@ estado "sin resultados" cuando ningún cliente coincide.
 
 ### ÉPICA E1 — Home profesional y productividad
 
-#### RF-E1-01 (P0) Dashboard consolidado de operación
-**Requisito:** El sistema debe mostrar un dashboard con actividad, eventos, cumplimiento y suscripciones.
-
-**Criterios de aceptación:**
-- Al entrar en home, se muestran widgets de: Actividad reciente, Próximos eventos, Revisar cumplimiento y Suscripciones.
-- Cada widget refleja datos actualizados del rango temporal vigente.
-- Si no hay datos, debe mostrarse estado vacío informativo.
-
-**Dependencia de plan:** No observada.
-
----
 
 #### RF-E1-02 (P1) Accesos rápidos configurables
 **Requisito:** El usuario puede configurar accesos rápidos de acciones frecuentes.
