@@ -459,33 +459,65 @@ estado "sin resultados" cuando ningún cliente coincide.
 
 ---
 
-#### RF-E1-01 — Dashboard consolidado de operación
+#### RF-E8-01 — Calendario operativo
 
 **¿Qué hace?**
-Pantalla de inicio del coach con tres widgets de datos en tiempo real y un grid de accesos rápidos.
-De un vistazo el coach ve cuántos clientes tiene, cuántos han entrenado esta semana, las sesiones
-agendadas para hoy (o las próximas), y las últimas sesiones completadas por sus atletas. Los
-accesos rápidos llevan directamente a Clientes, Rutinas y Nutrición.
+Vista mensual del calendario del coach con navegación por meses, dots en días con sesiones,
+panel de sesiones del día seleccionado y acceso directo a crear sesión. Incluye una segunda
+vista de lista con filtros por rango de fechas, tipo de sesión y modalidad.
 
 **Pantallas / flujo:**
-- `app/(coach)/dashboard.tsx` — pantalla raíz del coach
-  - **Widget Clientes**: total de atletas + activos esta semana; estado vacío con CTA "Ir a Clientes"
-  - **Widget Agenda**: sesiones de hoy (o las 3 próximas si no hay hoy); dot de color por modalidad
-  - **Widget Actividad reciente**: últimas 5 sesiones con avatar, nombre, fecha relativa y badge estado
-  - **Accesos rápidos**: grid 2 columnas → Clientes, Rutinas, Nutrición
-
-**Decisiones de diseño:**
-- `WidgetAgenda` consume `coachCalendarStore` directamente — datos de agenda desacoplados del resumen de clientes.
-- `useEffect` en lugar de `useFocusEffect` — el dashboard es la tab raíz y permanece montado.
+- `app/(coach)/calendar/index.tsx` — calendario mensual + tabs Calendario/Lista
+  - Grid 7×N con lunes como primer día; dots por sesión en cada día
+  - Panel inferior muestra sesiones del día con hora, título, atleta y acción eliminar
+  - Botón "+" navega a creación pre-rellenando la fecha seleccionada
+- `app/(coach)/calendar/SessionListView.tsx` — lista con filtros persistentes
+  - Selector rango desde/hasta + chips tipo + chips modalidad
 
 **Implementación técnica:**
-- `coachDashboardStore` → `getCoachDashboardSummaryUseCase` → `CoachRemoteRepository.getDashboardSummary`
-- `coachCalendarStore` provee sesiones del mes actual para el widget de agenda
-- `CoachDashboardSummary`: `totalAthletes`, `activeAthletesThisWeek`, `recentSessions[]`
-- Sin migración de BD — datos derivados de tablas existentes
+- `CoachSession` entity + `coachCalendarStore`: `fetchMonth`, `addSession`, `removeSession`
+- `buildCalendarDays` función pura que genera el grid con offset de lunes
+- Migración `add_coach_sessions.sql`: tabla `coach_sessions` con RLS
 
 **Métricas finales:**
-- Test Suites: 2/2 ✅ | Tests: 34/34 ✅
+- Test Suites: 2/2 ✅ | Tests: 51/51 ✅
+
+---
+
+#### RF-E8-02 — Sesiones agendadas (vista lista)
+
+**¿Qué hace?**
+Vista de lista dentro del calendario que filtra sesiones por rango de fechas, tipo y modalidad.
+Los filtros son persistentes durante la sesión de usuario.
+
+**Pantallas / flujo:**
+- `app/(coach)/calendar/SessionListView.tsx` — tab "Lista" dentro del calendario
+
+**Implementación técnica:**
+- `applyFilters(sessions, filters)` función pura + `ListFilters` type en `coachCalendarStore`
+
+**Métricas finales:**
+- Cubierto por los mismos tests que RF-E8-01
+
+---
+
+#### RF-E8-03 — Creación de sesiones
+
+**¿Qué hace?**
+Formulario para crear una sesión indicando título, atleta, tipo, modalidad, fecha/hora y duración.
+La sesión aparece inmediatamente en el calendario al guardar.
+
+**Pantallas / flujo:**
+- `app/(coach)/calendar/create.tsx` — formulario con DateTimePicker nativo
+  - Selector de atleta, chips tipo y modalidad, duración en opciones fijas (30–120 min)
+  - Recibe parámetro `date` para pre-rellenar la fecha desde el calendario
+
+**Implementación técnica:**
+- `createSessionUseCase` valida solape horario antes de insertar
+- `@react-native-community/datetimepicker` para fecha y hora
+
+**Métricas finales:**
+- Cubierto por los mismos tests que RF-E8-01
 
 ---
 
@@ -837,42 +869,6 @@ accesos rápidos llevan directamente a Clientes, Rutinas y Nutrición.
 ---
 
 ### ÉPICA E8 — Agenda (calendario, sesiones, citas, tipos, actividad)
-
-#### RF-E8-01 (P0) Calendario operativo
-**Requisito:** Vista mensual con eventos/sesiones y navegación temporal.
-
-**Criterios de aceptación:**
-- Botón "Hoy" + navegación mes anterior/siguiente.
-- Render de eventos por día con detalle mínimo visible.
-- Acción "Crear" accesible desde el calendario.
-
-**Dependencia de plan:** No observada.
-
----
-
-#### RF-E8-02 (P0) Sesiones agendadas
-**Requisito:** Vista lista por rango de fechas con filtros y métricas.
-
-**Criterios de aceptación:**
-- Selector desde–hasta para rango temporal.
-- Filtros aplicables y persistentes durante la sesión de usuario.
-- Modo lista y modo métricas disponibles.
-
-**Dependencia de plan:** No observada.
-
----
-
-#### RF-E8-03 (P0) Creación de sesiones
-**Requisito:** Crear sesión indicando cliente, tipo, modalidad, hora y duración.
-
-**Criterios de aceptación:**
-- Formulario de alta con validaciones de solape horario.
-- Confirmación y reflejo inmediato en calendario y lista.
-- Registro de actividad automático al crear.
-
-**Dependencia de plan:** No observada.
-
----
 
 #### RF-E8-04 (P1) Horario de citas reservables
 **Requisito:** Definir ventanas de reserva para que los clientes reserven desde la app.
