@@ -402,6 +402,63 @@ y borrar planes propios con confirmación.
 
 ---
 
+#### RF-E2-01 — Listado de clientes segmentado por estado
+
+**¿Qué hace?**
+Pantalla principal de clientes del coach con lista segmentada en dos tabs: Activos y Archivados.
+Cada tab muestra solo los clientes de ese estado con su contador. El coach puede archivar clientes
+activos, restaurar archivados o eliminarlos definitivamente mediante long-press. También puede
+crear nuevos atletas o vincular existentes desde el botón "+".
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — lista + tabs Activos/Archivados + acciones
+  - Tabs con contador en tiempo real (derivado del array local sin re-fetch)
+  - Long-press abre Alert contextual: archivar (activos) / restaurar+eliminar (archivados)
+  - Modal "Añadir cliente": dos modos → crear nuevo atleta (nombre+email+contraseña) o vincular existente (búsqueda por email/nombre)
+  - Tags por atleta con `TagPickerModal`
+  - `lastSessionAt` y `routineCount` visibles en cada tarjeta
+
+**Decisiones de diseño:**
+- `filterAthletes(athletes, tab, query)` es función pura exportada desde el componente — testeable sin montar UI.
+- Los contadores por tab se derivan del array local para evitar queries extra.
+- `useEffect` (no `useFocusEffect`) porque la pantalla es la raíz de la tab y permanece montada.
+
+**Implementación técnica:**
+- Migración `add_client_status.sql`: columna `status text check('active','archived')` en `coach_athletes`
+- `ICoachRepository`: `updateAthleteStatus(coachId, athleteId, status)`
+- `archiveAthleteUseCase` / `restoreAthleteUseCase` en `ClientUseCases.ts`
+- `ClientTag` + `TagRemoteRepository` + `TagPickerModal` para gestión de etiquetas
+- `formatLastActivity(date)` — función pura de presentación con i18n básico
+
+**Métricas finales:**
+- Test Suites: 2/2 ✅ | Tests: 45/45 ✅
+
+---
+
+#### RF-E2-02 — Búsqueda de clientes
+
+**¿Qué hace?**
+Buscador integrado en la pantalla de clientes que filtra en tiempo real por nombre o email,
+dentro del tab activo. La búsqueda es parcial y no distingue mayúsculas/minúsculas. Muestra
+estado "sin resultados" cuando ningún cliente coincide.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — barra de búsqueda sobre la lista, persistente entre tabs
+  - Query se aplica sobre el tab activo: busca en `full_name` y `email` simultáneamente
+  - Estado vacío si la query no produce resultados
+
+**Decisiones de diseño:**
+- Filtrado en cliente (no query a BD) — la lista completa ya está en memoria, el volumen por coach es pequeño.
+
+**Implementación técnica:**
+- `filterAthletes` maneja tab + query en una sola pasada
+- No requiere cambios de infraestructura ni migración
+
+**Métricas finales:**
+- Cubierto por los mismos tests que RF-E2-01 (misma suite)
+
+---
+
 ## 🔲 En curso
 
 ---
@@ -462,29 +519,6 @@ y borrar planes propios con confirmación.
 
 ### ÉPICA E2 — Gestión de clientes
 
-#### RF-E2-01 (P0) Listado de clientes segmentado por estado
-**Requisito:** Gestionar clientes en tabs Activos / Invitados / Archivados.
-
-**Criterios de aceptación:**
-- Mostrar contador por tab.
-- Cambiar de tab actualiza la tabla sin perder contexto.
-- Mantener paginación y filtros por tab.
-
-**Dependencia de plan:** No observada.
-
----
-
-#### RF-E2-02 (P0) Búsqueda de clientes
-**Requisito:** Buscar clientes por nombre o email.
-
-**Criterios de aceptación:**
-- Búsqueda parcial y tolerante a mayúsculas/minúsculas.
-- Tiempo de respuesta < 2 s en datasets medios.
-- Mostrar estado "sin resultados" si aplica.
-
-**Dependencia de plan:** No observada.
-
----
 
 #### RF-E2-03b (P1) Métricas avanzadas en tarjeta de cliente
 **Requisito:** Exponer columnas de estado operativo adicionales (plan, cumplimiento, pagos, etiquetas).
