@@ -54,4 +54,13 @@ export class FoodRemoteRepository implements IFoodRepository {
     const { error } = await supabase.from('foods').delete().eq('id', id);
     if (error) throw error;
   }
+
+  async isUsedInRecipes(foodId: string): Promise<boolean> {
+    const { count, error } = await supabase
+      .from('recipe_ingredients')
+      .select('id', { count: 'exact', head: true })
+      .eq('food_id', foodId);
+    if (error) throw error;
+    return (count ?? 0) > 0;
+  }
 }

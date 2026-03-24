@@ -557,6 +557,43 @@ propios del coach.
 
 ---
 
+#### RF-E6-03 — Recetas
+
+**¿Qué hace?**
+Biblioteca de recetas del coach. El coach puede crear recetas con nombre, instrucciones, imagen opcional,
+tags libres e ingredientes (cada uno vinculado a un alimento del catálogo con cantidad en gramos). Los macros
+totales (kcal, proteína, carbos, grasas, fibra) se calculan automáticamente en cliente. Las recetas se pueden
+editar y eliminar con confirmación. El coach no puede borrar un alimento que esté siendo usado en alguna receta.
+
+**Pantallas / flujo:**
+- `app/(coach)/recipes/index.tsx` — lista + buscador + chips de tags dinámicos + delete con confirmación
+  - Chips generados de todos los tags del catálogo propio
+  - Filtrado OR: receta visible si contiene alguno de los tags activos
+  - `useFocusEffect` para recargar al volver del formulario
+- `app/(coach)/recipes/create.tsx` — formulario: nombre, imagen, tags, ingredientes (food picker modal + cantidad), instrucciones
+- `app/(coach)/recipes/[id].tsx` — detalle: imagen, macros totales, lista de ingredientes, instrucciones + botón "Editar"
+- `app/(coach)/recipes/edit.tsx` — mismo formulario pre-rellenado, acepta `id` como param
+- Accesible desde `app/(coach)/nutrition/index.tsx` via botón "Recetas →"
+
+**Decisiones de diseño:**
+- Macros calculados en cliente con `computeRecipeMacros()` (pura), no almacenados en BD. Evita sincronización de datos derivados.
+- Ingredientes reemplazados en bloque en update (DELETE + INSERT), no diff individual. Simplifica la lógica de edición.
+- `ON DELETE RESTRICT` implícito en FK `recipe_ingredients.food_id → foods.id`. `deleteFoodUseCase` verifica `isUsedInRecipes` primero y lanza error con mensaje claro.
+- Imagen en bucket privado `recipe-images` con signed URLs (1h), mismo patrón que `progress-photos`.
+- `show_macros` y `visible_to_clients` almacenados en BD (default `true`) para uso futuro en la app del atleta, sin UI en esta historia.
+
+**Implementación técnica:**
+- `Recipe.ts`: entidad con `CreateRecipeSchema`, `UpdateRecipeSchema`, `RecipeIngredientSchema`, tipos `RecipeWithIngredients` y `RecipeMacros`
+- `IRecipeRepository` + `RecipeRemoteRepository`: CRUD + `uploadImage`/`deleteImage` en Storage
+- `RecipeUseCases.ts`: 5 use cases + `filterRecipes(items, query, tags)` + `computeRecipeMacros(ingredients)`
+- `recipeStore.ts`: `fetchRecipes`, `fetchRecipeDetail`, `createRecipe`, `updateRecipe` (con swap de imagen), `deleteRecipe`
+- `IFoodRepository` + `FoodRemoteRepository` actualizados con `isUsedInRecipes`; `deleteFoodUseCase` actualizado
+
+**Métricas finales:**
+- Test Suites: 2/2 ✅ | Tests: 73/73 ✅ (40 RecipeUseCases + 33 FoodUseCases)
+
+---
+
 ## 🔲 En curso
 
 ---
@@ -795,22 +832,6 @@ propios del coach.
 ---
 
 
-#### RF-E6-03 (P0) Recetas
-**Requisito:** Biblioteca de recetas con ingredientes vinculados a alimentos, macros, imagen e instrucciones.
-
-**Criterios de aceptación:**
-- Añadir receta con: nombre, ingredientes (cada uno referencia un alimento de E6-04 + cantidad en g), instrucciones de preparación, imagen opcional y tags.
-- Los macros y kcal totales se calculan automáticamente sumando los de los ingredientes según cantidad.
-- Flag `show_macros` por receta: si está activo, los clientes ven los macros al consultar la receta.
-- Flag `visible_to_clients` por receta: controla si la receta aparece en la pantalla de recetas del cliente.
-- Buscador por nombre y filtros por tags.
-- Borrar receta propia con confirmación.
-
-**Scope excluido:** Vinculación de recetas a planes (RF-E6-10), asignación directa a atletas.
-
-**Dependencia:** RF-E6-04 completado (los ingredientes referencian alimentos).
-
----
 
 #### RF-E6-10 (P1) Vincular recetas a comidas de un plan
 **Requisito:** Permitir asociar una o varias recetas a una comida de un plan nutricional.

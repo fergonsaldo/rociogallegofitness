@@ -28,9 +28,10 @@ const makeFood = (overrides: Partial<Food> = {}): Food => ({
 });
 
 const mockRepo: jest.Mocked<IFoodRepository> = {
-  getFoodsByCoach: jest.fn(),
-  createFood:      jest.fn(),
-  deleteFood:      jest.fn(),
+  getFoodsByCoach:   jest.fn(),
+  createFood:        jest.fn(),
+  deleteFood:        jest.fn(),
+  isUsedInRecipes:   jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -135,18 +136,42 @@ describe('createFoodUseCase', () => {
 // ── deleteFoodUseCase ─────────────────────────────────────────────────────────
 
 describe('deleteFoodUseCase', () => {
-  it('elimina un alimento por id', async () => {
+  it('elimina un alimento que no está en uso en recetas', async () => {
+    mockRepo.isUsedInRecipes.mockResolvedValue(false);
     mockRepo.deleteFood.mockResolvedValue(undefined);
     await expect(deleteFoodUseCase(FOOD_ID, mockRepo)).resolves.toBeUndefined();
     expect(mockRepo.deleteFood).toHaveBeenCalledWith(FOOD_ID);
   });
 
-  it('lanza error si id está vacío', async () => {
-    await expect(deleteFoodUseCase('', mockRepo)).rejects.toThrow('id is required');
+  it('lanza error si el alimento está en uso en una receta', async () => {
+    mockRepo.isUsedInRecipes.mockResolvedValue(true);
+    await expect(deleteFoodUseCase(FOOD_ID, mockRepo))
+      .rejects.toThrow('No se puede eliminar un alimento que está en uso en una o más recetas');
     expect(mockRepo.deleteFood).not.toHaveBeenCalled();
   });
 
-  it('propaga errores del repositorio', async () => {
+  it('verifica isUsedInRecipes antes de llamar a deleteFood', async () => {
+    mockRepo.isUsedInRecipes.mockResolvedValue(false);
+    mockRepo.deleteFood.mockResolvedValue(undefined);
+    await deleteFoodUseCase(FOOD_ID, mockRepo);
+    expect(mockRepo.isUsedInRecipes.mock.invocationCallOrder[0])
+      .toBeLessThan(mockRepo.deleteFood.mock.invocationCallOrder[0]);
+  });
+
+  it('lanza error si id está vacío', async () => {
+    await expect(deleteFoodUseCase('', mockRepo)).rejects.toThrow('id is required');
+    expect(mockRepo.isUsedInRecipes).not.toHaveBeenCalled();
+    expect(mockRepo.deleteFood).not.toHaveBeenCalled();
+  });
+
+  it('propaga errores del repositorio en isUsedInRecipes', async () => {
+    mockRepo.isUsedInRecipes.mockRejectedValue(new Error('Check failed'));
+    await expect(deleteFoodUseCase(FOOD_ID, mockRepo)).rejects.toThrow('Check failed');
+    expect(mockRepo.deleteFood).not.toHaveBeenCalled();
+  });
+
+  it('propaga errores del repositorio en deleteFood', async () => {
+    mockRepo.isUsedInRecipes.mockResolvedValue(false);
     mockRepo.deleteFood.mockRejectedValue(new Error('Delete failed'));
     await expect(deleteFoodUseCase(FOOD_ID, mockRepo)).rejects.toThrow('Delete failed');
   });

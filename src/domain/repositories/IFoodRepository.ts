@@ -9,4 +9,7 @@ export interface IFoodRepository {
 
   /** Deletes a coach-owned food (only own foods) */
   deleteFood(id: string): Promise<void>;
+
+  /** Returns true if the food is referenced by any recipe ingredient */
+  isUsedInRecipes(foodId: string): Promise<boolean>;
 }

@@ -28,6 +28,8 @@ export async function deleteFoodUseCase(
   repo: IFoodRepository,
 ): Promise<void> {
   if (!id) throw new Error('id is required');
+  const inUse = await repo.isUsedInRecipes(id);
+  if (inUse) throw new Error('No se puede eliminar un alimento que está en uso en una o más recetas');
   return repo.deleteFood(id);
 }
 
