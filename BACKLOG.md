@@ -594,6 +594,44 @@ editar y eliminar con confirmación. El coach no puede borrar un alimento que es
 
 ---
 
+#### RF-E7-02 — Repositorio de documentos compartidos
+
+**¿Qué hace?**
+Depósito de intercambio de ficheros entre el coach y un atleta concreto. El coach puede subir cualquier tipo de
+archivo desde su móvil (PDF, Word, imágenes, vídeos, etc.) para un atleta determinado, abrirlo directamente
+o eliminarlo si fue él quien lo subió. Los documentos solo son visibles entre el par coach-atleta concreto.
+Los ejecutables (.exe, .apk, .sh, .bat, .cmd, .ps1, .msi, .deb, .dmg, .bin) están bloqueados.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/documents.tsx` — lista de documentos + subida + apertura + borrado
+  - Accesible desde `app/(coach)/clients/[id].tsx` mediante botón "Documentos" en la topbar
+  - Selector de fichero nativo via `expo-document-picker`
+  - Validación de extensión bloqueada antes de subir
+  - Tarjeta por documento: badge de extensión, nombre, tamaño (KB), fecha, botón "Abrir" (signed URL) y papelera (solo uploader)
+  - Estado vacío con emoji y texto descriptivo
+  - Banner de error no bloqueante
+
+**Decisiones de diseño:**
+- Documentos aislados por par `(coach_id, athlete_id)`: RLS garantiza que solo los dos implicados los ven.
+- Ficheros almacenados en bucket privado `documents` con path `{coachId}/{athleteId}/{timestamp}.{ext}`.
+- Signed URLs generadas en lectura con expiración de 1h. Apertura via `Linking.openURL` sin módulo nativo adicional.
+- `isBlockedExtension` es una función pura en la capa application, testeable de forma aislada.
+- Solo el uploader puede borrar su fichero (`uploaded_by = auth.uid()` en RLS DELETE).
+- La parte del atleta (subir desde el lado cliente) queda pendiente en RF-E7-02b.
+
+**Implementación técnica:**
+- Migración SQL: tabla `documents` + índice `(coach_id, athlete_id)` + RLS (SELECT, INSERT, DELETE) + bucket `documents`
+- `Document.ts`: entidad con `BLOCKED_EXTENSIONS`, `DocumentSchema`, `CreateDocumentSchema`
+- `IDocumentRepository` + `DocumentRemoteRepository`: `getDocuments`, `uploadFile`, `uploadDocument`, `deleteDocument`
+- `DocumentUseCases.ts`: `isBlockedExtension` (pura), `getDocumentsUseCase`, `uploadDocumentUseCase`, `deleteDocumentUseCase`
+- `documentStore.ts`: estado `documents`, `isLoading`, `isUploading`, `error`
+- `expo-document-picker` como nueva dependencia nativa (`~14.0.8`)
+
+**Métricas finales:**
+- Test Suites: 1/1 ✅ | Tests: 35/35 ✅
+
+---
+
 ## 🔲 En curso
 
 ---
@@ -874,39 +912,29 @@ editar y eliminar con confirmación. El coach no puede borrar un alimento que es
 
 ### ÉPICA E7 — Librería: programas, documentos, formularios, validación
 
-#### RF-E7-01 (P0) Programas
-**Requisito:** Gestionar programas por semanas, automatización y creador.
-
-**Criterios de aceptación:**
-- Tabla con columnas funcionales: semanas, actualizado, automatizado, creador, etc.
-- Añadir programa y editar estructura.
-- Menú de acciones por fila (editar, duplicar, archivar, etc.).
-
-**Dependencia de plan:** No observada.
+#### RF-E7-01 — Programas
+> **EXCLUIDO** — No aplica en la app de momento. Decisión del producto.
 
 ---
 
-#### RF-E7-02 (P0) Documentos
-**Requisito:** Subir, clasificar y compartir documentos con control de visibilidad.
+#### RF-E7-02b (P1) Documentos — lado atleta
+**Requisito:** El atleta puede subir ficheros al repositorio compartido con su coach y descargar los que el coach ha subido.
 
 **Criterios de aceptación:**
-- Alta de documento con nombre, descripción y visibilidad.
-- Buscador por nombre o autor.
-- Acciones por documento: editar, compartir, etc.
+- El atleta ve la misma pantalla de documentos pero accesible desde su área.
+- Puede subir ficheros (mismas restricciones de extensión que el coach).
+- Solo puede eliminar los ficheros que él mismo ha subido.
 
-**Dependencia de plan:** No observada.
+**Dependencia:** RF-E7-02 completado.
 
 ---
 
-#### RF-E7-03 (P0) Formularios
-**Requisito:** Crear y gestionar formularios para onboarding y seguimiento.
+#### RF-E7-03 — Formularios
+> **DIFERIDO** — Requisitos pendientes de definición por parte del producto. Retomaremos cuando estén claros.
 
-**Criterios de aceptación:**
-- Añadir formulario nuevo.
-- Tabla con nombre, creador y fecha.
-- Soporte para formularios de "envío automático".
-
-**Dependencia de plan:** No observada.
+**Notas previas:**
+- Los formularios tendrán preguntas configurables (campos personalizados).
+- Uso previsto: onboarding y seguimiento del atleta.
 
 ---
 

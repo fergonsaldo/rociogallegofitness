@@ -554,6 +554,22 @@ export const Strings = {
   recipeDetailNoIngredients:        'Sin ingredientes',
   recipeDetailNoInstructions:       'Sin instrucciones',
 
+  // ── Documentos (RF-E7-02) ─────────────────────────────────────────────────
+  docTitle:                'Documentos',
+  docSubtitle:             (n: number) => `${n} ${n === 1 ? 'archivo' : 'archivos'}`,
+  docUploadButton:         'Subir archivo',
+  docEmptyTitle:           'Sin documentos',
+  docEmptySubtitle:        'Sube archivos para compartir con este cliente',
+  docDeleteTitle:          'Eliminar documento',
+  docDeleteMessage:        (name: string) => `¿Eliminar "${name}"?`,
+  docDeleteCancel:         'Cancelar',
+  docDeleteConfirm:        'Eliminar',
+  docOpenButton:           'Abrir',
+  docBlockedExtension:     'Este tipo de archivo no está permitido',
+  docUploadError:          'Error al subir el archivo',
+  docSizeLabel:            (kb: number) => `${kb} KB`,
+  docClientButton:         'Documentos',
+
   // ── Biblioteca de vídeos (RF-E5-01) ──────────────────────────────────────
   videoTitle:              'Vídeos',
   videoSubtitle:           (n: number) => `${n} ${n === 1 ? 'vídeo' : 'vídeos'}`,

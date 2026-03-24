@@ -139,6 +139,12 @@ export default function ClientDetailScreen() {
           >
             <Text style={styles.assignBtnText}>Asignar rutina</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.docsBtn}
+            onPress={() => router.push({ pathname: '/(coach)/clients/documents', params: { athleteId: id, athleteName: name } })}
+          >
+            <Text style={styles.docsBtnText}>{Strings.docClientButton}</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -266,6 +272,8 @@ const styles = StyleSheet.create({
   msgBtnText: { color: Colors.athlete, fontSize: 13, fontWeight: '600' },
   assignBtn: { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
   assignBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+  docsBtn: { backgroundColor: Colors.surface, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
+  docsBtnText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '600' },
   errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
   profileCard: { backgroundColor: Colors.surface, margin: Spacing.lg, borderRadius: BorderRadius.lg, padding: Spacing.lg, alignItems: 'center', gap: Spacing.md, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
   avatarLarge: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primarySubtle, alignItems: 'center', justifyContent: 'center' },

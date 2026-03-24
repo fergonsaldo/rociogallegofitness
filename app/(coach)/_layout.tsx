@@ -105,6 +105,7 @@ export default function CoachLayout() {
       <Tabs.Screen name="recipes/create"    options={{ href: null }} />
       <Tabs.Screen name="recipes/[id]"      options={{ href: null }} />
       <Tabs.Screen name="recipes/edit"      options={{ href: null }} />
+      <Tabs.Screen name="clients/documents" options={{ href: null }} />
     </Tabs>
   );
 }
