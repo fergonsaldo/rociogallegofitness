@@ -521,6 +521,42 @@ La sesión aparece inmediatamente en el calendario al guardar.
 
 ---
 
+#### RF-E6-04 — Catálogo de alimentos
+
+**¿Qué hace?**
+Pantalla de alimentos del coach con un catálogo base de 35 alimentos predefinidos (genéricos, específicos
+y suplementos) más los que cree cada coach. Permite buscar por nombre, filtrar por tipo mediante chips
+(Genérico / Específico / Suplemento / Propios) y crear nuevos alimentos con nombre, tipo y macros
+completos (kcal, proteína, carbos, grasas, fibra) por 100 g. Solo se pueden eliminar los alimentos
+propios del coach.
+
+**Pantallas / flujo:**
+- `app/(coach)/foods/index.tsx` — lista + buscador + 4 chips de filtro
+  - Chip "Propios" es mutuamente excluyente con los chips de tipo
+  - Cada tarjeta muestra nombre, badge de tipo, "por 100g" y 5 MacroPills (Kcal/P/C/G/F)
+  - Botón eliminar solo visible en alimentos propios del coach
+  - `useFocusEffect` para recargar al volver del formulario
+- `app/(coach)/foods/create.tsx` — formulario: nombre, tipo (3 chips), 5 campos numéricos en grid
+- Accesible desde `app/(coach)/nutrition/index.tsx` mediante botón "Alimentos →" en la cabecera
+
+**Decisiones de diseño:**
+- Ruta oculta (href: null) en el layout del coach — no aparece en la tab bar, se navega desde nutrición.
+- El filtro "Propios" se resuelve en cliente comparando `coachId === user.id`, no es un tipo de BD. La BD usa solo 3 tipos: `generic | specific | supplement`.
+- Catálogo base sembrado en BD con `coach_id = NULL` (igual que cardios), lo que permite asignarlo en historias futuras de forma uniforme.
+- `parseFloat(...) || 0` en el formulario: campos numéricos opcionales, valor 0 si se dejan vacíos.
+
+**Implementación técnica:**
+- `Food.ts`: entidad con `FoodSchema` + `CreateFoodSchema` (Zod, validación de rangos por macro)
+- `IFoodRepository` + `FoodRemoteRepository`: `getFoodsByCoach` (OR coach_id IS NULL), `createFood`, `deleteFood`
+- `FoodUseCases.ts`: `getFoodsUseCase`, `createFoodUseCase`, `deleteFoodUseCase`, `filterFoods` (pura)
+- `foodStore.ts`: `fetchFoods`, `createFood` (inserta ordenado alfabéticamente), `deleteFood`, `clearError`
+- Migración SQL: tabla `foods` + RLS + seed 35 alimentos base
+
+**Métricas finales:**
+- Test Suites: 1/1 ✅ | Tests: 30/30 ✅
+
+---
+
 ## 🔲 En curso
 
 ---
@@ -758,17 +794,6 @@ La sesión aparece inmediatamente en el calendario al guardar.
 
 ---
 
-#### RF-E6-04 (P0) Alimentos y base nutricional
-**Requisito:** Gestión de base de alimentos (energía, macros, fibra).
-
-**Criterios de aceptación:**
-- Filtro por tipo: genérico, específico, suplemento y propios.
-- Tabla nutricional completa por alimento (kcal, proteína, carbo, grasa, fibra).
-- Crear alimento personalizado.
-
-**Dependencia de plan:** No observada.
-
----
 
 #### RF-E6-03 (P0) Recetas
 **Requisito:** Biblioteca de recetas con ingredientes vinculados a alimentos, macros, imagen e instrucciones.

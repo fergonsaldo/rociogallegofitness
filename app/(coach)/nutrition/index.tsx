@@ -69,13 +69,22 @@ export default function CoachNutritionScreen() {
               <Text style={styles.subtitle}>{Strings.nutritionPlanSubtitle(coachPlans.length)}</Text>
             </View>
           </View>
-          <TouchableOpacity
-            style={styles.createButton}
-            onPress={() => router.push('/(coach)/nutrition/create')}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.createButtonText}>{Strings.nutritionPlanNewButton}</Text>
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => router.push('/(coach)/foods/index' as any)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.secondaryButtonText}>{Strings.foodNutritionLink}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => router.push('/(coach)/nutrition/create')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.createButtonText}>{Strings.nutritionPlanNewButton}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search */}
@@ -215,6 +224,14 @@ const styles = StyleSheet.create({
   accentBar:  { width: 4, height: 32, backgroundColor: Colors.primary, borderRadius: 2 },
   title:      { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
   subtitle:   { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+
+  headerActions: { flexDirection: 'row', gap: Spacing.xs },
+
+  secondaryButton: {
+    borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.primary,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+  },
+  secondaryButtonText: { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '700' },
 
   createButton: {
     backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
