@@ -758,27 +758,47 @@ La sesión aparece inmediatamente en el calendario al guardar.
 
 ---
 
-#### RF-E6-03 (P0) Recetas
-**Requisito:** Biblioteca de recetas con etiquetas y kcal.
-
-**Criterios de aceptación:**
-- Añadir receta de forma manual.
-- Buscador y filtros por tags y creador.
-- Acción mostrar/ocultar receta a clientes.
-
-**Dependencia de plan:** No observada.
-
----
-
 #### RF-E6-04 (P0) Alimentos y base nutricional
 **Requisito:** Gestión de base de alimentos (energía, macros, fibra).
 
 **Criterios de aceptación:**
 - Filtro por tipo: genérico, específico, suplemento y propios.
-- Tabla nutricional completa por alimento.
+- Tabla nutricional completa por alimento (kcal, proteína, carbo, grasa, fibra).
 - Crear alimento personalizado.
 
 **Dependencia de plan:** No observada.
+
+---
+
+#### RF-E6-03 (P0) Recetas
+**Requisito:** Biblioteca de recetas con ingredientes vinculados a alimentos, macros, imagen e instrucciones.
+
+**Criterios de aceptación:**
+- Añadir receta con: nombre, ingredientes (cada uno referencia un alimento de E6-04 + cantidad en g), instrucciones de preparación, imagen opcional y tags.
+- Los macros y kcal totales se calculan automáticamente sumando los de los ingredientes según cantidad.
+- Flag `show_macros` por receta: si está activo, los clientes ven los macros al consultar la receta.
+- Flag `visible_to_clients` por receta: controla si la receta aparece en la pantalla de recetas del cliente.
+- Buscador por nombre y filtros por tags.
+- Borrar receta propia con confirmación.
+
+**Scope excluido:** Vinculación de recetas a planes (RF-E6-10), asignación directa a atletas.
+
+**Dependencia:** RF-E6-04 completado (los ingredientes referencian alimentos).
+
+---
+
+#### RF-E6-10 (P1) Vincular recetas a comidas de un plan
+**Requisito:** Permitir asociar una o varias recetas a una comida de un plan nutricional.
+
+**Criterios de aceptación:**
+- DADO que el coach edita una comida de un plan, CUANDO selecciona "añadir receta" ENTONCES puede buscar y seleccionar una receta del catálogo.
+- Una comida puede tener varias recetas asociadas.
+- Los macros de la comida se actualizan al añadir/quitar recetas.
+- Las recetas vinculadas son visibles para el atleta si el plan le ha sido asignado.
+
+**Scope excluido:** Creación de recetas nuevas desde el formulario de plan (se hace desde el catálogo).
+
+**Dependencia:** RF-E6-01 + RF-E6-03 completados.
 
 ---
 
