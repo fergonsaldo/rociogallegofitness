@@ -828,6 +828,20 @@ Corrección de seis defectos detectados durante pruebas manuales en la sección 
 
 > RF-E6-01 (planes), RF-E6-03 (recetas) y RF-E6-04 (alimentos) completados — ver sección Completado.
 
+#### RF-E6-11 (P1) Edición de alimentos propios del coach
+**Requisito:** El entrenador puede editar los alimentos que él mismo ha creado (nombre, tipo y macros). Los alimentos del catálogo base (coach_id IS NULL) no son editables.
+
+**Criterios de aceptación:**
+- Botón "Editar" visible solo en alimentos propios del coach (misma lógica que el botón eliminar).
+- Formulario de edición pre-relleno con los valores actuales.
+- Al guardar, el alimento se actualiza en lista sin recargar manualmente.
+- Si el alimento está siendo usado en recetas, la edición de macros está permitida (afecta cálculos futuros, no retroactivos).
+- Validación de rangos igual que en creación.
+
+**Dependencia:** RF-E6-04 completado.
+
+---
+
 #### RF-E6-07 (P1) Duplicado de planes nutricionales
 **Requisito:** Copiar un plan existente para crear uno nuevo a partir de él.
 
