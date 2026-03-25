@@ -632,6 +632,56 @@ Los ejecutables (.exe, .apk, .sh, .bat, .cmd, .ps1, .msi, .deb, .dmg, .bin) est�
 
 ---
 
+#### BUG-01 — Correcciones de defectos (sesión 2026-03-25)
+
+**¿Qué hace?**
+Corrección de seis defectos detectados durante pruebas manuales en la sección de nutrición y recetas.
+
+**Defectos corregidos:**
+
+1. **Botón Guardar en creación de plan nutricional no hacía nada**
+   - `PostgrestError` de Supabase no es `instanceof Error`, la catch del store usaba el mensaje genérico de fallback y no lo propagaba a la UI.
+   - Fix: `nutritionStore.createPlan` extrae `err?.message`; `create.tsx` muestra banner de error dismissible.
+
+2. **Plan creado solo mostraba macros (columnas no encontradas en schema cache)**
+   - Las columnas renombradas en la migración `fix_nutrition_plans.sql` no estaban en el caché de PostgREST. La migración había fallado parcialmente (transacción rollback) dejando un estado inconsistente entre el historial de migraciones y la BD real.
+   - Fix: aplicación manual de columnas via Management API + `NOTIFY pgrst, 'reload schema'` + políticas RLS de `meals`.
+
+3. **No aparecía el botón "Nuevo plan" tras crear uno (overflow de cabecera)**
+   - Tres botones en una sola fila (`Recetas →`, `Alimentos →`, `+ Nuevo`) desbordaban el ancho en móvil.
+   - Fix: `nutrition/index.tsx` — botón "+ Nuevo" junto al título; botones secundarios en segunda fila.
+
+4. **Botón "Recetas →" mostraba spinner infinito**
+   - `isLoading` compartido entre `fetchRecipes` y `fetchRecipeDetail` en `recipeStore`. Si el detalle corría en paralelo o dejaba el flag a `true`, la lista mostraba spinner permanente.
+   - Fix: separar en `isListLoading` y `isDetailLoading`. Además `[id].tsx` separaba `isDetailLoading` de `!currentRecipe` para no mostrar spinner cuando no hay datos.
+
+5. **"Recetas →" y "Alimentos →" navegaban a pantalla incorrecta**
+   - `router.push('/(coach)/recipes/index')` se resolvía a `recipes/[id]` con `id='index'` porque `index.tsx` representa la raíz del directorio, no un segmento literal.
+   - Además, todas las sub-pantallas de recetas/alimentos eran tabs planos sin stack propio, por lo que el tab group recordaba el último screen visitado (create, [id]…).
+   - Fix: rutas corregidas a `/(coach)/recipes` y `/(coach)/foods`; creados `recipes/_layout.tsx` y `foods/_layout.tsx` con Stack navigator.
+
+6. **Guardar receta con imagen fallaba silenciosamente**
+   - `fetch(localUri).blob()` en React Native produce un Blob incompatible con el SDK de Supabase Storage → "network request failed".
+   - Además el URI podía incluir query strings que corrompían la extensión del fichero.
+   - Fix: `RecipeRemoteRepository.uploadImage` usa `expo-file-system/legacy` para leer como base64 y convierte a `Uint8Array` antes de subir. Extensión se extrae antes del `?`. Banner de error añadido a `create.tsx`.
+
+**Archivos modificados:**
+- `src/presentation/stores/nutritionStore.ts`
+- `src/presentation/stores/recipeStore.ts`
+- `src/infrastructure/supabase/remote/NutritionRemoteRepository.ts`
+- `src/infrastructure/supabase/remote/RecipeRemoteRepository.ts`
+- `app/(coach)/nutrition/index.tsx`
+- `app/(coach)/nutrition/create.tsx`
+- `app/(coach)/recipes/index.tsx`
+- `app/(coach)/recipes/[id].tsx`
+- `app/(coach)/recipes/edit.tsx`
+- `app/(coach)/recipes/create.tsx`
+- `app/(coach)/recipes/_layout.tsx` *(nuevo)*
+- `app/(coach)/foods/_layout.tsx` *(nuevo)*
+- `app/(coach)/_layout.tsx`
+
+---
+
 ## 🔲 En curso
 
 ---
