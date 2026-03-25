@@ -75,7 +75,8 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .select()
       .single();
 
-    if (error || !plan) throw error;
+    if (error) throw new Error(`nutrition_plans insert: ${error.message} (${error.code})`);
+    if (!plan) throw new Error('nutrition_plans insert returned no data');
 
     // Insert meals
     const { error: mealsError } = await supabase
@@ -93,7 +94,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
         }))
       );
 
-    if (mealsError) throw mealsError;
+    if (mealsError) throw new Error(`meals insert: ${mealsError.message} (${mealsError.code})`);
 
     const created = await this.getPlanById(plan.id);
     if (!created) throw new Error('Plan not found after creation');

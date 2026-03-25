@@ -61,15 +61,24 @@ export default function CoachNutritionScreen() {
       <View style={styles.container}>
 
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <View style={styles.accentBar} />
-            <View>
-              <Text style={styles.title}>{Strings.nutritionPlanTitle}</Text>
-              <Text style={styles.subtitle}>{Strings.nutritionPlanSubtitle(coachPlans.length)}</Text>
+        <View style={styles.headerWrapper}>
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <View style={styles.accentBar} />
+              <View>
+                <Text style={styles.title}>{Strings.nutritionPlanTitle}</Text>
+                <Text style={styles.subtitle}>{Strings.nutritionPlanSubtitle(coachPlans.length)}</Text>
+              </View>
             </View>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => router.push('/(coach)/nutrition/create')}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.createButtonText}>{Strings.nutritionPlanNewButton}</Text>
+            </TouchableOpacity>
           </View>
-          <View style={styles.headerActions}>
+          <View style={styles.headerLinks}>
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={() => router.push('/(coach)/recipes/index' as any)}
@@ -83,13 +92,6 @@ export default function CoachNutritionScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.secondaryButtonText}>{Strings.foodNutritionLink}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => router.push('/(coach)/nutrition/create')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.createButtonText}>{Strings.nutritionPlanNewButton}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -226,13 +228,13 @@ const styles = StyleSheet.create({
   safe:      { flex: 1, backgroundColor: Colors.background },
   container: { flex: 1, paddingHorizontal: Spacing.lg },
 
-  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.lg },
+  headerWrapper: { paddingTop: Spacing.lg, paddingBottom: Spacing.sm, gap: Spacing.sm },
+  header:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  headerLinks: { flexDirection: 'row', gap: Spacing.xs },
   accentBar:  { width: 4, height: 32, backgroundColor: Colors.primary, borderRadius: 2 },
   title:      { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
   subtitle:   { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
-
-  headerActions: { flexDirection: 'row', gap: Spacing.xs },
 
   secondaryButton: {
     borderRadius: BorderRadius.md, borderWidth: 1, borderColor: Colors.primary,
