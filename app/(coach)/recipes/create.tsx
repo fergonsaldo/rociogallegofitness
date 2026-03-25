@@ -21,7 +21,7 @@ interface IngredientRow extends IngredientInput {
 export default function CreateRecipeScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { createRecipe, isSubmitting } = useRecipeStore();
+  const { createRecipe, isSubmitting, error, clearError } = useRecipeStore();
   const { foods, fetchFoods } = useFoodStore();
 
   const [name,         setName]         = useState('');
@@ -240,6 +240,12 @@ export default function CreateRecipeScreen() {
           maxLength={5000}
         />
 
+        {error && (
+          <TouchableOpacity style={styles.errorBanner} onPress={clearError}>
+            <Text style={styles.errorText}>{error}</Text>
+          </TouchableOpacity>
+        )}
+
         {/* Submit */}
         <TouchableOpacity
           style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
@@ -365,6 +371,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addIngredientButtonText: { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '700' },
+
+  errorBanner: {
+    backgroundColor: `${Colors.error}15`, borderWidth: 1, borderColor: `${Colors.error}30`,
+    borderRadius: BorderRadius.md, padding: Spacing.md, marginTop: Spacing.md,
+  },
+  errorText: { color: Colors.error, fontSize: FontSize.sm },
 
   submitButton: {
     backgroundColor: Colors.primary, borderRadius: BorderRadius.md,

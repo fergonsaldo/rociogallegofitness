@@ -174,18 +174,20 @@ export class RecipeRemoteRepository implements IRecipeRepository {
   }
 
   async uploadImage(coachId: string, localUri: string): Promise<string> {
-    const response  = await fetch(localUri);
-    const blob      = await response.blob();
-    const ext       = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const mimeType  = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-    const imagePath = `${coachId}/${Date.now()}.${ext}`;
+    const rawExt   = localUri.split('?')[0].split('.').pop()?.toLowerCase() ?? 'jpg';
+    const ext      = ['jpg', 'jpeg', 'png', 'webp'].includes(rawExt) ? rawExt : 'jpg';
+    const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+    const filename = `${coachId}/${Date.now()}.${ext}`;
+
+    const response = await fetch(localUri);
+    const blob     = await response.blob();
 
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(imagePath, blob, { contentType: mimeType, upsert: false });
+      .upload(filename, blob, { contentType: mimeType, upsert: false });
 
-    if (error) throw error;
-    return imagePath;
+    if (error) throw new Error(`Storage upload: ${error.message} (${error.statusCode})`);
+    return filename;
   }
 
   async deleteImage(imagePath: string): Promise<void> {
