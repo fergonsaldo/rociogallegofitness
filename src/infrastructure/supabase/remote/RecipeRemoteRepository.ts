@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system';
 import { supabase } from '../client';
 import { IRecipeRepository } from '@/domain/repositories/IRecipeRepository';
 import {
@@ -179,12 +180,20 @@ export class RecipeRemoteRepository implements IRecipeRepository {
     const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
     const filename = `${coachId}/${Date.now()}.${ext}`;
 
-    const response = await fetch(localUri);
-    const blob     = await response.blob();
+    // React Native Blobs from fetch() are not compatible with Supabase Storage SDK.
+    // Read as base64 via expo-file-system and convert to Uint8Array instead.
+    const base64    = await FileSystem.readAsStringAsync(localUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+    const binaryStr = atob(base64);
+    const bytes     = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
 
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(filename, blob, { contentType: mimeType, upsert: false });
+      .upload(filename, bytes, { contentType: mimeType, upsert: false });
 
     if (error) throw new Error(`Storage upload: ${error.message} (${error.statusCode})`);
     return filename;
