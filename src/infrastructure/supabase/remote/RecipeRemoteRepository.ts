@@ -183,7 +183,7 @@ export class RecipeRemoteRepository implements IRecipeRepository {
     // React Native Blobs from fetch() are not compatible with Supabase Storage SDK.
     // Read as base64 via expo-file-system and convert to Uint8Array instead.
     const base64    = await FileSystem.readAsStringAsync(localUri, {
-      encoding: FileSystem.EncodingType.Base64,
+      encoding: 'base64' as any,
     });
     const binaryStr = atob(base64);
     const bytes     = new Uint8Array(binaryStr.length);
