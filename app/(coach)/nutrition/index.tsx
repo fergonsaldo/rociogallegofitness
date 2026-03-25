@@ -81,14 +81,14 @@ export default function CoachNutritionScreen() {
           <View style={styles.headerLinks}>
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => router.push('/(coach)/recipes/index' as any)}
+              onPress={() => router.push('/(coach)/recipes' as any)}
               activeOpacity={0.8}
             >
               <Text style={styles.secondaryButtonText}>{Strings.recipeNutritionLink}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={() => router.push('/(coach)/foods/index' as any)}
+              onPress={() => router.push('/(coach)/foods' as any)}
               activeOpacity={0.8}
             >
               <Text style={styles.secondaryButtonText}>{Strings.foodNutritionLink}</Text>
