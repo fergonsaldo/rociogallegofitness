@@ -828,15 +828,19 @@ Corrección de seis defectos detectados durante pruebas manuales en la sección 
 
 > RF-E6-01 (planes), RF-E6-03 (recetas) y RF-E6-04 (alimentos) completados — ver sección Completado.
 
-#### RF-E6-11 (P1) Edición de alimentos propios del coach
-**Requisito:** El entrenador puede editar los alimentos que él mismo ha creado (nombre, tipo y macros). Los alimentos del catálogo base (coach_id IS NULL) no son editables.
+#### RF-E6-11 (P1) Edición de alimentos del catálogo
+**Requisito:** El entrenador puede editar cualquier alimento visible en su catálogo: tanto los del catálogo base genérico (coach_id IS NULL) como los creados por él.
 
 **Criterios de aceptación:**
-- Botón "Editar" visible solo en alimentos propios del coach (misma lógica que el botón eliminar).
-- Formulario de edición pre-relleno con los valores actuales.
-- Al guardar, el alimento se actualiza en lista sin recargar manualmente.
-- Si el alimento está siendo usado en recetas, la edición de macros está permitida (afecta cálculos futuros, no retroactivos).
+- Botón "Editar" visible en todos los alimentos (genéricos y propios).
+- Formulario de edición pre-relleno con los valores actuales (nombre, tipo, macros).
+- Al guardar un alimento genérico, se crea una copia del alimento para ese coach (coach_id = auth.uid()) en lugar de modificar el registro base — así los cambios son locales al entrenador y no afectan a otros.
+- Al guardar un alimento propio, se actualiza el registro directamente.
+- El alimento editado/creado reemplaza al original en la lista sin recargar manualmente.
 - Validación de rangos igual que en creación.
+- Si el alimento está en uso en recetas, la edición es igualmente posible (afecta cálculos futuros).
+
+**Decisión de diseño pendiente:** confirmar si editar un genérico debe crear una copia por-coach o modificar el registro base (afectaría a todos los coaches). Preguntar antes de implementar.
 
 **Dependencia:** RF-E6-04 completado.
 
