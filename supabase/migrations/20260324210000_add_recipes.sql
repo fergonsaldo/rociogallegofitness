@@ -24,7 +24,7 @@ create index idx_recipes_coach on public.recipes(coach_id);
 
 create trigger recipes_updated_at
   before update on public.recipes
-  for each row execute function update_updated_at_column();
+  for each row execute function set_updated_at();
 
 alter table public.recipes enable row level security;
 

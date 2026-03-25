@@ -67,8 +67,9 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const plan = await createNutritionPlanUseCase(input, repo);
       set((s) => ({ coachPlans: [plan, ...s.coachPlans], isSubmitting: false }));
       return plan;
-    } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedCreatePlan, isSubmitting: false });
+    } catch (err: any) {
+      const msg = err instanceof Error ? err.message : err?.message ?? Strings.errorFailedCreatePlan;
+      set({ error: msg, isSubmitting: false });
       return null;
     }
   },

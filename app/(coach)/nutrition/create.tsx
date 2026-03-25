@@ -2,7 +2,7 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import { useNutritionStore } from '../../../src/presentation/stores/nutritionStore';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
@@ -39,8 +39,9 @@ function calcCals(p: string, c: string, f: string) {
 export default function CreateNutritionPlanScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { createPlan, isSubmitting } = useNutritionStore();
+  const { createPlan, isSubmitting, error, clearError } = useNutritionStore();
 
+  useEffect(() => { clearError(); }, []);
   const [step, setStep] = useState<1 | 2>(1);
 
   // Step 1 - plan info
@@ -139,6 +140,12 @@ export default function CreateNutritionPlanScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {error && (
+        <TouchableOpacity style={styles.errorBanner} onPress={clearError}>
+          <Text style={styles.errorText}>{error}</Text>
+        </TouchableOpacity>
+      )}
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
 
@@ -303,6 +310,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, minWidth: 60, alignItems: 'center',
   },
   nextBtnDisabled: { opacity: 0.6 },
+  errorBanner: { backgroundColor: `${Colors.error}15`, borderWidth: 1, borderColor: `${Colors.error}40`, marginHorizontal: Spacing.lg, marginTop: Spacing.sm, borderRadius: BorderRadius.md, padding: Spacing.md },
+  errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
   nextBtnText: { color: '#fff', fontWeight: '700', fontSize: FontSize.sm },
   scroll: { flex: 1 },
   section: { padding: Spacing.lg, gap: Spacing.md },
