@@ -15,7 +15,7 @@ export default function RecipeDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
-  const { currentRecipe, isLoading, error, fetchRecipeDetail, clearCurrentRecipe } = useRecipeStore();
+  const { currentRecipe, isDetailLoading, error, fetchRecipeDetail, clearCurrentRecipe } = useRecipeStore();
 
   useFocusEffect(
     useCallback(() => {
@@ -24,14 +24,26 @@ export default function RecipeDetailScreen() {
     }, [id, user?.id]),
   );
 
-  if (isLoading || !currentRecipe) {
+  if (isDetailLoading) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
-          {error
-            ? <Text style={styles.errorText}>{error}</Text>
-            : <ActivityIndicator color={Colors.primary} size="large" />
-          }
+          <ActivityIndicator color={Colors.primary} size="large" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!currentRecipe) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.topbar}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backText}>← Back</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.center}>
+          <Text style={styles.errorText}>{error ?? 'Receta no encontrada'}</Text>
         </View>
       </SafeAreaView>
     );

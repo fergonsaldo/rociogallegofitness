@@ -22,7 +22,7 @@ export default function EditRecipeScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
-  const { currentRecipe, isLoading, isSubmitting, fetchRecipeDetail, updateRecipe } = useRecipeStore();
+  const { currentRecipe, isDetailLoading, isSubmitting, fetchRecipeDetail, updateRecipe } = useRecipeStore();
   const { foods, fetchFoods } = useFoodStore();
 
   const [initialized,  setInitialized]  = useState(false);
@@ -150,7 +150,7 @@ export default function EditRecipeScreen() {
 
   const displayImageUri = imageUri ?? (keepImage ? currentRecipe?.imageUrl : null);
 
-  if (isLoading && !initialized) {
+  if (isDetailLoading && !initialized) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>

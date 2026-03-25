@@ -16,11 +16,12 @@ import {
 import { Strings } from '@/shared/constants/strings';
 
 interface RecipeState {
-  recipes:       Recipe[];
-  currentRecipe: RecipeWithIngredients | null;
-  isLoading:     boolean;
-  isSubmitting:  boolean;
-  error:         string | null;
+  recipes:         Recipe[];
+  currentRecipe:   RecipeWithIngredients | null;
+  isListLoading:   boolean;
+  isDetailLoading: boolean;
+  isSubmitting:    boolean;
+  error:           string | null;
 
   fetchRecipes(coachId: string): Promise<void>;
   fetchRecipeDetail(id: string, coachId: string): Promise<void>;
@@ -34,33 +35,34 @@ interface RecipeState {
 const repo = new RecipeRemoteRepository();
 
 export const useRecipeStore = create<RecipeState>((set, get) => ({
-  recipes:       [],
-  currentRecipe: null,
-  isLoading:     false,
-  isSubmitting:  false,
-  error:         null,
+  recipes:         [],
+  currentRecipe:   null,
+  isListLoading:   false,
+  isDetailLoading: false,
+  isSubmitting:    false,
+  error:           null,
 
   fetchRecipes: async (coachId) => {
-    set({ isLoading: true, error: null });
+    set({ isListLoading: true, error: null });
     try {
       const recipes = await getRecipesUseCase(coachId, repo);
       set({ recipes });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : Strings.errorFallback });
     } finally {
-      set({ isLoading: false });
+      set({ isListLoading: false });
     }
   },
 
   fetchRecipeDetail: async (id, coachId) => {
-    set({ isLoading: true, error: null });
+    set({ isDetailLoading: true, error: null });
     try {
       const recipe = await getRecipeDetailUseCase(id, coachId, repo);
       set({ currentRecipe: recipe });
     } catch (err) {
       set({ error: err instanceof Error ? err.message : Strings.errorFallback });
     } finally {
-      set({ isLoading: false });
+      set({ isDetailLoading: false });
     }
   },
 

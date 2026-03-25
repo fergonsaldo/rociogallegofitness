@@ -15,7 +15,7 @@ import { Strings } from '../../../src/shared/constants/strings';
 export default function RecipesScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { recipes, isLoading, error, fetchRecipes, deleteRecipe } = useRecipeStore();
+  const { recipes, isListLoading, error, fetchRecipes, deleteRecipe } = useRecipeStore();
 
   const [query,      setQuery]      = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -108,7 +108,7 @@ export default function RecipesScreen() {
           </View>
         )}
 
-        {isLoading ? (
+        {isListLoading ? (
           <View style={styles.center}>
             <ActivityIndicator color={Colors.primary} size="large" />
           </View>
