@@ -57,7 +57,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const plans = await getCoachNutritionPlansUseCase(coachId, repo);
       set({ coachPlans: plans, coachPlansLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadPlans, coachPlansLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadPlans, coachPlansLoading: false });
     }
   },
 
@@ -68,7 +68,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       set((s) => ({ coachPlans: [plan, ...s.coachPlans], isSubmitting: false }));
       return plan;
     } catch (err: any) {
-      const msg = err instanceof Error ? err.message : err?.message ?? Strings.errorFailedCreatePlan;
+      const msg = (err as any)?.message ?? Strings.errorFailedCreatePlan;
       set({ error: msg, isSubmitting: false });
       return null;
     }
@@ -78,7 +78,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
     try {
       await assignNutritionPlanUseCase({ planId, athleteId }, repo);
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignPlan });
+      set({ error: (err as any)?.message ?? Strings.errorFailedAssignPlan });
     }
   },
 
@@ -87,7 +87,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       await deleteNutritionPlanUseCase(planId, repo);
       set((s) => ({ coachPlans: s.coachPlans.filter((p) => p.id !== planId) }));
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedDeletePlan });
+      set({ error: (err as any)?.message ?? Strings.errorFailedDeletePlan });
     }
   },
 
@@ -99,7 +99,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const plan = await getAssignedNutritionPlanUseCase(athleteId, repo);
       set({ assignedPlan: plan, assignedPlanLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadPlan, assignedPlanLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadPlan, assignedPlanLoading: false });
     }
   },
 
@@ -111,7 +111,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const summary = await getDailyNutritionSummaryUseCase(athleteId, date, assignedPlan, repo);
       set({ dailySummary: summary, dailySummaryLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadDailySummary, dailySummaryLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadDailySummary, dailySummaryLoading: false });
     }
   },
 
@@ -162,7 +162,7 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       });
       return entry;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLogMeal, isSubmitting: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLogMeal, isSubmitting: false });
       return null;
     }
   },

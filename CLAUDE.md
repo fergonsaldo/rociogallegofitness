@@ -147,10 +147,17 @@ App móvil de entrenamiento online con dos roles:
 
 ## BACKLOG
 
-Mantén siempre actualizado el fichero `BACKLOG.md` con tres secciones:
-- Completado (con detalle de qué se implementó)
-- En curso
-- Pendiente / ideas futuras
+Mantén siempre actualizado el fichero `BACKLOG.md` con cuatro secciones, en este orden:
+
+1. **✅ Completado** — historias funcionales cerradas
+2. **🐛 Bugs resueltos** — defectos corregidos, separados del trabajo funcional
+3. **🔲 En curso** — trabajo activo
+4. **💡 Pendiente** — ideas y trabajo futuro
+
+**Por qué separar bugs de features:**
+Los bugs tienen un ciclo de vida distinto (detección → reproducción → confirmación → cierre) y métricas propias. Mezclarlos con historias funcionales contamina la visión de producto. Si el volumen de bugs crece, extraer a `BUGS.md` es trivial manteniendo esta estructura.
+
+**Regla:** todo defecto corregido va a `🐛 Bugs resueltos`, nunca a `✅ Completado`.
 
 ### Formato obligatorio para entradas completadas
 

@@ -41,7 +41,7 @@ export class MessageRemoteRepository implements IMessageRepository {
       .eq('athlete_id', athleteId)
       .maybeSingle();
 
-    if (selectError) throw selectError;
+    if (selectError) throw new Error(selectError.message);
 
     if (existing) {
       return mapConversationRow(existing as ConversationRow, { unreadCount: 0 });
@@ -69,7 +69,7 @@ export class MessageRemoteRepository implements IMessageRepository {
       `)
       .or(`coach_id.eq.${userId},athlete_id.eq.${userId}`);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     if (!convRows || convRows.length === 0) return [];
 
     const convIds = convRows.map((c: any) => c.id);
@@ -88,8 +88,8 @@ export class MessageRemoteRepository implements IMessageRepository {
         .is('read_at', null),
     ]);
 
-    if (lastMsgsResult.error) throw lastMsgsResult.error;
-    if (unreadResult.error) throw unreadResult.error;
+    if (lastMsgsResult.error) throw new Error(lastMsgsResult.error.message);
+    if (unreadResult.error) throw new Error(unreadResult.error.message);
 
     const lastMsgByConv = new Map<string, { body: string; sent_at: string }>();
     for (const msg of lastMsgsResult.data ?? []) {
@@ -133,7 +133,7 @@ export class MessageRemoteRepository implements IMessageRepository {
       .eq('conversation_id', conversationId)
       .order('sent_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map((row) => mapMessageRow(row as MessageRow));
   }
 
@@ -149,7 +149,8 @@ export class MessageRemoteRepository implements IMessageRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('Failed to send message');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Failed to send message');
     return mapMessageRow(data as MessageRow);
   }
 
@@ -161,7 +162,7 @@ export class MessageRemoteRepository implements IMessageRepository {
       .neq('sender_id', userId)
       .is('read_at', null);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async getUnreadCount(userId: string): Promise<number> {
@@ -171,7 +172,7 @@ export class MessageRemoteRepository implements IMessageRepository {
       .select('id')
       .or(`coach_id.eq.${userId},athlete_id.eq.${userId}`);
 
-    if (convError) throw convError;
+    if (convError) throw new Error(convError.message);
     if (!convRows || convRows.length === 0) return 0;
 
     const { count, error } = await supabase
@@ -181,7 +182,7 @@ export class MessageRemoteRepository implements IMessageRepository {
       .neq('sender_id', userId)
       .is('read_at', null);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return count ?? 0;
   }
 }

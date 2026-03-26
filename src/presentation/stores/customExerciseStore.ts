@@ -39,7 +39,7 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
       const exercises = await getCoachCustomExercisesUseCase(coachId, repo);
       set({ exercises, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al cargar ejercicios', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al cargar ejercicios', isLoading: false });
     }
   },
 
@@ -49,7 +49,7 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
       const catalog = await getAllExercisesUseCase(coachId, repo);
       set({ catalog, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al cargar ejercicios', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al cargar ejercicios', isLoading: false });
     }
   },
 
@@ -60,7 +60,7 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
       set((state) => ({ exercises: [created, ...state.exercises], isLoading: false }));
       return created;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al crear ejercicio', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al crear ejercicio', isLoading: false });
       return null;
     }
   },
@@ -75,7 +75,7 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
       }));
       return updated;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al actualizar ejercicio', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al actualizar ejercicio', isLoading: false });
       return null;
     }
   },
@@ -91,7 +91,7 @@ export const useCustomExerciseStore = create<CustomExerciseState>((set) => ({
       }));
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al eliminar ejercicio', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al eliminar ejercicio', isLoading: false });
       return false;
     }
   },

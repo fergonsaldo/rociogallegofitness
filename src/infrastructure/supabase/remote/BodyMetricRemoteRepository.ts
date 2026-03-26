@@ -26,7 +26,7 @@ export class BodyMetricRemoteRepository implements IBodyMetricRepository {
       .eq('athlete_id', athleteId)
       .order('recorded_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapRow.bind(this));
   }
 
@@ -45,7 +45,8 @@ export class BodyMetricRemoteRepository implements IBodyMetricRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after insert');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as BodyMetricRow);
   }
 
@@ -55,6 +56,6 @@ export class BodyMetricRemoteRepository implements IBodyMetricRepository {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

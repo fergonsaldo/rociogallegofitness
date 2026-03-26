@@ -33,7 +33,7 @@ export class VideoRemoteRepository implements IVideoRepository {
       .eq('coach_id', coachId)
       .order('title', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapRow.bind(this));
   }
 
@@ -50,7 +50,8 @@ export class VideoRemoteRepository implements IVideoRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after insert');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as VideoRow);
   }
 
@@ -60,6 +61,6 @@ export class VideoRemoteRepository implements IVideoRepository {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

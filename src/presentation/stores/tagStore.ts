@@ -36,7 +36,7 @@ export const useTagStore = create<TagState>((set, get) => ({
       set({ tags, isLoading: false });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : Strings.errorFailedLoadTags,
+        error: (err as any)?.message ?? Strings.errorFailedLoadTags,
         isLoading: false,
       });
     }
@@ -48,7 +48,7 @@ export const useTagStore = create<TagState>((set, get) => ({
       set({ tags: [...get().tags, tag].sort((a, b) => a.name.localeCompare(b.name)) });
       return tag;
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorFailedCreateTag;
+      const message = (err as any)?.message ?? Strings.errorFailedCreateTag;
       set({ error: message });
       throw err;
     }
@@ -64,7 +64,7 @@ export const useTagStore = create<TagState>((set, get) => ({
       });
       return updated;
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorFailedUpdateTag;
+      const message = (err as any)?.message ?? Strings.errorFailedUpdateTag;
       set({ error: message });
       throw err;
     }
@@ -75,7 +75,7 @@ export const useTagStore = create<TagState>((set, get) => ({
       await deleteTagUseCase(id, repo);
       set({ tags: get().tags.filter((t) => t.id !== id) });
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorFailedDeleteTag;
+      const message = (err as any)?.message ?? Strings.errorFailedDeleteTag;
       set({ error: message });
       throw err;
     }

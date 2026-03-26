@@ -33,7 +33,7 @@ export const useProgressPhotoStore = create<ProgressPhotoState>((set) => ({
       const photos = await getProgressPhotosUseCase(athleteId, repo);
       set({ photos, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al cargar fotos', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al cargar fotos', isLoading: false });
     }
   },
 
@@ -49,7 +49,7 @@ export const useProgressPhotoStore = create<ProgressPhotoState>((set) => ({
       }));
       return photo;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al subir foto', isUploading: false });
+      set({ error: (err as any)?.message ?? 'Error al subir foto', isUploading: false });
       return null;
     }
   },
@@ -61,7 +61,7 @@ export const useProgressPhotoStore = create<ProgressPhotoState>((set) => ({
       set((state) => ({ photos: state.photos.filter((p) => p.id !== photo.id), isLoading: false }));
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al eliminar foto', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al eliminar foto', isLoading: false });
       return false;
     }
   },

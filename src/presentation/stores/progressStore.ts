@@ -47,7 +47,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
       const history = await getWorkoutHistoryUseCase(athleteId, workoutRepo);
       set({ history, historyLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadHistory, historyLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadHistory, historyLoading: false });
     }
   },
 
@@ -60,7 +60,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
         progressionLoading: false,
       }));
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadProgression, progressionLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadProgression, progressionLoading: false });
     }
   },
 
@@ -70,7 +70,7 @@ export const useProgressStore = create<ProgressState>((set) => ({
       const personalBests = await getPersonalBestsUseCase(athleteId, progressRepo);
       set({ personalBests, personalBestsLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadPersonalBests, personalBestsLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadPersonalBests, personalBestsLoading: false });
     }
   },
 

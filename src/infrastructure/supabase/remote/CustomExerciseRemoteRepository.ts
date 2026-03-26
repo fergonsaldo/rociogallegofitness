@@ -40,7 +40,7 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
       .eq('coach_id', coachId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapRow.bind(this));
   }
 
@@ -60,7 +60,8 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after insert');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as ExerciseRow);
   }
 
@@ -81,7 +82,8 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after update');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after update');
     return this.mapRow(data as ExerciseRow);
   }
 
@@ -91,7 +93,7 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async isInUse(exerciseId: string): Promise<boolean> {
@@ -100,7 +102,7 @@ export class CustomExerciseRemoteRepository implements ICustomExerciseRepository
       .select('*', { count: 'exact', head: true })
       .eq('exercise_id', exerciseId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (count ?? 0) > 0;
   }
 }

@@ -41,7 +41,7 @@ export const useBodyMetricStore = create<BodyMetricState>((set) => ({
       const metrics = await getBodyMetricsUseCase(athleteId, repo);
       set({ metrics, summary: buildBodyMetricSummary(metrics), isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al cargar métricas', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al cargar métricas', isLoading: false });
     }
   },
 
@@ -57,7 +57,7 @@ export const useBodyMetricStore = create<BodyMetricState>((set) => ({
       });
       return created;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al guardar métrica', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al guardar métrica', isLoading: false });
       return null;
     }
   },
@@ -72,7 +72,7 @@ export const useBodyMetricStore = create<BodyMetricState>((set) => ({
       });
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error al eliminar métrica', isLoading: false });
+      set({ error: (err as any)?.message ?? 'Error al eliminar métrica', isLoading: false });
       return false;
     }
   },

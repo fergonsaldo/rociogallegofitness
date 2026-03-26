@@ -37,7 +37,7 @@ export class CardioRemoteRepository implements ICardioRepository {
       .or(`coach_id.eq.${coachId},coach_id.is.null`)
       .order('name', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapRow.bind(this));
   }
 
@@ -56,7 +56,8 @@ export class CardioRemoteRepository implements ICardioRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after insert');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as CardioRow);
   }
 
@@ -66,7 +67,7 @@ export class CardioRemoteRepository implements ICardioRepository {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async assignToAthlete(cardioId: string, athleteId: string): Promise<void> {
@@ -74,7 +75,7 @@ export class CardioRemoteRepository implements ICardioRepository {
       .from('cardio_assignments')
       .insert({ cardio_id: cardioId, athlete_id: athleteId });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async unassignFromAthlete(cardioId: string, athleteId: string): Promise<void> {
@@ -84,6 +85,6 @@ export class CardioRemoteRepository implements ICardioRepository {
       .eq('cardio_id', cardioId)
       .eq('athlete_id', athleteId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

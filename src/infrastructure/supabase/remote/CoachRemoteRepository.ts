@@ -17,7 +17,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .select('users!coach_athletes_athlete_id_fkey ( id, full_name, email )')
       .eq('coach_id', coachId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     return (data ?? [])
       .map((row: any) => row.users)
@@ -36,7 +36,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .eq('athlete_id', athleteId)
       .order('assigned_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     return (data ?? [])
       .map((row: any) => ({
@@ -55,7 +55,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .order('started_at', { ascending: false })
       .limit(limit);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     return (data ?? []).map((row: any): AthleteSession => ({
       id:         row.id,
@@ -72,7 +72,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .eq('routine_id', routineId)
       .eq('athlete_id', athleteId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async updateAthleteStatus(coachId: string, athleteId: string, status: ClientStatus): Promise<void> {
@@ -82,7 +82,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .eq('coach_id', coachId)
       .eq('athlete_id', athleteId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async getDashboardSummary(
@@ -96,7 +96,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .select('users!coach_athletes_athlete_id_fkey ( id, full_name )')
       .eq('coach_id', coachId);
 
-    if (athleteError) throw athleteError;
+    if (athleteError) throw new Error(athleteError.message);
 
     const athletes = (athleteRows ?? [])
       .map((row: any) => row.users)
@@ -119,7 +119,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .order('started_at', { ascending: false })
       .limit(sessionLimit);
 
-    if (sessionError) throw sessionError;
+    if (sessionError) throw new Error(sessionError.message);
 
     const recentSessions: RecentAthleteSession[] = (sessionRows ?? []).map((row: any) => ({
       sessionId:   row.id,
@@ -137,7 +137,7 @@ export class CoachRemoteRepository implements ICoachRepository {
       .eq('status', 'completed')
       .gte('started_at', since.toISOString());
 
-    if (activeError) throw activeError;
+    if (activeError) throw new Error(activeError.message);
 
     const activeAthleteIds = new Set((activeRows ?? []).map((r: any) => r.athlete_id));
 

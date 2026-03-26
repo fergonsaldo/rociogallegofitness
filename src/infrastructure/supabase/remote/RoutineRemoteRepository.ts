@@ -52,7 +52,7 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .eq('coach_id', coachId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapRow.bind(this));
   }
 
@@ -62,7 +62,7 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .select(`routines ( ${this.SELECT} )`)
       .eq('athlete_id', athleteId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     return (data ?? []).map((row: any) => row.routines).filter(Boolean).map(this.mapRow.bind(this));
   }
@@ -76,7 +76,7 @@ export class RoutineRemoteRepository implements IRoutineRepository {
 
     if (error) {
       if (error.code === 'PGRST116') return null;
-      throw error;
+      throw new Error(error.message);
     }
     return this.mapRow(data);
   }
@@ -93,7 +93,8 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .select()
       .single();
 
-    if (routineError || !routine) throw routineError;
+    if (routineError) throw new Error(routineError.message);
+    if (!routine) throw new Error('No data returned after routine insert');
 
     for (const day of input.days) {
       const { data: createdDay, error: dayError } = await supabase
@@ -102,7 +103,8 @@ export class RoutineRemoteRepository implements IRoutineRepository {
         .select()
         .single();
 
-      if (dayError || !createdDay) throw dayError;
+      if (dayError) throw new Error(dayError.message);
+      if (!createdDay) throw new Error('No data returned after routine_days insert');
 
       if (day.exercises.length > 0) {
         const { error: exError } = await supabase
@@ -118,7 +120,7 @@ export class RoutineRemoteRepository implements IRoutineRepository {
             notes: ex.notes,
           })));
 
-        if (exError) throw exError;
+        if (exError) throw new Error(exError.message);
       }
     }
 
@@ -133,7 +135,7 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .update({ name: input.name, description: input.description, duration_weeks: input.durationWeeks })
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     const updated = await this.getById(id);
     if (!updated) throw new Error('Routine not found after update');
     return updated;
@@ -145,13 +147,13 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .select('*', { count: 'exact', head: true })
       .eq('routine_id', routineId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (count ?? 0) > 0;
   }
 
   async delete(id: string): Promise<void> {
     const { error } = await supabase.from('routines').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async assignToAthlete(routineId: string, athleteId: string): Promise<void> {
@@ -161,7 +163,7 @@ export class RoutineRemoteRepository implements IRoutineRepository {
         { routine_id: routineId, athlete_id: athleteId },
         { onConflict: 'routine_id,athlete_id' },
       );
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async unassignFromAthlete(routineId: string, athleteId: string): Promise<void> {
@@ -170,6 +172,6 @@ export class RoutineRemoteRepository implements IRoutineRepository {
       .delete()
       .eq('routine_id', routineId)
       .eq('athlete_id', athleteId);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

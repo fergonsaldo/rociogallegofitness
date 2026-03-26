@@ -58,7 +58,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       const session = await startWorkoutSessionUseCase({ athleteId, routineId, routineDayId }, repo);
       set({ session, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedStartSession, isLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedStartSession, isLoading: false });
     }
   },
 
@@ -78,7 +78,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
       return newSet;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLogSet });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLogSet });
       return null;
     }
   },
@@ -96,7 +96,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
 
       return summary;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedFinishSession, isLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedFinishSession, isLoading: false });
       return null;
     }
   },
@@ -108,7 +108,7 @@ export const useWorkoutStore = create<WorkoutState>((set, get) => ({
       await abandonWorkoutSessionUseCase(session.id, repo);
       set({ session: null, restTimerActive: false, restTimerSeconds: 0 });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedAbandonSession });
+      set({ error: (err as any)?.message ?? Strings.errorFailedAbandonSession });
     }
   },
 

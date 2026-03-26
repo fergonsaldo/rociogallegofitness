@@ -36,7 +36,7 @@ export const useCardioStore = create<CardioState>((set) => ({
       const catalog = await getAllCardiosUseCase(coachId, repo);
       set({ catalog, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadCardios, isLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadCardios, isLoading: false });
     }
   },
 
@@ -50,7 +50,7 @@ export const useCardioStore = create<CardioState>((set) => ({
       }));
       return cardio;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedCreateCardio, isCreating: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedCreateCardio, isCreating: false });
       return null;
     }
   },
@@ -62,7 +62,7 @@ export const useCardioStore = create<CardioState>((set) => ({
       set((state) => ({ catalog: state.catalog.filter((c) => c.id !== id) }));
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedDeleteCardio });
+      set({ error: (err as any)?.message ?? Strings.errorFailedDeleteCardio });
       return false;
     }
   },
@@ -73,7 +73,7 @@ export const useCardioStore = create<CardioState>((set) => ({
       await assignMultipleCardiosUseCase(cardioIds, athleteId, repo);
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedAssignCardio });
+      set({ error: (err as any)?.message ?? Strings.errorFailedAssignCardio });
       return false;
     }
   },

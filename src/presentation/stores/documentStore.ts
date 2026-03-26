@@ -34,7 +34,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       const documents = await getDocumentsUseCase(coachId, athleteId, repo);
       set({ documents });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
     } finally {
       set({ isLoading: false });
     }
@@ -47,7 +47,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       set({ documents: [doc, ...get().documents] });
       return doc;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
       return null;
     } finally {
       set({ isUploading: false });
@@ -60,7 +60,7 @@ export const useDocumentStore = create<DocumentState>((set, get) => ({
       await deleteDocumentUseCase(doc, repo);
       set({ documents: get().documents.filter((d) => d.id !== doc.id) });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
     }
   },
 

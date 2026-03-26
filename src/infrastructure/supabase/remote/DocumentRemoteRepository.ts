@@ -39,7 +39,7 @@ export class DocumentRemoteRepository implements IDocumentRepository {
       .eq('athlete_id', athleteId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return Promise.all((data ?? []).map((row) => this.mapRow(row)));
   }
 
@@ -58,7 +58,8 @@ export class DocumentRemoteRepository implements IDocumentRepository {
       .select()
       .single();
 
-    if (error || !data) throw error;
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after document insert');
     return this.mapRow(data);
   }
 
@@ -66,13 +67,13 @@ export class DocumentRemoteRepository implements IDocumentRepository {
     const { error: storageError } = await supabase.storage
       .from(BUCKET)
       .remove([doc.filePath]);
-    if (storageError) throw storageError;
+    if (storageError) throw new Error(storageError.message);
 
     const { error: dbError } = await supabase
       .from('documents')
       .delete()
       .eq('id', doc.id);
-    if (dbError) throw dbError;
+    if (dbError) throw new Error(dbError.message);
   }
 
   async uploadFile(
@@ -90,7 +91,7 @@ export class DocumentRemoteRepository implements IDocumentRepository {
       .from(BUCKET)
       .upload(filePath, blob, { contentType: mimeType, upsert: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return { filePath, fileSize: blob.size };
   }
 }

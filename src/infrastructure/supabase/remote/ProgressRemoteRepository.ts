@@ -34,7 +34,8 @@ export class ProgressRemoteRepository implements IProgressRepository {
       .select()
       .single();
 
-    if (error || !data) throw error;
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after progress record insert');
     return this.mapRow(data);
   }
 
@@ -46,7 +47,7 @@ export class ProgressRemoteRepository implements IProgressRepository {
       .eq('exercise_id', exerciseId)
       .order('recorded_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapRow.bind(this));
   }
 
@@ -59,7 +60,7 @@ export class ProgressRemoteRepository implements IProgressRepository {
       .eq('athlete_id', athleteId)
       .order('recorded_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     const seen = new Set<string>();
     return (data ?? [])
@@ -81,7 +82,7 @@ export class ProgressRemoteRepository implements IProgressRepository {
       .limit(1)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return data ? this.mapRow(data) : null;
   }
 }

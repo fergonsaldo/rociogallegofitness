@@ -33,7 +33,7 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
       .lt('scheduled_at', end.toISOString())
       .order('scheduled_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map((row: any) =>
       this.mapRow(row as CoachSessionRow, row.athlete?.full_name ?? null),
     );
@@ -48,7 +48,7 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
       .lt('scheduled_at', to.toISOString())
       .order('scheduled_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map((row: any) =>
       this.mapRow(row as CoachSessionRow, row.athlete?.full_name ?? null),
     );
@@ -66,7 +66,7 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
         new Date(start.getTime() - 480 * 60_000).toISOString(),
       );
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     return (data ?? [])
       .map((row: CoachSessionRow) => this.mapRow(row))
@@ -92,7 +92,8 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after insert');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as CoachSessionRow);
   }
 
@@ -102,6 +103,6 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

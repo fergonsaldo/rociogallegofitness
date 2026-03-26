@@ -61,7 +61,7 @@ export class RecipeRemoteRepository implements IRecipeRepository {
       .eq('coach_id', coachId)
       .order('name', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map((row) => this.mapRecipe(row));
   }
 
@@ -80,7 +80,7 @@ export class RecipeRemoteRepository implements IRecipeRepository {
     ]);
 
     if (recipeResult.error || !recipeResult.data) throw recipeResult.error ?? new Error('Recipe not found');
-    if (ingredientsResult.error) throw ingredientsResult.error;
+    if (ingredientsResult.error) throw new Error(ingredientsResult.error.message);
 
     const row = recipeResult.data;
     const imageUrl = row.image_path ? await this.generateSignedUrl(row.image_path) : null;
@@ -113,7 +113,8 @@ export class RecipeRemoteRepository implements IRecipeRepository {
       .select()
       .single();
 
-    if (error || !data) throw error;
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after recipe insert');
 
     if (input.ingredients.length > 0) {
       const { error: ingError } = await supabase
@@ -125,7 +126,7 @@ export class RecipeRemoteRepository implements IRecipeRepository {
             quantity_g: i.quantityG,
           })),
         );
-      if (ingError) throw ingError;
+      if (ingError) throw new Error(ingError.message);
     }
 
     return this.mapRecipe(data);
@@ -148,7 +149,8 @@ export class RecipeRemoteRepository implements IRecipeRepository {
       .select()
       .single();
 
-    if (error || !data) throw error;
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after recipe update');
 
     if (input.ingredients !== undefined) {
       await supabase.from('recipe_ingredients').delete().eq('recipe_id', id);
@@ -162,7 +164,7 @@ export class RecipeRemoteRepository implements IRecipeRepository {
               quantity_g: i.quantityG,
             })),
           );
-        if (ingError) throw ingError;
+        if (ingError) throw new Error(ingError.message);
       }
     }
 
@@ -171,7 +173,7 @@ export class RecipeRemoteRepository implements IRecipeRepository {
 
   async deleteRecipe(id: string): Promise<void> {
     const { error } = await supabase.from('recipes').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async uploadImage(coachId: string, localUri: string): Promise<string> {
@@ -201,6 +203,6 @@ export class RecipeRemoteRepository implements IRecipeRepository {
 
   async deleteImage(imagePath: string): Promise<void> {
     const { error } = await supabase.storage.from(BUCKET).remove([imagePath]);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

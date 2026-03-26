@@ -23,7 +23,7 @@ export class TagRemoteRepository implements ITagRepository {
       .eq('coach_id', coachId)
       .order('name', { ascending: true });
 
-    if (tagsError) throw tagsError;
+    if (tagsError) throw new Error(tagsError.message);
     if (!tags || tags.length === 0) return [];
 
     // Fetch client counts in one query
@@ -33,7 +33,7 @@ export class TagRemoteRepository implements ITagRepository {
       .select('tag_id')
       .in('tag_id', tagIds);
 
-    if (assignError) throw assignError;
+    if (assignError) throw new Error(assignError.message);
 
     const countMap: Record<string, number> = {};
     for (const row of (assignments ?? [])) {
@@ -54,7 +54,8 @@ export class TagRemoteRepository implements ITagRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after insert');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as ClientTagRow, 0);
   }
 
@@ -70,7 +71,8 @@ export class TagRemoteRepository implements ITagRepository {
       .select()
       .single();
 
-    if (error || !data) throw error ?? new Error('No data returned after update');
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after update');
 
     const count = await this.getClientCount(id);
     return this.mapRow(data as ClientTagRow, count);
@@ -82,7 +84,7 @@ export class TagRemoteRepository implements ITagRepository {
       .delete()
       .eq('id', id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async getClientCount(tagId: string): Promise<number> {
@@ -91,7 +93,7 @@ export class TagRemoteRepository implements ITagRepository {
       .select('*', { count: 'exact', head: true })
       .eq('tag_id', tagId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return count ?? 0;
   }
 
@@ -101,7 +103,7 @@ export class TagRemoteRepository implements ITagRepository {
       .select('client_tags(id, coach_id, name, color, created_at)')
       .eq('athlete_id', athleteId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? [])
       .map((row: any) => row.client_tags)
       .filter(Boolean)
@@ -116,7 +118,7 @@ export class TagRemoteRepository implements ITagRepository {
       .select('athlete_id, client_tags(id, coach_id, name, color, created_at)')
       .in('athlete_id', athleteIds);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     const result = new Map<string, ClientTag[]>();
     for (const row of (data ?? [])) {
@@ -134,7 +136,7 @@ export class TagRemoteRepository implements ITagRepository {
       .from('athlete_tags')
       .upsert({ tag_id: tagId, athlete_id: athleteId }, { onConflict: 'tag_id,athlete_id' });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async removeTag(tagId: string, athleteId: string): Promise<void> {
@@ -144,6 +146,6 @@ export class TagRemoteRepository implements ITagRepository {
       .eq('tag_id', tagId)
       .eq('athlete_id', athleteId);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 }

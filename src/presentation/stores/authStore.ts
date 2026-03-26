@@ -36,7 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { user } = await loginUseCase(input);
       set({ user, status: 'authenticated', error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorLoginFailed;
+      const message = (err as any)?.message ?? Strings.errorLoginFailed;
       set({ status: 'unauthenticated', error: message });
     }
   },
@@ -47,7 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       const { user } = await registerUseCase(input);
       set({ user, status: 'authenticated', error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorRegistrationFailed;
+      const message = (err as any)?.message ?? Strings.errorRegistrationFailed;
       set({ status: 'unauthenticated', error: message });
     }
   },
@@ -58,7 +58,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       await logoutUseCase();
       set({ user: null, status: 'unauthenticated', error: null });
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorLogoutFailed;
+      const message = (err as any)?.message ?? Strings.errorLogoutFailed;
       set({ error: message, status: 'authenticated' });
     }
   },

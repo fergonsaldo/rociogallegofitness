@@ -27,7 +27,7 @@ export const useCoachDashboardStore = create<CoachDashboardState>((set) => ({
       set({ summary, isLoading: false });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : Strings.errorFailedLoadDashboard,
+        error: (err as any)?.message ?? Strings.errorFailedLoadDashboard,
         isLoading: false,
       });
     }

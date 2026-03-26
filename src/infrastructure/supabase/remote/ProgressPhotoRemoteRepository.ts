@@ -14,7 +14,7 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
       .createSignedUrl(storagePath, SIGNED_URL_EXPIRES);
 
     if (error || !data?.signedUrl) {
-      throw error ?? new Error(`Could not generate signed URL for ${storagePath}`);
+      throw error ? new Error(error.message) : new Error(`Could not generate signed URL for ${storagePath}`);
     }
     return data.signedUrl;
   }
@@ -40,7 +40,7 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
       .eq('athlete_id', athleteId)
       .order('taken_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
 
     // Generate all signed URLs in parallel
     return Promise.all((data ?? []).map((row) => this.mapRow(row as ProgressPhotoRow)));
@@ -59,7 +59,7 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
       .from(BUCKET)
       .upload(storagePath, blob, { contentType: mimeType, upsert: false });
 
-    if (uploadError) throw uploadError;
+    if (uploadError) throw new Error(uploadError.message);
 
     // 3. Insert metadata row (no public_url — bucket is private)
     const { data, error: insertError } = await supabase
@@ -86,13 +86,13 @@ export class ProgressPhotoRemoteRepository implements IProgressPhotoRepository {
       .from(BUCKET)
       .remove([photo.storagePath]);
 
-    if (storageError) throw storageError;
+    if (storageError) throw new Error(storageError.message);
 
     const { error: dbError } = await supabase
       .from('progress_photos')
       .delete()
       .eq('id', photo.id);
 
-    if (dbError) throw dbError;
+    if (dbError) throw new Error(dbError.message);
   }
 }

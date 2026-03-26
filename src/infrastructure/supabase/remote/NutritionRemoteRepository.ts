@@ -108,7 +108,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .eq('coach_id', coachId)
       .order('created_at', { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapPlan.bind(this));
   }
 
@@ -121,14 +121,14 @@ export class NutritionRemoteRepository implements INutritionRepository {
 
     if (error) {
       if (error.code === 'PGRST116') return null;
-      throw error;
+      throw new Error(error.message);
     }
     return this.mapPlan(data);
   }
 
   async deletePlan(id: string): Promise<void> {
     const { error } = await supabase.from('nutrition_plans').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   // ── Assignments ───────────────────────────────────────────────────────────
@@ -140,7 +140,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
         { nutrition_plan_id: planId, athlete_id: athleteId },
         { onConflict: 'nutrition_plan_id,athlete_id' },
       );
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async unassignFromAthlete(planId: string, athleteId: string): Promise<void> {
@@ -149,7 +149,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .delete()
       .eq('nutrition_plan_id', planId)
       .eq('athlete_id', athleteId);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async getAssignedPlan(athleteId: string): Promise<NutritionPlan | null> {
@@ -160,7 +160,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .limit(1)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     if (!data?.nutrition_plans) return null;
     return this.mapPlan(data.nutrition_plans);
   }
@@ -183,7 +183,8 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .select()
       .single();
 
-    if (error || !data) throw error;
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after logMeal insert');
     return this.mapLogEntry(data);
   }
 
@@ -201,7 +202,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .lte('logged_at', end.toISOString())
       .order('logged_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapLogEntry.bind(this));
   }
 
@@ -214,7 +215,7 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .lte('logged_at', to.toISOString())
       .order('logged_at', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapLogEntry.bind(this));
   }
 }

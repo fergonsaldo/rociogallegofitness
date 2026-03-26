@@ -34,7 +34,7 @@ export const useVideoStore = create<VideoState>((set) => ({
       const catalog = await getAllVideosUseCase(coachId, repo);
       set({ catalog, isLoading: false });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedLoadVideos, isLoading: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadVideos, isLoading: false });
     }
   },
 
@@ -48,7 +48,7 @@ export const useVideoStore = create<VideoState>((set) => ({
       }));
       return video;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedCreateVideo, isCreating: false });
+      set({ error: (err as any)?.message ?? Strings.errorFailedCreateVideo, isCreating: false });
       return null;
     }
   },
@@ -60,7 +60,7 @@ export const useVideoStore = create<VideoState>((set) => ({
       set((state) => ({ catalog: state.catalog.filter((v) => v.id !== id) }));
       return true;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFailedDeleteVideo });
+      set({ error: (err as any)?.message ?? Strings.errorFailedDeleteVideo });
       return false;
     }
   },

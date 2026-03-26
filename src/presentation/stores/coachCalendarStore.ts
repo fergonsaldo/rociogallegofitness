@@ -77,7 +77,7 @@ export const useCoachCalendarStore = create<CoachCalendarState>((set, get) => ({
       set({ sessions, isLoading: false });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : Strings.errorFailedLoadSessions,
+        error: (err as any)?.message ?? Strings.errorFailedLoadSessions,
         isLoading: false,
       });
     }
@@ -90,7 +90,7 @@ export const useCoachCalendarStore = create<CoachCalendarState>((set, get) => ({
       set({ rangeSessions, isLoadingRange: false });
     } catch (err) {
       set({
-        error: err instanceof Error ? err.message : Strings.errorFailedLoadSessions,
+        error: (err as any)?.message ?? Strings.errorFailedLoadSessions,
         isLoadingRange: false,
       });
     }
@@ -104,7 +104,7 @@ export const useCoachCalendarStore = create<CoachCalendarState>((set, get) => ({
       )});
       return session;
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorFailedCreateSession;
+      const message = (err as any)?.message ?? Strings.errorFailedCreateSession;
       set({ error: message });
       throw err;
     }
@@ -118,7 +118,7 @@ export const useCoachCalendarStore = create<CoachCalendarState>((set, get) => ({
         rangeSessions: get().rangeSessions.filter((s) => s.id !== id),
       });
     } catch (err) {
-      const message = err instanceof Error ? err.message : Strings.errorFailedDeleteSession;
+      const message = (err as any)?.message ?? Strings.errorFailedDeleteSession;
       set({ error: message });
       throw err;
     }
