@@ -35,6 +35,9 @@ export class NutritionRemoteRepository implements INutritionRepository {
           order: m.order,
           targetMacros: this.mapMacros(m),
           notes: m.notes ?? undefined,
+          linkedRecipes: (m.meal_recipes ?? [])
+            .map((mr: any) => ({ id: mr.recipes?.id ?? mr.recipe_id, name: mr.recipes?.name ?? '' }))
+            .filter((lr: any) => lr.id),
         })),
       createdAt: new Date(row.created_at),
       updatedAt: new Date(row.updated_at),
@@ -54,7 +57,10 @@ export class NutritionRemoteRepository implements INutritionRepository {
 
   private readonly PLAN_SELECT = `
     *,
-    meals ( * )
+    meals (
+      *,
+      meal_recipes ( recipe_id, recipes ( id, name ) )
+    )
   `;
 
   // ── Plan CRUD ─────────────────────────────────────────────────────────────
@@ -149,6 +155,24 @@ export class NutritionRemoteRepository implements INutritionRepository {
       .delete()
       .eq('nutrition_plan_id', planId)
       .eq('athlete_id', athleteId);
+    if (error) throw new Error(error.message);
+  }
+
+  // ── Meal recipes ──────────────────────────────────────────────────────────
+
+  async linkRecipeToMeal(mealId: string, recipeId: string): Promise<void> {
+    const { error } = await supabase
+      .from('meal_recipes')
+      .insert({ meal_id: mealId, recipe_id: recipeId });
+    if (error) throw new Error(error.message);
+  }
+
+  async unlinkRecipeFromMeal(mealId: string, recipeId: string): Promise<void> {
+    const { error } = await supabase
+      .from('meal_recipes')
+      .delete()
+      .eq('meal_id', mealId)
+      .eq('recipe_id', recipeId);
     if (error) throw new Error(error.message);
   }
 

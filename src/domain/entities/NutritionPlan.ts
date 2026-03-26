@@ -30,6 +30,13 @@ export function macroPercentages(macros: Macros): { protein: number; carbs: numb
 
 // ── Meal ──────────────────────────────────────────────────────────────────────
 
+export const LinkedRecipeSchema = z.object({
+  id:   z.string().uuid(),
+  name: z.string(),
+});
+
+export type LinkedRecipe = z.infer<typeof LinkedRecipeSchema>;
+
 export const MealSchema = z.object({
   id: z.string(),
   nutritionPlanId: z.string(),
@@ -37,6 +44,7 @@ export const MealSchema = z.object({
   order: z.number().int().min(1),
   targetMacros: MacrosSchema,
   notes: z.string().max(500).optional(),
+  linkedRecipes: z.array(LinkedRecipeSchema).default([]),
 });
 
 export type Meal = z.infer<typeof MealSchema>;

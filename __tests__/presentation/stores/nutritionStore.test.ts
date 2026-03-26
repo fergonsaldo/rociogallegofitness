@@ -11,6 +11,8 @@ jest.mock('../../../src/application/coach/NutritionUseCases', () => ({
   assignPlansToAthleteUseCase:    jest.fn(),
   deleteNutritionPlanUseCase:     jest.fn(),
   filterNutritionPlans:           jest.fn(),
+  linkRecipeToMealUseCase:        jest.fn(),
+  unlinkRecipeFromMealUseCase:    jest.fn(),
 }));
 
 jest.mock('../../../src/application/athlete/NutritionUseCases', () => ({
@@ -20,18 +22,32 @@ jest.mock('../../../src/application/athlete/NutritionUseCases', () => ({
   getWeeklyAdherenceUseCase:        jest.fn(),
 }));
 
-jest.mock('../../../src/infrastructure/supabase/remote/NutritionRemoteRepository', () => ({
-  NutritionRemoteRepository: jest.fn().mockImplementation(() => ({})),
-}));
+jest.mock('../../../src/infrastructure/supabase/remote/NutritionRemoteRepository', () => {
+  const repoInstance = { getPlanById: jest.fn() };
+  return {
+    NutritionRemoteRepository: jest.fn().mockImplementation(() => repoInstance),
+    __repoInstance: repoInstance,
+  };
+});
 
 import {
   assignPlansToAthleteUseCase,
   duplicatePlanUseCase,
+  linkRecipeToMealUseCase,
+  unlinkRecipeFromMealUseCase,
 } from '../../../src/application/coach/NutritionUseCases';
 import { NutritionPlan } from '../../../src/domain/entities/NutritionPlan';
 
-const mockAssignPlans  = assignPlansToAthleteUseCase as jest.MockedFunction<typeof assignPlansToAthleteUseCase>;
-const mockDuplicate    = duplicatePlanUseCase        as jest.MockedFunction<typeof duplicatePlanUseCase>;
+const mockAssignPlans  = assignPlansToAthleteUseCase  as jest.MockedFunction<typeof assignPlansToAthleteUseCase>;
+const mockDuplicate    = duplicatePlanUseCase          as jest.MockedFunction<typeof duplicatePlanUseCase>;
+const mockLinkRecipe   = linkRecipeToMealUseCase       as jest.MockedFunction<typeof linkRecipeToMealUseCase>;
+const mockUnlinkRecipe = unlinkRecipeFromMealUseCase   as jest.MockedFunction<typeof unlinkRecipeFromMealUseCase>;
+
+// Access the repo instance exposed by the mock factory
+const mockGetPlanById: jest.Mock =
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  (require('../../../src/infrastructure/supabase/remote/NutritionRemoteRepository') as any)
+    .__repoInstance.getPlanById;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -39,6 +55,8 @@ const COACH_ID   = '00000000-0000-4000-b000-000000000099';
 const ATHLETE_ID = '00000000-0000-4000-b000-000000000001';
 const PLAN_ID_A  = 'aaaaaaaa-0000-4000-b000-000000000001';
 const PLAN_ID_B  = 'bbbbbbbb-0000-4000-b000-000000000002';
+const MEAL_ID    = 'mmmmmmmm-0000-4000-b000-000000000001';
+const RECIPE_ID  = 'rrrrrrrr-0000-4000-b000-000000000001';
 const NOW        = new Date('2024-01-01');
 
 function makePlan(overrides: Partial<NutritionPlan> = {}): NutritionPlan {
@@ -64,6 +82,7 @@ function resetStore() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockGetPlanById.mockReset();
   resetStore();
 });
 
@@ -243,5 +262,225 @@ describe('useNutritionStore — assignMultipleToAthlete', () => {
 
     expect(useNutritionStore.getState().coachPlans).toHaveLength(1);
     expect(useNutritionStore.getState().coachPlans[0]).toEqual(plan);
+  });
+});
+
+// ── linkRecipe ────────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — linkRecipe', () => {
+  it('devuelve true y actualiza el plan en coachPlans en caso de éxito', async () => {
+    const original = makePlan({ id: PLAN_ID_A });
+    const updated  = makePlan({ id: PLAN_ID_A, name: 'Plan actualizado' });
+    useNutritionStore.setState({ coachPlans: [original] });
+    mockLinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(updated);
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(result).toBe(true);
+    expect(useNutritionStore.getState().coachPlans[0]).toEqual(updated);
+  });
+
+  it('llama al use case con mealId y recipeId correctos', async () => {
+    mockLinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(mockLinkRecipe).toHaveBeenCalledWith(MEAL_ID, RECIPE_ID, expect.anything());
+  });
+
+  it('llama a getPlanById con el planId correcto tras el vínculo', async () => {
+    mockLinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(mockGetPlanById).toHaveBeenCalledWith(PLAN_ID_A);
+  });
+
+  it('devuelve false y setea error cuando el use case falla', async () => {
+    mockLinkRecipe.mockRejectedValue(new Error('Link failed'));
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Link failed');
+  });
+
+  it('usa el fallback string cuando el error no tiene mensaje', async () => {
+    mockLinkRecipe.mockRejectedValue('unexpected');
+
+    await act(async () => {
+      await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().error).toBeTruthy();
+  });
+
+  it('limpia el error previo al inicio de la operación', async () => {
+    useNutritionStore.setState({ error: 'error previo' });
+    mockLinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().error).toBeNull();
+  });
+
+  it('no modifica coachPlans si getPlanById devuelve null', async () => {
+    const original = makePlan({ id: PLAN_ID_A });
+    useNutritionStore.setState({ coachPlans: [original] });
+    mockLinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(null);
+
+    await act(async () => {
+      await useNutritionStore.getState().linkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().coachPlans[0]).toEqual(original);
+  });
+});
+
+// ── unlinkRecipe ──────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — unlinkRecipe', () => {
+  it('devuelve true y actualiza el plan en coachPlans en caso de éxito', async () => {
+    const original = makePlan({ id: PLAN_ID_A });
+    const updated  = makePlan({ id: PLAN_ID_A, name: 'Plan actualizado' });
+    useNutritionStore.setState({ coachPlans: [original] });
+    mockUnlinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(updated);
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().unlinkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(result).toBe(true);
+    expect(useNutritionStore.getState().coachPlans[0]).toEqual(updated);
+  });
+
+  it('llama al use case con mealId y recipeId correctos', async () => {
+    mockUnlinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().unlinkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(mockUnlinkRecipe).toHaveBeenCalledWith(MEAL_ID, RECIPE_ID, expect.anything());
+  });
+
+  it('devuelve false y setea error cuando el use case falla', async () => {
+    mockUnlinkRecipe.mockRejectedValue(new Error('Unlink failed'));
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().unlinkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Unlink failed');
+  });
+
+  it('usa el fallback string cuando el error no tiene mensaje', async () => {
+    mockUnlinkRecipe.mockRejectedValue('unexpected');
+
+    await act(async () => {
+      await useNutritionStore.getState().unlinkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().error).toBeTruthy();
+  });
+
+  it('limpia el error previo al inicio de la operación', async () => {
+    useNutritionStore.setState({ error: 'error previo' });
+    mockUnlinkRecipe.mockResolvedValue(undefined);
+    mockGetPlanById.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().unlinkRecipe(MEAL_ID, RECIPE_ID, PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().error).toBeNull();
+  });
+});
+
+// ── refreshPlan ───────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — refreshPlan', () => {
+  it('reemplaza el plan en coachPlans con el plan actualizado del repositorio', async () => {
+    const original = makePlan({ id: PLAN_ID_A, name: 'Plan original' });
+    const updated  = makePlan({ id: PLAN_ID_A, name: 'Plan actualizado' });
+    useNutritionStore.setState({ coachPlans: [original] });
+    mockGetPlanById.mockResolvedValue(updated);
+
+    await act(async () => {
+      await useNutritionStore.getState().refreshPlan(PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().coachPlans[0]).toEqual(updated);
+  });
+
+  it('llama a getPlanById con el planId correcto', async () => {
+    mockGetPlanById.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().refreshPlan(PLAN_ID_A);
+    });
+
+    expect(mockGetPlanById).toHaveBeenCalledWith(PLAN_ID_A);
+  });
+
+  it('no modifica coachPlans si getPlanById devuelve null', async () => {
+    const original = makePlan({ id: PLAN_ID_A });
+    useNutritionStore.setState({ coachPlans: [original] });
+    mockGetPlanById.mockResolvedValue(null);
+
+    await act(async () => {
+      await useNutritionStore.getState().refreshPlan(PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().coachPlans[0]).toEqual(original);
+  });
+
+  it('setea error si getPlanById lanza una excepción', async () => {
+    mockGetPlanById.mockRejectedValue(new Error('DB error'));
+
+    await act(async () => {
+      await useNutritionStore.getState().refreshPlan(PLAN_ID_A);
+    });
+
+    expect(useNutritionStore.getState().error).toBe('DB error');
+  });
+
+  it('no toca otros planes al actualizar uno específico', async () => {
+    const planA = makePlan({ id: PLAN_ID_A, name: 'Plan A' });
+    const planB = makePlan({ id: PLAN_ID_B, name: 'Plan B' });
+    const updatedA = makePlan({ id: PLAN_ID_A, name: 'Plan A updated' });
+    useNutritionStore.setState({ coachPlans: [planA, planB] });
+    mockGetPlanById.mockResolvedValue(updatedA);
+
+    await act(async () => {
+      await useNutritionStore.getState().refreshPlan(PLAN_ID_A);
+    });
+
+    const plans = useNutritionStore.getState().coachPlans;
+    expect(plans).toHaveLength(2);
+    expect(plans.find((p) => p.id === PLAN_ID_B)).toEqual(planB);
+    expect(plans.find((p) => p.id === PLAN_ID_A)).toEqual(updatedA);
   });
 });

@@ -2,7 +2,7 @@ import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
 import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry } from '@/domain/entities/NutritionPlan';
 import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
-import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase, duplicatePlanUseCase } from '@/application/coach/NutritionUseCases';
+import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase, duplicatePlanUseCase, linkRecipeToMealUseCase, unlinkRecipeFromMealUseCase } from '@/application/coach/NutritionUseCases';
 import { getAssignedNutritionPlanUseCase, logMealUseCase, getDailyNutritionSummaryUseCase, getWeeklyAdherenceUseCase, WeeklyAdherenceDay } from '@/application/athlete/NutritionUseCases';
 
 const repo = new NutritionRemoteRepository();
@@ -25,8 +25,11 @@ interface NutritionState {
 
   // Coach actions
   fetchCoachPlans: (coachId: string) => Promise<void>;
+  refreshPlan: (planId: string) => Promise<void>;
   createPlan: (input: CreateNutritionPlanInput) => Promise<NutritionPlan | null>;
   duplicatePlan: (plan: NutritionPlan, coachId: string) => Promise<boolean>;
+  linkRecipe: (mealId: string, recipeId: string, planId: string) => Promise<boolean>;
+  unlinkRecipe: (mealId: string, recipeId: string, planId: string) => Promise<boolean>;
   assignPlan: (planId: string, athleteId: string) => Promise<void>;
   assignMultipleToAthlete: (planIds: string[], athleteId: string) => Promise<boolean>;
   deletePlan: (planId: string) => Promise<void>;
@@ -63,6 +66,18 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
     }
   },
 
+  refreshPlan: async (planId) => {
+    try {
+      const updated = await repo.getPlanById(planId);
+      if (!updated) return;
+      set((s) => ({
+        coachPlans: s.coachPlans.map((p) => (p.id === planId ? updated : p)),
+      }));
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
+    }
+  },
+
   createPlan: async (input) => {
     set({ isSubmitting: true, error: null });
     try {
@@ -73,6 +88,32 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       const msg = (err as any)?.message ?? Strings.errorFailedCreatePlan;
       set({ error: msg, isSubmitting: false });
       return null;
+    }
+  },
+
+  linkRecipe: async (mealId, recipeId, planId) => {
+    set({ error: null });
+    try {
+      await linkRecipeToMealUseCase(mealId, recipeId, repo);
+      const updated = await repo.getPlanById(planId);
+      if (updated) set((s) => ({ coachPlans: s.coachPlans.map((p) => (p.id === planId ? updated : p)) }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
+      return false;
+    }
+  },
+
+  unlinkRecipe: async (mealId, recipeId, planId) => {
+    set({ error: null });
+    try {
+      await unlinkRecipeFromMealUseCase(mealId, recipeId, repo);
+      const updated = await repo.getPlanById(planId);
+      if (updated) set((s) => ({ coachPlans: s.coachPlans.map((p) => (p.id === planId ? updated : p)) }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
+      return false;
     }
   },
 

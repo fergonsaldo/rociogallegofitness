@@ -1,4 +1,9 @@
-import { assignPlansToAthleteUseCase, duplicatePlanUseCase } from '../../../src/application/coach/NutritionUseCases';
+import {
+  assignPlansToAthleteUseCase,
+  duplicatePlanUseCase,
+  linkRecipeToMealUseCase,
+  unlinkRecipeFromMealUseCase,
+} from '../../../src/application/coach/NutritionUseCases';
 import { INutritionRepository } from '../../../src/domain/repositories/INutritionRepository';
 import { NutritionPlan } from '../../../src/domain/entities/NutritionPlan';
 
@@ -7,10 +12,14 @@ import { NutritionPlan } from '../../../src/domain/entities/NutritionPlan';
 const ATHLETE_ID = '00000000-0000-4000-b000-000000000001';
 const PLAN_ID_A  = 'aaaaaaaa-0000-4000-b000-000000000001';
 const PLAN_ID_B  = 'bbbbbbbb-0000-4000-b000-000000000002';
+const MEAL_ID    = 'mmmmmmmm-0000-4000-b000-000000000001';
+const RECIPE_ID  = 'rrrrrrrr-0000-4000-b000-000000000001';
 
-const mockRepo: jest.Mocked<Pick<INutritionRepository, 'assignToAthlete' | 'createPlan'>> = {
-  assignToAthlete: jest.fn(),
-  createPlan:      jest.fn(),
+const mockRepo: jest.Mocked<Pick<INutritionRepository, 'assignToAthlete' | 'createPlan' | 'linkRecipeToMeal' | 'unlinkRecipeFromMeal'>> = {
+  assignToAthlete:      jest.fn(),
+  createPlan:           jest.fn(),
+  linkRecipeToMeal:     jest.fn(),
+  unlinkRecipeFromMeal: jest.fn(),
 };
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -189,5 +198,73 @@ describe('assignPlansToAthleteUseCase', () => {
     ).rejects.toThrow('second fails');
 
     expect(mockRepo.assignToAthlete).toHaveBeenCalledTimes(2);
+  });
+});
+
+// ── linkRecipeToMealUseCase ───────────────────────────────────────────────────
+
+describe('linkRecipeToMealUseCase', () => {
+  it('llama a repo.linkRecipeToMeal con mealId y recipeId correctos', async () => {
+    mockRepo.linkRecipeToMeal.mockResolvedValue(undefined);
+
+    await linkRecipeToMealUseCase(MEAL_ID, RECIPE_ID, mockRepo as any);
+
+    expect(mockRepo.linkRecipeToMeal).toHaveBeenCalledWith(MEAL_ID, RECIPE_ID);
+  });
+
+  it('lanza error cuando mealId está vacío', async () => {
+    await expect(
+      linkRecipeToMealUseCase('', RECIPE_ID, mockRepo as any),
+    ).rejects.toThrow('mealId is required');
+    expect(mockRepo.linkRecipeToMeal).not.toHaveBeenCalled();
+  });
+
+  it('lanza error cuando recipeId está vacío', async () => {
+    await expect(
+      linkRecipeToMealUseCase(MEAL_ID, '', mockRepo as any),
+    ).rejects.toThrow('recipeId is required');
+    expect(mockRepo.linkRecipeToMeal).not.toHaveBeenCalled();
+  });
+
+  it('propaga el error del repositorio', async () => {
+    mockRepo.linkRecipeToMeal.mockRejectedValue(new Error('DB insert failed'));
+
+    await expect(
+      linkRecipeToMealUseCase(MEAL_ID, RECIPE_ID, mockRepo as any),
+    ).rejects.toThrow('DB insert failed');
+  });
+});
+
+// ── unlinkRecipeFromMealUseCase ───────────────────────────────────────────────
+
+describe('unlinkRecipeFromMealUseCase', () => {
+  it('llama a repo.unlinkRecipeFromMeal con mealId y recipeId correctos', async () => {
+    mockRepo.unlinkRecipeFromMeal.mockResolvedValue(undefined);
+
+    await unlinkRecipeFromMealUseCase(MEAL_ID, RECIPE_ID, mockRepo as any);
+
+    expect(mockRepo.unlinkRecipeFromMeal).toHaveBeenCalledWith(MEAL_ID, RECIPE_ID);
+  });
+
+  it('lanza error cuando mealId está vacío', async () => {
+    await expect(
+      unlinkRecipeFromMealUseCase('', RECIPE_ID, mockRepo as any),
+    ).rejects.toThrow('mealId is required');
+    expect(mockRepo.unlinkRecipeFromMeal).not.toHaveBeenCalled();
+  });
+
+  it('lanza error cuando recipeId está vacío', async () => {
+    await expect(
+      unlinkRecipeFromMealUseCase(MEAL_ID, '', mockRepo as any),
+    ).rejects.toThrow('recipeId is required');
+    expect(mockRepo.unlinkRecipeFromMeal).not.toHaveBeenCalled();
+  });
+
+  it('propaga el error del repositorio', async () => {
+    mockRepo.unlinkRecipeFromMeal.mockRejectedValue(new Error('DB delete failed'));
+
+    await expect(
+      unlinkRecipeFromMealUseCase(MEAL_ID, RECIPE_ID, mockRepo as any),
+    ).rejects.toThrow('DB delete failed');
   });
 });

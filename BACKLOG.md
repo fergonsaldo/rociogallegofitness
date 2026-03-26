@@ -2,6 +2,41 @@
 
 ## ✅ Completado
 
+#### RF-E6-10 — Vincular recetas a comidas de un plan nutricional
+
+**¿Qué hace?**
+El entrenador puede asociar una o varias recetas del catálogo a cada comida de un plan nutricional. Al acceder al detalle del plan, cada comida muestra sus recetas vinculadas con un botón ✕ para desvincular. Un botón "+" abre un modal de selección donde el coach elige la receta a añadir. Los macros de la comida se recalculan automáticamente al vincular o desvincular recetas (trigger PostgreSQL). Los cambios son visibles para los atletas a los que esté asignado el plan.
+
+**Pantallas / flujo:**
+- `app/(coach)/nutrition/[id].tsx` — reescrita
+  - Cabecera con nombre del plan, tipo y macros diarios
+  - Lista de comidas con sus macros actualizados
+  - Por cada comida: lista de recetas vinculadas con nombre + botón ✕ (desvincular)
+  - Botón dashed "+ Añadir receta" en cada comida
+  - Modal (pageSheet) con recetas disponibles; las ya vinculadas aparecen deshabilitadas con indicador "Ya vinculada"
+  - Spinner por receta durante las operaciones de vínculo/desvínculo
+
+**Decisiones de diseño:**
+- Los macros de la comida se recalculan vía trigger PostgreSQL (`sync_meal_macros_from_recipes`) al insertar/borrar en `meal_recipes`. No hay cómputo en cliente.
+- Tras cada operación de vínculo/desvínculo, el store refetch el plan completo (`repo.getPlanById(planId)`) para reflejar los macros actualizados por el trigger.
+- Los nombres de las recetas vinculadas se obtienen directamente en la query del plan via join anidado PostgREST: `meals(*, meal_recipes(recipe_id, recipes(id, name)))`.
+- RLS de `meal_recipes` encadena por `meal_id → meals → nutrition_plans` para acceso del coach, y por `meal_id → meals → nutrition_assignments` para acceso del atleta.
+- La migración crea la tabla `meal_recipes` con FK a `meals` y `recipes`, índice compuesto único, y el trigger de recálculo de macros.
+
+**Implementación técnica:**
+- `NutritionPlan.ts` — nuevo `LinkedRecipeSchema` / `LinkedRecipe`; `MealSchema` añade `linkedRecipes`
+- `INutritionRepository` — nuevos métodos `linkRecipeToMeal`, `unlinkRecipeFromMeal`
+- `NutritionRemoteRepository` — `PLAN_SELECT` con join `meal_recipes → recipes`; `mapPlan` mapea `linkedRecipes`; dos nuevos métodos de repo
+- `NutritionUseCases.ts` — `linkRecipeToMealUseCase`, `unlinkRecipeFromMealUseCase`
+- `nutritionStore.ts` — acciones `linkRecipe`, `unlinkRecipe`, `refreshPlan`
+- `strings.ts` — 10 nuevas claves de UI
+- `supabase/migrations/20260326000000_add_meal_recipes.sql` — tabla + RLS + trigger
+
+**Métricas finales:**
+- Test Suites: 3/3 ✅ | Tests: 96/96 ✅ (+25 tests nuevos: 8 use case + 17 store)
+
+---
+
 #### RF-E6-07 — Duplicado de planes nutricionales
 
 **¿Qué hace?**
@@ -985,20 +1020,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 
 
-#### RF-E6-10 (P1) Vincular recetas a comidas de un plan
-**Requisito:** Permitir asociar una o varias recetas a una comida de un plan nutricional.
-
-**Criterios de aceptación:**
-- DADO que el coach edita una comida de un plan, CUANDO selecciona "añadir receta" ENTONCES puede buscar y seleccionar una receta del catálogo.
-- Una comida puede tener varias recetas asociadas.
-- Los macros de la comida se actualizan al añadir/quitar recetas.
-- Las recetas vinculadas son visibles para el atleta si el plan le ha sido asignado.
-
-**Scope excluido:** Creación de recetas nuevas desde el formulario de plan (se hace desde el catálogo).
-
-**Dependencia:** RF-E6-01 + RF-E6-03 completados.
-
----
 
 #### RF-E6-05 (P1) Agrupaciones de planes
 **Requisito:** Agrupar planes nutricionales para asignación masiva.

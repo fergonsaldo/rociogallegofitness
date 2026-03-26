@@ -487,6 +487,18 @@ export const Strings = {
   nutritionPlanFormNameRequired:    'El nombre del plan es obligatorio',
   nutritionPlanFormMacrosRequired:  'Define los macros objetivo',
 
+  // ── Vinculación de recetas (RF-E6-10) ─────────────────────────────────────
+  nutritionPlanDetailTitle:      'Detalle del plan',
+  nutritionPlanDetailBack:       '← Volver',
+  nutritionPlanMealsLabel:       (n: number) => `COMIDAS · ${n}`,
+  nutritionMealLinkedRecipes:    'Recetas vinculadas',
+  nutritionMealNoRecipes:        'Sin recetas vinculadas',
+  nutritionMealAddRecipe:        '+ Añadir receta',
+  nutritionRecipePickerTitle:    'Seleccionar receta',
+  nutritionRecipePickerSubtitle: 'Elige una receta para vincular a esta comida',
+  nutritionRecipePickerEmpty:    'No tienes recetas en tu catálogo',
+  nutritionRecipeAlreadyLinked:  'Ya vinculada',
+
   // ── Duplicado de planes (RF-E6-07) ────────────────────────────────────────
   nutritionDuplicatePrefix:         '(Copia) ',
 

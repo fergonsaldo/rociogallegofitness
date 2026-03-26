@@ -48,7 +48,7 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       const recipes = await getRecipesUseCase(coachId, repo);
       set({ recipes });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
     } finally {
       set({ isListLoading: false });
     }
@@ -60,7 +60,7 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       const recipe = await getRecipeDetailUseCase(id, coachId, repo);
       set({ currentRecipe: recipe });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
     } finally {
       set({ isDetailLoading: false });
     }
@@ -77,7 +77,7 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       set({ recipes: [...get().recipes, recipe].sort((a, b) => a.name.localeCompare(b.name)) });
       return recipe;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
       return null;
     } finally {
       set({ isSubmitting: false });
@@ -103,7 +103,7 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       });
       return recipe;
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
       return null;
     } finally {
       set({ isSubmitting: false });
@@ -117,7 +117,7 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       if (imagePath) await repo.deleteImage(imagePath).catch(() => undefined);
       set({ recipes: get().recipes.filter((r) => r.id !== id) });
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
     }
   },
 

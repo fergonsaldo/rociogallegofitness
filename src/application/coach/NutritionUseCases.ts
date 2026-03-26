@@ -53,6 +53,28 @@ export async function unassignNutritionPlanUseCase(
   await repo.unassignFromAthlete(input.planId, input.athleteId);
 }
 
+// ── LinkRecipeToMeal ──────────────────────────────────────────────────────────
+
+export async function linkRecipeToMealUseCase(
+  mealId: string,
+  recipeId: string,
+  repo: INutritionRepository,
+): Promise<void> {
+  if (!mealId)   throw new Error('mealId is required');
+  if (!recipeId) throw new Error('recipeId is required');
+  return repo.linkRecipeToMeal(mealId, recipeId);
+}
+
+export async function unlinkRecipeFromMealUseCase(
+  mealId: string,
+  recipeId: string,
+  repo: INutritionRepository,
+): Promise<void> {
+  if (!mealId)   throw new Error('mealId is required');
+  if (!recipeId) throw new Error('recipeId is required');
+  return repo.unlinkRecipeFromMeal(mealId, recipeId);
+}
+
 // ── DuplicatePlan ─────────────────────────────────────────────────────────────
 
 const COPY_PREFIX = '(Copia) ';

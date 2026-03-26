@@ -1,4 +1,4 @@
-import { NutritionPlan, CreateNutritionPlanInput, MealLogEntry, CreateMealLogEntryInput } from '../entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanInput, MealLogEntry, CreateMealLogEntryInput, LinkedRecipe } from '../entities/NutritionPlan';
 
 export interface INutritionRepository {
   // ── Plans (coach) ─────────────────────────────────────────────────────────
@@ -10,6 +10,10 @@ export interface INutritionRepository {
   // ── Assignments ───────────────────────────────────────────────────────────
   assignToAthlete(planId: string, athleteId: string): Promise<void>;
   unassignFromAthlete(planId: string, athleteId: string): Promise<void>;
+
+  // ── Meal recipes ──────────────────────────────────────────────────────────
+  linkRecipeToMeal(mealId: string, recipeId: string): Promise<void>;
+  unlinkRecipeFromMeal(mealId: string, recipeId: string): Promise<void>;
 
   // ── Plans (athlete) ───────────────────────────────────────────────────────
   /** Returns the plan currently assigned to an athlete, or null */
