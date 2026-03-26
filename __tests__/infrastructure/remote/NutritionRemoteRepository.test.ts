@@ -231,15 +231,15 @@ describe('NutritionRemoteRepository', () => {
     });
 
     it('throws when plan insert fails', async () => {
-      supabase.from.mockReturnValueOnce(mockChain({ data: null, error: { message: 'Insert failed' } }));
-      await expect(repo.createPlan(VALID_INPUT)).rejects.toMatchObject({ message: 'Insert failed' });
+      supabase.from.mockReturnValueOnce(mockChain({ data: null, error: { message: 'Insert failed', code: 'ERR' } }));
+      await expect(repo.createPlan(VALID_INPUT)).rejects.toMatchObject({ message: 'nutrition_plans insert: Insert failed (ERR)' });
     });
 
     it('throws when meals insert fails', async () => {
       supabase.from
         .mockReturnValueOnce(mockChain({ data: PLAN_ROW, error: null }))
-        .mockReturnValueOnce(mockChain({ error: { message: 'Meals failed' } }));
-      await expect(repo.createPlan(VALID_INPUT)).rejects.toMatchObject({ message: 'Meals failed' });
+        .mockReturnValueOnce(mockChain({ error: { message: 'Meals failed', code: 'ERR' } }));
+      await expect(repo.createPlan(VALID_INPUT)).rejects.toMatchObject({ message: 'meals insert: Meals failed (ERR)' });
     });
 
     it('throws when getPlanById returns null after creation', async () => {

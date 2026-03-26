@@ -103,6 +103,27 @@ export const CreateMealLogEntrySchema = z.object({
 
 export type CreateMealLogEntryInput = z.infer<typeof CreateMealLogEntrySchema>;
 
+// ── PlanGroup ─────────────────────────────────────────────────────────────────
+
+export const PlanGroupSchema = z.object({
+  id:          z.string().uuid(),
+  coachId:     z.string().uuid(),
+  name:        z.string().min(1).max(100),
+  description: z.string().max(500).optional(),
+  planCount:   z.number().int().min(0),
+  createdAt:   z.date(),
+});
+
+export type PlanGroup = z.infer<typeof PlanGroupSchema>;
+
+export const CreatePlanGroupSchema = z.object({
+  coachId:     z.string().uuid('El ID del coach no es válido'),
+  name:        z.string().min(1, 'El nombre es obligatorio').max(100),
+  description: z.string().max(500).optional(),
+});
+
+export type CreatePlanGroupInput = z.infer<typeof CreatePlanGroupSchema>;
+
 // ── DailyNutritionSummary ─────────────────────────────────────────────────────
 
 export interface DailyNutritionSummary {

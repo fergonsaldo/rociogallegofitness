@@ -2,6 +2,36 @@
 
 ## ✅ Completado
 
+#### RF-E6-05 — Agrupaciones de planes nutricionales
+
+**¿Qué hace?**
+El entrenador puede organizar sus planes nutricionales en agrupaciones con nombre y descripción opcional. Desde la lista de planes hay un acceso directo a "Agrupaciones". En la lista de agrupaciones puede crear nuevas, ver cuántos planes tiene cada una y eliminarlas. En el detalle de cada agrupación puede añadir planes del catálogo y quitarlos individualmente. Los planes no se borran al eliminar una agrupación.
+
+**Pantallas / flujo:**
+- `app/(coach)/nutrition/index.tsx` — modificada: nuevo botón "Agrupaciones" en la barra de accesos secundarios
+- `app/(coach)/nutrition/groups/index.tsx` — lista de agrupaciones con conteo de planes, modal inline de creación, borrado con confirmación
+- `app/(coach)/nutrition/groups/[id].tsx` — detalle: lista de planes vinculados, botón dashed "+ Añadir plan", modal de selección con planes ya añadidos deshabilitados, quitar plan con confirmación
+
+**Decisiones de diseño:**
+- El planCount en la lista se actualiza optimistamente tras añadir/quitar planes (sin refetch global).
+- Al añadir un plan, se hace un refetch del detalle completo para garantizar coherencia con el dato real de BD.
+- Al quitar un plan, se actualiza el estado local sin refetch (operación determinista).
+- La pantalla de detalle usa `useFocusEffect` para recargar tanto el detalle del grupo como los planes del coach (para el modal de selección).
+
+**Implementación técnica:**
+- `NutritionPlan.ts` — nuevos `PlanGroupSchema`, `CreatePlanGroupSchema`, `PlanGroup`, `CreatePlanGroupInput`
+- `INutritionRepository.ts` — 6 nuevos métodos de plan groups
+- `NutritionRemoteRepository.ts` — implementación con queries a `plan_groups` y `plan_group_plans`; `mapGroup` privado
+- `NutritionUseCases.ts` — 6 nuevos use cases de plan groups
+- `nutritionStore.ts` — estado `groups`, `groupDetail` + 6 nuevas acciones
+- `strings.ts` — 19 nuevas claves en sección RF-E6-05
+- `supabase/migrations/20260326100000_add_plan_groups.sql` — tablas + índices + RLS
+
+**Métricas finales:**
+- Test Suites: 60/60 ✅ | Tests: 1173/1173 ✅ (+40 tests nuevos: 20 use case + 20 store)
+
+---
+
 #### RF-E6-10 — Vincular recetas a comidas de un plan nutricional
 
 **¿Qué hace?**
@@ -838,8 +868,8 @@ Corrección de un bug estructural presente en todos los stores y repositorios: l
 
 ### Deuda técnica detectada (no bloqueante)
 
-#### DT-01 — Tests de NutritionRemoteRepository desactualizados tras BUG-02
-Dos tests esperan el mensaje del PostgrestError crudo (`'Meals failed'`), pero tras envolver con `new Error(...)` en BUG-02 el mensaje incluye prefijo (`'meals insert: Meals failed (undefined)'`). No bloquea la funcionalidad, solo los tests de repo.
+#### DT-01 — Tests de NutritionRemoteRepository desactualizados tras BUG-02 ✅ (2026-03-26)
+Corregidos los dos tests que esperaban el mensaje crudo del PostgrestError. Ahora los mocks incluyen `code` y los mensajes esperados usan el formato con prefijo (`'nutrition_plans insert: Insert failed (ERR)'`, `'meals insert: Meals failed (ERR)'`). Tests: 32/32 ✅
 
 #### DT-02 — Strings.errorFallback ausente en strings.ts (pre-existente)
 Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando el error como `undefined` en el fallback. Añadido en RF-E6-11 (`'Ha ocurrido un error inesperado'`).
@@ -1020,16 +1050,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 
 
-
-#### RF-E6-05 (P1) Agrupaciones de planes
-**Requisito:** Agrupar planes nutricionales para asignación masiva.
-
-**Criterios de aceptación:**
-- Crear agrupación con nombre y descripción.
-- Asociar N planes a la agrupación.
-- Buscar y listar agrupaciones con conteo de planes incluidos.
-
-**Dependencia de plan:** No observada.
 
 ---
 

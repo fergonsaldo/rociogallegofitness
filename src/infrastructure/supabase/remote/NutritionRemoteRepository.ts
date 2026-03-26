@@ -3,6 +3,7 @@ import { INutritionRepository } from '@/domain/repositories/INutritionRepository
 import {
   NutritionPlan, CreateNutritionPlanInput,
   MealLogEntry, CreateMealLogEntryInput, Macros, PlanType,
+  PlanGroup, CreatePlanGroupInput,
 } from '@/domain/entities/NutritionPlan';
 
 export class NutritionRemoteRepository implements INutritionRepository {
@@ -241,5 +242,101 @@ export class NutritionRemoteRepository implements INutritionRepository {
 
     if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapLogEntry.bind(this));
+  }
+
+  // ── Plan groups ───────────────────────────────────────────────────────────
+
+  private mapGroup(row: any): PlanGroup {
+    return {
+      id:          row.id,
+      coachId:     row.coach_id,
+      name:        row.name,
+      description: row.description ?? undefined,
+      planCount:   row.plan_count ?? 0,
+      createdAt:   new Date(row.created_at),
+    };
+  }
+
+  async createPlanGroup(input: CreatePlanGroupInput): Promise<PlanGroup> {
+    const { data, error } = await supabase
+      .from('plan_groups')
+      .insert({
+        coach_id:    input.coachId,
+        name:        input.name,
+        description: input.description ?? null,
+      })
+      .select('*, plan_group_plans(count)')
+      .single();
+
+    if (error) throw new Error(`plan_groups insert: ${error.message} (${error.code})`);
+    if (!data) throw new Error('plan_groups insert returned no data');
+    return this.mapGroup({ ...data, plan_count: 0 });
+  }
+
+  async deletePlanGroup(groupId: string): Promise<void> {
+    const { error } = await supabase.from('plan_groups').delete().eq('id', groupId);
+    if (error) throw new Error(error.message);
+  }
+
+  async getPlanGroups(coachId: string): Promise<PlanGroup[]> {
+    const { data, error } = await supabase
+      .from('plan_groups')
+      .select('*, plan_group_plans(count)')
+      .eq('coach_id', coachId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((row) =>
+      this.mapGroup({ ...row, plan_count: row.plan_group_plans?.[0]?.count ?? 0 })
+    );
+  }
+
+  async getPlanGroupDetail(groupId: string): Promise<{ group: PlanGroup; plans: NutritionPlan[] }> {
+    const [groupRes, plansRes] = await Promise.all([
+      supabase
+        .from('plan_groups')
+        .select('*, plan_group_plans(count)')
+        .eq('id', groupId)
+        .single(),
+      supabase
+        .from('plan_group_plans')
+        .select(`nutrition_plans ( ${this.PLAN_SELECT} )`)
+        .eq('group_id', groupId)
+        .order('added_at', { ascending: true }),
+    ]);
+
+    if (groupRes.error) {
+      if (groupRes.error.code === 'PGRST116') throw new Error('Group not found');
+      throw new Error(groupRes.error.message);
+    }
+    if (plansRes.error) throw new Error(plansRes.error.message);
+
+    const group = this.mapGroup({
+      ...groupRes.data,
+      plan_count: groupRes.data.plan_group_plans?.[0]?.count ?? 0,
+    });
+
+    const plans = (plansRes.data ?? [])
+      .map((row: any) => row.nutrition_plans)
+      .filter(Boolean)
+      .map(this.mapPlan.bind(this));
+
+    return { group, plans };
+  }
+
+  async addPlanToGroup(groupId: string, planId: string): Promise<void> {
+    const { error } = await supabase
+      .from('plan_group_plans')
+      .upsert({ group_id: groupId, plan_id: planId }, { onConflict: 'group_id,plan_id' });
+    if (error) throw new Error(error.message);
+  }
+
+  async removePlanFromGroup(groupId: string, planId: string): Promise<void> {
+    const { error } = await supabase
+      .from('plan_group_plans')
+      .delete()
+      .eq('group_id', groupId)
+      .eq('plan_id', planId);
+    if (error) throw new Error(error.message);
   }
 }

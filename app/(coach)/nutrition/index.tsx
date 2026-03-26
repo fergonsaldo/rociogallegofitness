@@ -183,6 +183,13 @@ export default function CoachNutritionScreen() {
               >
                 <Text style={styles.secondaryButtonText}>{Strings.foodNutritionLink}</Text>
               </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => router.push('/(coach)/nutrition/groups' as any)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.secondaryButtonText}>{Strings.planGroupLink}</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>

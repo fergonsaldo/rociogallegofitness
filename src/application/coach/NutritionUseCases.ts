@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NutritionPlan, CreateNutritionPlanSchema, PlanType } from '@/domain/entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanSchema, PlanType, PlanGroup, CreatePlanGroupSchema } from '@/domain/entities/NutritionPlan';
 import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 
 // ── CreateNutritionPlan ───────────────────────────────────────────────────────
@@ -126,6 +126,60 @@ export async function deleteNutritionPlanUseCase(
 ): Promise<void> {
   if (!planId) throw new Error('planId is required');
   await repo.deletePlan(planId);
+}
+
+// ── Plan groups ───────────────────────────────────────────────────────────────
+
+export async function createPlanGroupUseCase(
+  input: unknown,
+  repo: INutritionRepository,
+): Promise<PlanGroup> {
+  const validated = CreatePlanGroupSchema.parse(input);
+  return repo.createPlanGroup(validated);
+}
+
+export async function deletePlanGroupUseCase(
+  groupId: string,
+  repo: INutritionRepository,
+): Promise<void> {
+  if (!groupId) throw new Error('groupId is required');
+  return repo.deletePlanGroup(groupId);
+}
+
+export async function getPlanGroupsUseCase(
+  coachId: string,
+  repo: INutritionRepository,
+): Promise<PlanGroup[]> {
+  if (!coachId) throw new Error('coachId is required');
+  return repo.getPlanGroups(coachId);
+}
+
+export async function getPlanGroupDetailUseCase(
+  groupId: string,
+  repo: INutritionRepository,
+): Promise<{ group: PlanGroup; plans: NutritionPlan[] }> {
+  if (!groupId) throw new Error('groupId is required');
+  return repo.getPlanGroupDetail(groupId);
+}
+
+export async function addPlanToGroupUseCase(
+  groupId: string,
+  planId: string,
+  repo: INutritionRepository,
+): Promise<void> {
+  if (!groupId) throw new Error('groupId is required');
+  if (!planId)  throw new Error('planId is required');
+  return repo.addPlanToGroup(groupId, planId);
+}
+
+export async function removePlanFromGroupUseCase(
+  groupId: string,
+  planId: string,
+  repo: INutritionRepository,
+): Promise<void> {
+  if (!groupId) throw new Error('groupId is required');
+  if (!planId)  throw new Error('planId is required');
+  return repo.removePlanFromGroup(groupId, planId);
 }
 
 // ── Pure filter (exported for testing) ───────────────────────────────────────

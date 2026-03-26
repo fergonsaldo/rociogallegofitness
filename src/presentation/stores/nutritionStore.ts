@@ -1,13 +1,26 @@
 import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
-import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry } from '@/domain/entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry, PlanGroup } from '@/domain/entities/NutritionPlan';
 import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
-import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase, duplicatePlanUseCase, linkRecipeToMealUseCase, unlinkRecipeFromMealUseCase } from '@/application/coach/NutritionUseCases';
+import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase, duplicatePlanUseCase, linkRecipeToMealUseCase, unlinkRecipeFromMealUseCase, createPlanGroupUseCase, deletePlanGroupUseCase, getPlanGroupsUseCase, getPlanGroupDetailUseCase, addPlanToGroupUseCase, removePlanFromGroupUseCase } from '@/application/coach/NutritionUseCases';
 import { getAssignedNutritionPlanUseCase, logMealUseCase, getDailyNutritionSummaryUseCase, getWeeklyAdherenceUseCase, WeeklyAdherenceDay } from '@/application/athlete/NutritionUseCases';
 
 const repo = new NutritionRemoteRepository();
 
 interface NutritionState {
+  // Plan groups
+  groups: PlanGroup[];
+  groupsLoading: boolean;
+  groupDetail: { group: PlanGroup; plans: NutritionPlan[] } | null;
+  groupDetailLoading: boolean;
+
+  fetchGroups: (coachId: string) => Promise<void>;
+  createGroup: (coachId: string, name: string, description?: string) => Promise<boolean>;
+  deleteGroup: (groupId: string) => Promise<boolean>;
+  fetchGroupDetail: (groupId: string) => Promise<void>;
+  addPlanToGroup: (groupId: string, planId: string) => Promise<boolean>;
+  removePlanFromGroup: (groupId: string, planId: string) => Promise<boolean>;
+
   // Coach
   coachPlans: NutritionPlan[];
   coachPlansLoading: boolean;
@@ -44,6 +57,94 @@ interface NutritionState {
 }
 
 export const useNutritionStore = create<NutritionState>((set, get) => ({
+  groups: [],
+  groupsLoading: false,
+  groupDetail: null,
+  groupDetailLoading: false,
+
+  fetchGroups: async (coachId) => {
+    set({ groupsLoading: true, error: null });
+    try {
+      const groups = await getPlanGroupsUseCase(coachId, repo);
+      set({ groups, groupsLoading: false });
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadGroups, groupsLoading: false });
+    }
+  },
+
+  createGroup: async (coachId, name, description) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const group = await createPlanGroupUseCase({ coachId, name, description }, repo);
+      set((s) => ({ groups: [group, ...s.groups], isSubmitting: false }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFailedCreateGroup, isSubmitting: false });
+      return false;
+    }
+  },
+
+  deleteGroup: async (groupId) => {
+    set({ error: null });
+    try {
+      await deletePlanGroupUseCase(groupId, repo);
+      set((s) => ({ groups: s.groups.filter((g) => g.id !== groupId) }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFailedDeleteGroup });
+      return false;
+    }
+  },
+
+  fetchGroupDetail: async (groupId) => {
+    set({ groupDetailLoading: true, error: null });
+    try {
+      const detail = await getPlanGroupDetailUseCase(groupId, repo);
+      set({ groupDetail: detail, groupDetailLoading: false });
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFailedLoadGroup, groupDetailLoading: false });
+    }
+  },
+
+  addPlanToGroup: async (groupId, planId) => {
+    set({ error: null });
+    try {
+      await addPlanToGroupUseCase(groupId, planId, repo);
+      const detail = await getPlanGroupDetailUseCase(groupId, repo);
+      set({ groupDetail: detail });
+      set((s) => ({
+        groups: s.groups.map((g) =>
+          g.id === groupId ? { ...g, planCount: detail.plans.length } : g
+        ),
+      }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
+      return false;
+    }
+  },
+
+  removePlanFromGroup: async (groupId, planId) => {
+    set({ error: null });
+    try {
+      await removePlanFromGroupUseCase(groupId, planId, repo);
+      set((s) => {
+        if (!s.groupDetail || s.groupDetail.group.id !== groupId) return {};
+        const plans = s.groupDetail.plans.filter((p) => p.id !== planId);
+        return {
+          groupDetail: { ...s.groupDetail, plans },
+          groups: s.groups.map((g) =>
+            g.id === groupId ? { ...g, planCount: plans.length } : g
+          ),
+        };
+      });
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback });
+      return false;
+    }
+  },
+
   coachPlans: [],
   coachPlansLoading: false,
   assignedPlan: null,

@@ -13,6 +13,12 @@ jest.mock('../../../src/application/coach/NutritionUseCases', () => ({
   filterNutritionPlans:           jest.fn(),
   linkRecipeToMealUseCase:        jest.fn(),
   unlinkRecipeFromMealUseCase:    jest.fn(),
+  createPlanGroupUseCase:         jest.fn(),
+  deletePlanGroupUseCase:         jest.fn(),
+  getPlanGroupsUseCase:           jest.fn(),
+  getPlanGroupDetailUseCase:      jest.fn(),
+  addPlanToGroupUseCase:          jest.fn(),
+  removePlanFromGroupUseCase:     jest.fn(),
 }));
 
 jest.mock('../../../src/application/athlete/NutritionUseCases', () => ({
@@ -35,13 +41,25 @@ import {
   duplicatePlanUseCase,
   linkRecipeToMealUseCase,
   unlinkRecipeFromMealUseCase,
+  createPlanGroupUseCase,
+  deletePlanGroupUseCase,
+  getPlanGroupsUseCase,
+  getPlanGroupDetailUseCase,
+  addPlanToGroupUseCase,
+  removePlanFromGroupUseCase,
 } from '../../../src/application/coach/NutritionUseCases';
-import { NutritionPlan } from '../../../src/domain/entities/NutritionPlan';
+import { NutritionPlan, PlanGroup } from '../../../src/domain/entities/NutritionPlan';
 
-const mockAssignPlans  = assignPlansToAthleteUseCase  as jest.MockedFunction<typeof assignPlansToAthleteUseCase>;
-const mockDuplicate    = duplicatePlanUseCase          as jest.MockedFunction<typeof duplicatePlanUseCase>;
-const mockLinkRecipe   = linkRecipeToMealUseCase       as jest.MockedFunction<typeof linkRecipeToMealUseCase>;
-const mockUnlinkRecipe = unlinkRecipeFromMealUseCase   as jest.MockedFunction<typeof unlinkRecipeFromMealUseCase>;
+const mockAssignPlans       = assignPlansToAthleteUseCase  as jest.MockedFunction<typeof assignPlansToAthleteUseCase>;
+const mockDuplicate         = duplicatePlanUseCase          as jest.MockedFunction<typeof duplicatePlanUseCase>;
+const mockLinkRecipe        = linkRecipeToMealUseCase       as jest.MockedFunction<typeof linkRecipeToMealUseCase>;
+const mockUnlinkRecipe      = unlinkRecipeFromMealUseCase   as jest.MockedFunction<typeof unlinkRecipeFromMealUseCase>;
+const mockCreateGroup       = createPlanGroupUseCase        as jest.MockedFunction<typeof createPlanGroupUseCase>;
+const mockDeleteGroup       = deletePlanGroupUseCase        as jest.MockedFunction<typeof deletePlanGroupUseCase>;
+const mockGetGroups         = getPlanGroupsUseCase          as jest.MockedFunction<typeof getPlanGroupsUseCase>;
+const mockGetGroupDetail    = getPlanGroupDetailUseCase     as jest.MockedFunction<typeof getPlanGroupDetailUseCase>;
+const mockAddPlanToGroup    = addPlanToGroupUseCase         as jest.MockedFunction<typeof addPlanToGroupUseCase>;
+const mockRemovePlanFromGroup = removePlanFromGroupUseCase  as jest.MockedFunction<typeof removePlanFromGroupUseCase>;
 
 // Access the repo instance exposed by the mock factory
 const mockGetPlanById: jest.Mock =
@@ -55,9 +73,18 @@ const COACH_ID   = '00000000-0000-4000-b000-000000000099';
 const ATHLETE_ID = '00000000-0000-4000-b000-000000000001';
 const PLAN_ID_A  = 'aaaaaaaa-0000-4000-b000-000000000001';
 const PLAN_ID_B  = 'bbbbbbbb-0000-4000-b000-000000000002';
+const GROUP_ID   = 'gggggggg-0000-4000-b000-000000000001';
 const MEAL_ID    = 'mmmmmmmm-0000-4000-b000-000000000001';
 const RECIPE_ID  = 'rrrrrrrr-0000-4000-b000-000000000001';
 const NOW        = new Date('2024-01-01');
+
+function makeGroup(overrides: Partial<PlanGroup> = {}): PlanGroup {
+  return {
+    id: GROUP_ID, coachId: COACH_ID, name: 'Grupo A',
+    description: undefined, planCount: 0, createdAt: NOW,
+    ...overrides,
+  };
+}
 
 function makePlan(overrides: Partial<NutritionPlan> = {}): NutritionPlan {
   return {
@@ -73,6 +100,8 @@ function makePlan(overrides: Partial<NutritionPlan> = {}): NutritionPlan {
 
 function resetStore() {
   useNutritionStore.setState({
+    groups: [], groupsLoading: false,
+    groupDetail: null, groupDetailLoading: false,
     coachPlans: [], coachPlansLoading: false,
     assignedPlan: null, assignedPlanLoading: false,
     dailySummary: null, dailySummaryLoading: false,
@@ -482,5 +511,240 @@ describe('useNutritionStore — refreshPlan', () => {
     expect(plans).toHaveLength(2);
     expect(plans.find((p) => p.id === PLAN_ID_B)).toEqual(planB);
     expect(plans.find((p) => p.id === PLAN_ID_A)).toEqual(updatedA);
+  });
+});
+
+// ── fetchGroups ───────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — fetchGroups', () => {
+  it('setea los grupos en caso de éxito', async () => {
+    const groups = [makeGroup(), makeGroup({ id: 'gggggggg-0000-4000-b000-000000000002', name: 'Grupo B' })];
+    mockGetGroups.mockResolvedValue(groups);
+
+    await act(async () => { await useNutritionStore.getState().fetchGroups(COACH_ID); });
+
+    expect(useNutritionStore.getState().groups).toEqual(groups);
+    expect(useNutritionStore.getState().groupsLoading).toBe(false);
+    expect(useNutritionStore.getState().error).toBeNull();
+  });
+
+  it('setea error en caso de fallo', async () => {
+    mockGetGroups.mockRejectedValue(new Error('Network error'));
+
+    await act(async () => { await useNutritionStore.getState().fetchGroups(COACH_ID); });
+
+    expect(useNutritionStore.getState().error).toBe('Network error');
+    expect(useNutritionStore.getState().groupsLoading).toBe(false);
+  });
+
+  it('usa fallback string si el error no tiene mensaje', async () => {
+    mockGetGroups.mockRejectedValue('unexpected');
+
+    await act(async () => { await useNutritionStore.getState().fetchGroups(COACH_ID); });
+
+    expect(useNutritionStore.getState().error).toBeTruthy();
+  });
+
+  it('limpia el error previo al inicio de la operación', async () => {
+    useNutritionStore.setState({ error: 'error previo' });
+    mockGetGroups.mockResolvedValue([]);
+
+    await act(async () => { await useNutritionStore.getState().fetchGroups(COACH_ID); });
+
+    expect(useNutritionStore.getState().error).toBeNull();
+  });
+});
+
+// ── createGroup ───────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — createGroup', () => {
+  it('añade el grupo al principio de la lista y devuelve true', async () => {
+    const existing = makeGroup({ id: 'gggggggg-0000-4000-b000-000000000002', name: 'Viejo' });
+    const newGroup = makeGroup({ name: 'Nuevo' });
+    useNutritionStore.setState({ groups: [existing] });
+    mockCreateGroup.mockResolvedValue(newGroup);
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().createGroup(COACH_ID, 'Nuevo'); });
+
+    expect(result).toBe(true);
+    const groups = useNutritionStore.getState().groups;
+    expect(groups[0]).toEqual(newGroup);
+    expect(groups).toHaveLength(2);
+  });
+
+  it('devuelve false y setea error en caso de fallo', async () => {
+    mockCreateGroup.mockRejectedValue(new Error('Insert failed'));
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().createGroup(COACH_ID, 'X'); });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Insert failed');
+  });
+
+  it('isSubmitting es true durante la operación y false al terminar', async () => {
+    const states: boolean[] = [];
+    mockCreateGroup.mockImplementation(() => {
+      states.push(useNutritionStore.getState().isSubmitting);
+      return Promise.resolve(makeGroup());
+    });
+
+    await act(async () => { await useNutritionStore.getState().createGroup(COACH_ID, 'Grupo'); });
+
+    expect(states[0]).toBe(true);
+    expect(useNutritionStore.getState().isSubmitting).toBe(false);
+  });
+
+  it('pasa la descripción al use case cuando se proporciona', async () => {
+    mockCreateGroup.mockResolvedValue(makeGroup({ description: 'Desc' }));
+
+    await act(async () => { await useNutritionStore.getState().createGroup(COACH_ID, 'Grupo', 'Desc'); });
+
+    expect(mockCreateGroup).toHaveBeenCalledWith(
+      expect.objectContaining({ description: 'Desc' }),
+      expect.anything(),
+    );
+  });
+});
+
+// ── deleteGroup ───────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — deleteGroup', () => {
+  it('elimina el grupo de la lista y devuelve true', async () => {
+    const groupA = makeGroup();
+    const groupB = makeGroup({ id: 'gggggggg-0000-4000-b000-000000000002', name: 'Grupo B' });
+    useNutritionStore.setState({ groups: [groupA, groupB] });
+    mockDeleteGroup.mockResolvedValue();
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().deleteGroup(GROUP_ID); });
+
+    expect(result).toBe(true);
+    expect(useNutritionStore.getState().groups).toEqual([groupB]);
+  });
+
+  it('devuelve false y setea error en caso de fallo', async () => {
+    mockDeleteGroup.mockRejectedValue(new Error('Delete failed'));
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().deleteGroup(GROUP_ID); });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Delete failed');
+  });
+
+  it('usa fallback string si el error no tiene mensaje', async () => {
+    mockDeleteGroup.mockRejectedValue('unexpected');
+
+    await act(async () => { await useNutritionStore.getState().deleteGroup(GROUP_ID); });
+
+    expect(useNutritionStore.getState().error).toBeTruthy();
+  });
+});
+
+// ── fetchGroupDetail ──────────────────────────────────────────────────────────
+
+describe('useNutritionStore — fetchGroupDetail', () => {
+  it('setea el detalle del grupo en caso de éxito', async () => {
+    const group = makeGroup({ planCount: 1 });
+    const plan  = makePlan();
+    mockGetGroupDetail.mockResolvedValue({ group, plans: [plan] });
+
+    await act(async () => { await useNutritionStore.getState().fetchGroupDetail(GROUP_ID); });
+
+    const detail = useNutritionStore.getState().groupDetail;
+    expect(detail?.group).toEqual(group);
+    expect(detail?.plans).toHaveLength(1);
+    expect(useNutritionStore.getState().groupDetailLoading).toBe(false);
+  });
+
+  it('setea error en caso de fallo', async () => {
+    mockGetGroupDetail.mockRejectedValue(new Error('Not found'));
+
+    await act(async () => { await useNutritionStore.getState().fetchGroupDetail(GROUP_ID); });
+
+    expect(useNutritionStore.getState().error).toBe('Not found');
+    expect(useNutritionStore.getState().groupDetailLoading).toBe(false);
+  });
+});
+
+// ── addPlanToGroup ────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — addPlanToGroup', () => {
+  it('actualiza el detalle y el planCount en la lista de grupos', async () => {
+    const group = makeGroup({ planCount: 0 });
+    const plan  = makePlan();
+    useNutritionStore.setState({
+      groups: [group],
+      groupDetail: { group, plans: [] },
+    });
+    mockAddPlanToGroup.mockResolvedValue();
+    mockGetGroupDetail.mockResolvedValue({ group: { ...group, planCount: 1 }, plans: [plan] });
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().addPlanToGroup(GROUP_ID, PLAN_ID_A); });
+
+    expect(result).toBe(true);
+    expect(useNutritionStore.getState().groupDetail?.plans).toHaveLength(1);
+    expect(useNutritionStore.getState().groups[0].planCount).toBe(1);
+  });
+
+  it('devuelve false y setea error en caso de fallo', async () => {
+    mockAddPlanToGroup.mockRejectedValue(new Error('Upsert failed'));
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().addPlanToGroup(GROUP_ID, PLAN_ID_A); });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Upsert failed');
+  });
+});
+
+// ── removePlanFromGroup ───────────────────────────────────────────────────────
+
+describe('useNutritionStore — removePlanFromGroup', () => {
+  it('elimina el plan del detalle y actualiza el planCount', async () => {
+    const plan  = makePlan({ id: PLAN_ID_A });
+    const plan2 = makePlan({ id: PLAN_ID_B, name: 'Plan B' });
+    const group = makeGroup({ planCount: 2 });
+    useNutritionStore.setState({
+      groups: [group],
+      groupDetail: { group, plans: [plan, plan2] },
+    });
+    mockRemovePlanFromGroup.mockResolvedValue();
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().removePlanFromGroup(GROUP_ID, PLAN_ID_A); });
+
+    expect(result).toBe(true);
+    const state = useNutritionStore.getState();
+    expect(state.groupDetail?.plans).toHaveLength(1);
+    expect(state.groupDetail?.plans[0].id).toBe(PLAN_ID_B);
+    expect(state.groups[0].planCount).toBe(1);
+  });
+
+  it('devuelve false y setea error en caso de fallo', async () => {
+    mockRemovePlanFromGroup.mockRejectedValue(new Error('Delete failed'));
+
+    let result: boolean | undefined;
+    await act(async () => { result = await useNutritionStore.getState().removePlanFromGroup(GROUP_ID, PLAN_ID_A); });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Delete failed');
+  });
+
+  it('no modifica el estado si el groupDetail es de otro grupo', async () => {
+    const otherGroupId = 'gggggggg-0000-4000-b000-000000000099';
+    const plan = makePlan();
+    useNutritionStore.setState({
+      groups: [],
+      groupDetail: { group: makeGroup({ id: otherGroupId }), plans: [plan] },
+    });
+    mockRemovePlanFromGroup.mockResolvedValue();
+
+    await act(async () => { await useNutritionStore.getState().removePlanFromGroup(GROUP_ID, PLAN_ID_A); });
+
+    expect(useNutritionStore.getState().groupDetail?.plans).toHaveLength(1);
   });
 });
