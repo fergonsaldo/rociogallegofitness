@@ -65,6 +65,10 @@ export default function FoodsScreen() {
     }
   };
 
+  const handleEdit = (food: Food) => {
+    router.push({ pathname: '/(coach)/foods/edit' as any, params: { id: food.id } });
+  };
+
   const handleDelete = (food: Food) => {
     Alert.alert(
       Strings.foodDeleteTitle,
@@ -157,6 +161,7 @@ export default function FoodsScreen() {
                 food={item}
                 isOwn={item.coachId === user?.id}
                 typeLabel={TYPE_LABELS[item.type]}
+                onEdit={handleEdit}
                 onDelete={handleDelete}
               />
             )}
@@ -173,10 +178,11 @@ interface FoodCardProps {
   food:       Food;
   isOwn:      boolean;
   typeLabel:  string;
+  onEdit:     (f: Food) => void;
   onDelete:   (f: Food) => void;
 }
 
-function FoodCard({ food, isOwn, typeLabel, onDelete }: FoodCardProps) {
+function FoodCard({ food, isOwn, typeLabel, onEdit, onDelete }: FoodCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardAccent} />
@@ -196,15 +202,22 @@ function FoodCard({ food, isOwn, typeLabel, onDelete }: FoodCardProps) {
           <MacroPill label="F"    value={`${food.fiberG}g`}                    color="#16A34A" />
         </View>
       </View>
-      {isOwn && (
+      <View style={styles.cardActions}>
         <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => onDelete(food)}
+          onPress={() => onEdit(food)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text style={styles.deleteIcon}>🗑</Text>
+          <Text style={styles.editIcon}>✏️</Text>
         </TouchableOpacity>
-      )}
+        {isOwn && (
+          <TouchableOpacity
+            onPress={() => onDelete(food)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.deleteIcon}>🗑</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
@@ -294,6 +307,7 @@ const styles = StyleSheet.create({
   macroPillLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
   macroPillValue: { fontSize: 9, fontWeight: '600' },
 
-  deleteButton: { justifyContent: 'center', paddingHorizontal: Spacing.md },
-  deleteIcon:   { fontSize: 18 },
+  cardActions: { justifyContent: 'center', alignItems: 'center', gap: Spacing.sm, paddingHorizontal: Spacing.md },
+  editIcon:    { fontSize: 16 },
+  deleteIcon:  { fontSize: 16 },
 });

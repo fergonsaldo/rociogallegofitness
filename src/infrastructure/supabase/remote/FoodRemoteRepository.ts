@@ -1,6 +1,6 @@
 import { supabase } from '../client';
 import { IFoodRepository } from '@/domain/repositories/IFoodRepository';
-import { Food, CreateFoodInput, FoodType } from '@/domain/entities/Food';
+import { Food, CreateFoodInput, UpdateFoodInput, FoodType } from '@/domain/entities/Food';
 
 export class FoodRemoteRepository implements IFoodRepository {
 
@@ -26,7 +26,7 @@ export class FoodRemoteRepository implements IFoodRepository {
       .or(`coach_id.eq.${coachId},coach_id.is.null`)
       .order('name', { ascending: true });
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapFood.bind(this));
   }
 
@@ -46,13 +46,56 @@ export class FoodRemoteRepository implements IFoodRepository {
       .select()
       .single();
 
-    if (error || !data) throw error;
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('Not found');
+    return this.mapFood(data);
+  }
+
+  async updateFood(id: string, input: UpdateFoodInput): Promise<Food> {
+    const { data, error } = await supabase
+      .from('foods')
+      .update({
+        name:              input.name,
+        type:              input.type,
+        calories_per_100g: input.caloriesPer100g,
+        protein_g:         input.proteinG,
+        carbs_g:           input.carbsG,
+        fat_g:             input.fatG,
+        fiber_g:           input.fiberG,
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after food update');
+    return this.mapFood(data);
+  }
+
+  async cloneGenericFood(coachId: string, input: UpdateFoodInput): Promise<Food> {
+    const { data, error } = await supabase
+      .from('foods')
+      .insert({
+        coach_id:          coachId,
+        name:              input.name,
+        type:              input.type,
+        calories_per_100g: input.caloriesPer100g,
+        protein_g:         input.proteinG,
+        carbs_g:           input.carbsG,
+        fat_g:             input.fatG,
+        fiber_g:           input.fiberG,
+      })
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after food clone');
     return this.mapFood(data);
   }
 
   async deleteFood(id: string): Promise<void> {
     const { error } = await supabase.from('foods').delete().eq('id', id);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
   }
 
   async isUsedInRecipes(foodId: string): Promise<boolean> {
@@ -60,7 +103,7 @@ export class FoodRemoteRepository implements IFoodRepository {
       .from('recipe_ingredients')
       .select('id', { count: 'exact', head: true })
       .eq('food_id', foodId);
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return (count ?? 0) > 0;
   }
 }

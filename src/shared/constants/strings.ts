@@ -4,6 +4,9 @@
  */
 
 export const Strings = {
+  // ── Errores genéricos ─────────────────────────────────────────────────────
+  errorFallback: 'Ha ocurrido un error inesperado',
+
   // ── Saludos ──────────────────────────────────────────────────────────────
   greetingMorning: 'Buenos días',
   greetingAfternoon: 'Buenas tardes',
@@ -501,6 +504,9 @@ export const Strings = {
   foodDeleteCancel:            'Cancelar',
   foodDeleteConfirm:           'Eliminar',
   foodFormTitle:               'Nuevo alimento',
+  foodEditTitle:               'Editar alimento',
+  foodEditGenericNote:         'Se guardará una copia personalizada de este alimento',
+  foodEditNotFound:            'Alimento no encontrado',
   foodFormCancel:              '✕ Cancelar',
   foodFormSave:                'Guardar',
   foodFormLabelName:           'NOMBRE *',

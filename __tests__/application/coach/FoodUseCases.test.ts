@@ -1,11 +1,12 @@
 import {
   getFoodsUseCase,
   createFoodUseCase,
+  editFoodUseCase,
   deleteFoodUseCase,
   filterFoods,
 } from '../../../src/application/coach/FoodUseCases';
 import { IFoodRepository } from '../../../src/domain/repositories/IFoodRepository';
-import { Food } from '../../../src/domain/entities/Food';
+import { Food, UpdateFoodInput } from '../../../src/domain/entities/Food';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -30,6 +31,8 @@ const makeFood = (overrides: Partial<Food> = {}): Food => ({
 const mockRepo: jest.Mocked<IFoodRepository> = {
   getFoodsByCoach:   jest.fn(),
   createFood:        jest.fn(),
+  updateFood:        jest.fn(),
+  cloneGenericFood:  jest.fn(),
   deleteFood:        jest.fn(),
   isUsedInRecipes:   jest.fn(),
 };
@@ -130,6 +133,96 @@ describe('createFoodUseCase', () => {
   it('propaga errores del repositorio', async () => {
     mockRepo.createFood.mockRejectedValue(new Error('Insert failed'));
     await expect(createFoodUseCase(validInput, mockRepo)).rejects.toThrow('Insert failed');
+  });
+});
+
+// ── editFoodUseCase ───────────────────────────────────────────────────────────
+
+describe('editFoodUseCase', () => {
+  const validInput: UpdateFoodInput = {
+    name:            'Pechuga de pollo editada',
+    type:            'specific',
+    caloriesPer100g: 160,
+    proteinG:        32,
+    carbsG:          0,
+    fatG:            3,
+    fiberG:          0,
+  };
+
+  it('llama a updateFood cuando el alimento es propio del coach', async () => {
+    const ownFood   = makeFood({ coachId: COACH_ID });
+    const updated   = makeFood({ ...validInput, coachId: COACH_ID });
+    mockRepo.updateFood.mockResolvedValue(updated);
+
+    const result = await editFoodUseCase(ownFood, validInput, COACH_ID, mockRepo);
+
+    expect(result).toEqual(updated);
+    expect(mockRepo.updateFood).toHaveBeenCalledWith(FOOD_ID, validInput);
+    expect(mockRepo.cloneGenericFood).not.toHaveBeenCalled();
+  });
+
+  it('llama a cloneGenericFood cuando el alimento es genérico (coachId null)', async () => {
+    const genericFood = makeFood({ coachId: null });
+    const cloned      = makeFood({ ...validInput, coachId: COACH_ID });
+    mockRepo.cloneGenericFood.mockResolvedValue(cloned);
+
+    const result = await editFoodUseCase(genericFood, validInput, COACH_ID, mockRepo);
+
+    expect(result).toEqual(cloned);
+    expect(mockRepo.cloneGenericFood).toHaveBeenCalledWith(COACH_ID, validInput);
+    expect(mockRepo.updateFood).not.toHaveBeenCalled();
+  });
+
+  it('lanza ZodError si el nombre está vacío', async () => {
+    const food = makeFood({ coachId: COACH_ID });
+    await expect(editFoodUseCase(food, { ...validInput, name: '' }, COACH_ID, mockRepo))
+      .rejects.toThrow();
+    expect(mockRepo.updateFood).not.toHaveBeenCalled();
+    expect(mockRepo.cloneGenericFood).not.toHaveBeenCalled();
+  });
+
+  it('lanza ZodError si caloriesPer100g es negativo', async () => {
+    const food = makeFood({ coachId: COACH_ID });
+    await expect(editFoodUseCase(food, { ...validInput, caloriesPer100g: -1 }, COACH_ID, mockRepo))
+      .rejects.toThrow();
+    expect(mockRepo.updateFood).not.toHaveBeenCalled();
+  });
+
+  it('lanza ZodError si un macro supera 100', async () => {
+    const food = makeFood({ coachId: COACH_ID });
+    await expect(editFoodUseCase(food, { ...validInput, proteinG: 101 }, COACH_ID, mockRepo))
+      .rejects.toThrow();
+    expect(mockRepo.updateFood).not.toHaveBeenCalled();
+  });
+
+  it('lanza ZodError si el tipo no es válido', async () => {
+    const food = makeFood({ coachId: COACH_ID });
+    await expect(editFoodUseCase(food, { ...validInput, type: 'unknown' as any }, COACH_ID, mockRepo))
+      .rejects.toThrow();
+    expect(mockRepo.updateFood).not.toHaveBeenCalled();
+  });
+
+  it('acepta todos los tipos válidos al editar alimento propio', async () => {
+    const ownFood = makeFood({ coachId: COACH_ID });
+    for (const type of ['generic', 'specific', 'supplement'] as const) {
+      mockRepo.updateFood.mockResolvedValue(makeFood({ type, coachId: COACH_ID }));
+      await expect(editFoodUseCase(ownFood, { ...validInput, type }, COACH_ID, mockRepo))
+        .resolves.toBeDefined();
+    }
+  });
+
+  it('propaga errores de updateFood', async () => {
+    const ownFood = makeFood({ coachId: COACH_ID });
+    mockRepo.updateFood.mockRejectedValue(new Error('Update failed'));
+    await expect(editFoodUseCase(ownFood, validInput, COACH_ID, mockRepo))
+      .rejects.toThrow('Update failed');
+  });
+
+  it('propaga errores de cloneGenericFood', async () => {
+    const genericFood = makeFood({ coachId: null });
+    mockRepo.cloneGenericFood.mockRejectedValue(new Error('Clone failed'));
+    await expect(editFoodUseCase(genericFood, validInput, COACH_ID, mockRepo))
+      .rejects.toThrow('Clone failed');
   });
 });
 

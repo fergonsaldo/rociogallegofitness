@@ -36,3 +36,17 @@ export const CreateFoodSchema = z.object({
 });
 
 export type CreateFoodInput = z.infer<typeof CreateFoodSchema>;
+
+// ── Update input ───────────────────────────────────────────────────────────────
+
+export const UpdateFoodSchema = z.object({
+  name:            z.string().min(1, 'El nombre es obligatorio').max(100),
+  type:            z.enum(FOOD_TYPES),
+  caloriesPer100g: z.number().min(0).max(10000),
+  proteinG:        z.number().min(0).max(100),
+  carbsG:          z.number().min(0).max(100),
+  fatG:            z.number().min(0).max(100),
+  fiberG:          z.number().min(0).max(100),
+});
+
+export type UpdateFoodInput = z.infer<typeof UpdateFoodSchema>;

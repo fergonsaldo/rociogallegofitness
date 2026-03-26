@@ -1,4 +1,4 @@
-import { Food, CreateFoodSchema, FoodType } from '@/domain/entities/Food';
+import { Food, CreateFoodSchema, UpdateFoodSchema, FoodType } from '@/domain/entities/Food';
 import { IFoodRepository } from '@/domain/repositories/IFoodRepository';
 
 // ── GetFoods ──────────────────────────────────────────────────────────────────
@@ -19,6 +19,21 @@ export async function createFoodUseCase(
 ): Promise<Food> {
   const validated = CreateFoodSchema.parse(input);
   return repo.createFood(validated);
+}
+
+// ── EditFood ──────────────────────────────────────────────────────────────────
+
+export async function editFoodUseCase(
+  food: Food,
+  input: unknown,
+  coachId: string,
+  repo: IFoodRepository,
+): Promise<Food> {
+  const validated = UpdateFoodSchema.parse(input);
+  if (food.coachId === null) {
+    return repo.cloneGenericFood(coachId, validated);
+  }
+  return repo.updateFood(food.id, validated);
 }
 
 // ── DeleteFood ────────────────────────────────────────────────────────────────
