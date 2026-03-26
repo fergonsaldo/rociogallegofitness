@@ -2,6 +2,39 @@
 
 ## ✅ Completado
 
+#### RF-E6-08 — Asignación de planes nutricionales a atletas
+
+**¿Qué hace?**
+El entrenador puede seleccionar uno o varios planes nutricionales de su lista y asignarlos a un atleta. Se activa manteniendo pulsado un plan (long-press), lo que abre el modo selección. Desde ahí puede añadir más planes al lote y pulsar "Asignar" para elegir el atleta destinatario. Si ya tenía ese plan asignado, no se produce error (upsert). El flujo termina con un mensaje de confirmación.
+
+**Pantallas / flujo:**
+- `app/(coach)/nutrition/index.tsx` — modificada
+  - Long-press en una tarjeta activa el modo selección (checkbox redondo)
+  - Tap sobre tarjeta seleccionada alterna su selección; si queda a 0, sale del modo
+  - "Cancelar" en el header sale del modo selección sin asignar
+  - Barra azul inferior con contador de planes seleccionados + botón "Asignar"
+  - Botón de borrar se oculta en modo selección
+  - Links de navegación a Recetas y Alimentos se ocultan en modo selección
+  - Modal (pageSheet) con lista de atletas: avatar + nombre + email
+  - Estado vacío en el modal si el coach no tiene atletas
+  - Spinner por atleta durante la asignación en curso
+
+**Decisiones de diseño:**
+- El fetch de atletas se hace directamente desde Supabase en la pantalla (excepción documentada, mismo patrón que `routines/index.tsx`). No se añaden atletas al store de nutrición.
+- La selección y el estado del modal son estado local de la pantalla — no se persisten en el store.
+- El use case `assignPlansToAthleteUseCase` asigna en secuencia (no en paralelo) para simplificar el manejo de errores: si uno falla, los siguientes no se ejecutan y el error se propaga limpiamente.
+
+**Implementación técnica:**
+- `NutritionUseCases.ts` — nuevo `assignPlansToAthleteUseCase(planIds, athleteId, repo)`
+- `nutritionStore.ts` — nueva acción `assignMultipleToAthlete(planIds, athleteId) → Promise<boolean>`
+- `strings.ts` — 5 nuevas claves en la sección `RF-E6-08`
+- `nutrition/index.tsx` — modo selección, barra bulk-assign y modal de atletas
+
+**Métricas finales:**
+- Test Suites: 2/2 ✅ | Tests: 55/55 ✅ (+11 tests nuevos: 6 use case + 5 store)
+
+---
+
 #### RF-E6-11 — Edición de alimentos del catálogo
 
 **¿Qué hace?**
@@ -921,17 +954,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E6-08 (P1) Asignación de planes nutricionales a atletas
-**Requisito:** Asignar uno o varios planes a un atleta desde el catálogo.
-
-**Criterios de aceptación:**
-- Selección múltiple con long-press (mismo patrón que cardios/rutinas).
-- Modal de selección de atleta.
-- Confirmación tras asignación exitosa.
-
-**Dependencia:** RF-E6-01 completado.
-
----
 
 #### RF-E6-09 (P2) Versionado de planes nutricionales
 **Requisito:** Historial de cambios por plan para trazabilidad.

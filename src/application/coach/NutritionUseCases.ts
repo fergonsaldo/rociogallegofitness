@@ -53,6 +53,20 @@ export async function unassignNutritionPlanUseCase(
   await repo.unassignFromAthlete(input.planId, input.athleteId);
 }
 
+// ── AssignPlansToAthlete (bulk) ───────────────────────────────────────────────
+
+export async function assignPlansToAthleteUseCase(
+  planIds: string[],
+  athleteId: string,
+  repo: INutritionRepository,
+): Promise<void> {
+  if (!athleteId) throw new Error('athleteId is required');
+  if (planIds.length === 0) throw new Error('planIds must not be empty');
+  for (const planId of planIds) {
+    await repo.assignToAthlete(planId, athleteId);
+  }
+}
+
 // ── DeleteNutritionPlan ───────────────────────────────────────────────────────
 
 export async function deleteNutritionPlanUseCase(

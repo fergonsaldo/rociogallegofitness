@@ -487,6 +487,14 @@ export const Strings = {
   nutritionPlanFormNameRequired:    'El nombre del plan es obligatorio',
   nutritionPlanFormMacrosRequired:  'Define los macros objetivo',
 
+  // ── Asignación de planes (RF-E6-08) ───────────────────────────────────────
+  nutritionBulkAssignButton:        'Asignar',
+  nutritionSelectionCount:          (n: number) => `${n} ${n === 1 ? 'plan seleccionado' : 'planes seleccionados'}`,
+  nutritionAssignTitle:             'Asignar a atleta',
+  nutritionAssignSubtitle:          'Selecciona el atleta que recibirá los planes',
+  nutritionAssignEmpty:             'No tienes atletas registrados',
+  nutritionBulkAssignSuccess:       (n: number, name: string) => `${n} ${n === 1 ? 'plan asignado' : 'planes asignados'} a ${name}`,
+
   // ── Alimentos (RF-E6-04) ──────────────────────────────────────────────────
   foodTitle:                   'Alimentos',
   foodSubtitle:                (n: number) => `${n} ${n === 1 ? 'alimento' : 'alimentos'}`,

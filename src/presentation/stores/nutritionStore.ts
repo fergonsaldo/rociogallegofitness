@@ -2,7 +2,7 @@ import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
 import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry } from '@/domain/entities/NutritionPlan';
 import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
-import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase } from '@/application/coach/NutritionUseCases';
+import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase } from '@/application/coach/NutritionUseCases';
 import { getAssignedNutritionPlanUseCase, logMealUseCase, getDailyNutritionSummaryUseCase, getWeeklyAdherenceUseCase, WeeklyAdherenceDay } from '@/application/athlete/NutritionUseCases';
 
 const repo = new NutritionRemoteRepository();
@@ -27,6 +27,7 @@ interface NutritionState {
   fetchCoachPlans: (coachId: string) => Promise<void>;
   createPlan: (input: CreateNutritionPlanInput) => Promise<NutritionPlan | null>;
   assignPlan: (planId: string, athleteId: string) => Promise<void>;
+  assignMultipleToAthlete: (planIds: string[], athleteId: string) => Promise<boolean>;
   deletePlan: (planId: string) => Promise<void>;
 
   // Athlete actions
@@ -79,6 +80,17 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       await assignNutritionPlanUseCase({ planId, athleteId }, repo);
     } catch (err) {
       set({ error: (err as any)?.message ?? Strings.errorFailedAssignPlan });
+    }
+  },
+
+  assignMultipleToAthlete: async (planIds, athleteId) => {
+    set({ error: null });
+    try {
+      await assignPlansToAthleteUseCase(planIds, athleteId, repo);
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFailedAssignPlan });
+      return false;
     }
   },
 

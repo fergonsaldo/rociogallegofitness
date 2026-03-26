@@ -1,6 +1,6 @@
 import {
   View, Text, FlatList, TouchableOpacity, TextInput, ScrollView,
-  StyleSheet, SafeAreaView, ActivityIndicator, Alert,
+  StyleSheet, SafeAreaView, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,15 @@ import { NutritionPlan, PlanType, PLAN_TYPES } from '../../../src/domain/entitie
 import { filterNutritionPlans } from '../../../src/application/coach/NutritionUseCases';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
+import { supabase } from '../../../src/infrastructure/supabase/client';
+
+// ── Types ───────────────────────────────────────────────────────────────────────
+
+interface AthleteOption {
+  id: string;
+  full_name: string;
+  email: string;
+}
 
 // ── Labels ─────────────────────────────────────────────────────────────────────
 
@@ -26,11 +35,18 @@ const TYPE_LABELS: Record<PlanType, string> = {
 export default function CoachNutritionScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { coachPlans, coachPlansLoading, error, fetchCoachPlans, deletePlan } =
+  const { coachPlans, coachPlansLoading, error, fetchCoachPlans, deletePlan, assignMultipleToAthlete } =
     useNutritionStore();
 
-  const [query, setQuery]           = useState('');
+  const [query, setQuery]             = useState('');
   const [activeTypes, setActiveTypes] = useState<PlanType[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectMode, setSelectMode]   = useState(false);
+
+  const [modalVisible, setModalVisible]     = useState(false);
+  const [athletes, setAthletes]             = useState<AthleteOption[]>([]);
+  const [loadingAthletes, setLoadingAthletes] = useState(false);
+  const [assigningId, setAssigningId]       = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -44,6 +60,67 @@ export default function CoachNutritionScreen() {
     setActiveTypes((prev) =>
       prev.includes(t) ? prev.filter((x) => x !== t) : [...prev, t],
     );
+
+  // ── Selection mode ────────────────────────────────────────────────────────
+
+  const handleLongPress = (plan: NutritionPlan) => {
+    setSelectMode(true);
+    setSelectedIds(new Set([plan.id]));
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      if (next.size === 0) setSelectMode(false);
+      return next;
+    });
+  };
+
+  const handleCancelSelect = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  // ── Bulk assign ───────────────────────────────────────────────────────────
+
+  const handleOpenModal = async () => {
+    setModalVisible(true);
+    setLoadingAthletes(true);
+    try {
+      const { data, error: err } = await supabase
+        .from('coach_athletes')
+        .select('users!coach_athletes_athlete_id_fkey ( id, full_name, email )')
+        .eq('coach_id', user!.id);
+      if (err) throw err;
+      const list: AthleteOption[] = (data ?? [])
+        .map((row: any) => row.users)
+        .filter(Boolean);
+      setAthletes(list);
+    } catch {
+      setAthletes([]);
+    } finally {
+      setLoadingAthletes(false);
+    }
+  };
+
+  const handleAssign = async (athlete: AthleteOption) => {
+    setAssigningId(athlete.id);
+    const ids = Array.from(selectedIds);
+    const ok = await assignMultipleToAthlete(ids, athlete.id);
+    setAssigningId(null);
+    if (ok) {
+      setModalVisible(false);
+      handleCancelSelect();
+      Alert.alert('✓', Strings.nutritionBulkAssignSuccess(ids.length, athlete.full_name));
+    }
+  };
+
+  // ── Delete ────────────────────────────────────────────────────────────────
 
   const handleDelete = (plan: NutritionPlan) => {
     Alert.alert(
@@ -70,30 +147,38 @@ export default function CoachNutritionScreen() {
                 <Text style={styles.subtitle}>{Strings.nutritionPlanSubtitle(coachPlans.length)}</Text>
               </View>
             </View>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => router.push('/(coach)/nutrition/create')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.createButtonText}>{Strings.nutritionPlanNewButton}</Text>
-            </TouchableOpacity>
+            {selectMode ? (
+              <TouchableOpacity onPress={handleCancelSelect} style={styles.cancelButton}>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={styles.createButton}
+                onPress={() => router.push('/(coach)/nutrition/create')}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.createButtonText}>{Strings.nutritionPlanNewButton}</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          <View style={styles.headerLinks}>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.push('/(coach)/recipes' as any)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.secondaryButtonText}>{Strings.recipeNutritionLink}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.push('/(coach)/foods' as any)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.secondaryButtonText}>{Strings.foodNutritionLink}</Text>
-            </TouchableOpacity>
-          </View>
+          {!selectMode && (
+            <View style={styles.headerLinks}>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => router.push('/(coach)/recipes' as any)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.secondaryButtonText}>{Strings.recipeNutritionLink}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.secondaryButton}
+                onPress={() => router.push('/(coach)/foods' as any)}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.secondaryButtonText}>{Strings.foodNutritionLink}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         {/* Search */}
@@ -124,6 +209,14 @@ export default function CoachNutritionScreen() {
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Bulk-assign bar */}
+        {selectMode && selectedIds.size > 0 && (
+          <TouchableOpacity style={styles.bulkBar} onPress={handleOpenModal}>
+            <Text style={styles.bulkBarCount}>{Strings.nutritionSelectionCount(selectedIds.size)}</Text>
+            <Text style={styles.bulkBarAction}>{Strings.nutritionBulkAssignButton}</Text>
+          </TouchableOpacity>
+        )}
 
         {error && (
           <View style={styles.errorBanner}>
@@ -159,15 +252,89 @@ export default function CoachNutritionScreen() {
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
             renderItem={({ item }) => (
-              <PlanCard
-                plan={item}
-                onPress={() => router.push({ pathname: '/(coach)/nutrition/[id]', params: { id: item.id } })}
-                onDelete={handleDelete}
-              />
+              <View style={styles.cardWrapper}>
+                {selectMode && (
+                  <View style={[styles.checkbox, selectedIds.has(item.id) && styles.checkboxSelected]}>
+                    {selectedIds.has(item.id) && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+                )}
+                <View style={styles.cardFlex}>
+                  <PlanCard
+                    plan={item}
+                    selected={selectedIds.has(item.id)}
+                    onPress={() => {
+                      if (selectMode) {
+                        handleToggleSelect(item.id);
+                      } else {
+                        router.push({ pathname: '/(coach)/nutrition/[id]', params: { id: item.id } });
+                      }
+                    }}
+                    onLongPress={() => handleLongPress(item)}
+                    onDelete={handleDelete}
+                    selectMode={selectMode}
+                  />
+                </View>
+              </View>
             )}
           />
         )}
       </View>
+
+      {/* Athlete picker modal */}
+      <Modal visible={modalVisible} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setModalVisible(false)}>
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{Strings.nutritionAssignTitle}</Text>
+              <View style={styles.modalHeaderSpacer} />
+            </View>
+
+            <Text style={styles.modalSubtitle}>{Strings.nutritionAssignSubtitle}</Text>
+
+            {loadingAthletes ? (
+              <View style={styles.center}>
+                <ActivityIndicator color={Colors.primary} size="large" />
+              </View>
+            ) : athletes.length === 0 ? (
+              <View style={styles.center}>
+                <Text style={styles.emptyEmoji}>👥</Text>
+                <Text style={styles.emptyText}>{Strings.nutritionAssignEmpty}</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={athletes}
+                keyExtractor={(a) => a.id}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    style={styles.athleteRow}
+                    onPress={() => handleAssign(item)}
+                    disabled={assigningId !== null}
+                  >
+                    <View style={styles.athleteAvatar}>
+                      <Text style={styles.athleteAvatarText}>
+                        {item.full_name.charAt(0).toUpperCase()}
+                      </Text>
+                    </View>
+                    <View style={styles.athleteInfo}>
+                      <Text style={styles.athleteName}>{item.full_name}</Text>
+                      <Text style={styles.athleteEmail}>{item.email}</Text>
+                    </View>
+                    {assigningId === item.id ? (
+                      <ActivityIndicator size="small" color={Colors.primary} />
+                    ) : (
+                      <Text style={styles.assignIcon}>＋</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                contentContainerStyle={styles.athleteList}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -175,14 +342,22 @@ export default function CoachNutritionScreen() {
 // ── PlanCard ───────────────────────────────────────────────────────────────────
 
 interface PlanCardProps {
-  plan:     NutritionPlan;
-  onPress:  () => void;
-  onDelete: (p: NutritionPlan) => void;
+  plan:       NutritionPlan;
+  onPress:    () => void;
+  onLongPress?: () => void;
+  onDelete:   (p: NutritionPlan) => void;
+  selected?:  boolean;
+  selectMode?: boolean;
 }
 
-function PlanCard({ plan, onPress, onDelete }: PlanCardProps) {
+function PlanCard({ plan, onPress, onLongPress, onDelete, selected, selectMode }: PlanCardProps) {
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, selected && styles.cardSelected]}
+      onPress={onPress}
+      onLongPress={onLongPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.cardAccent} />
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
@@ -202,13 +377,15 @@ function PlanCard({ plan, onPress, onDelete }: PlanCardProps) {
         </View>
         <Text style={styles.mealCount}>{plan.meals.length} {plan.meals.length === 1 ? 'comida' : 'comidas'}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => onDelete(plan)}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <Text style={styles.deleteIcon}>🗑</Text>
-      </TouchableOpacity>
+      {!selectMode && (
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => onDelete(plan)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={styles.deleteIcon}>🗑</Text>
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
@@ -268,6 +445,30 @@ const styles = StyleSheet.create({
   chipTextActive: { color: '#fff' },
 
   list: { gap: Spacing.sm, paddingBottom: Spacing.xl, paddingTop: Spacing.sm },
+  cardWrapper: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  cardFlex: { flex: 1 },
+
+  checkbox: {
+    width: 24, height: 24, borderRadius: 12,
+    borderWidth: 2, borderColor: Colors.textSecondary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  checkboxSelected: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  checkmark: { color: '#fff', fontSize: 14, fontWeight: '700' },
+
+  bulkBar: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, marginBottom: Spacing.sm,
+  },
+  bulkBarCount:  { color: '#fff', fontSize: FontSize.sm, fontWeight: '600' },
+  bulkBarAction: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
+
+  cancelButton: {
+    borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderWidth: 1, borderColor: Colors.textSecondary,
+  },
+  cancelButtonText: { color: Colors.textSecondary, fontSize: FontSize.sm, fontWeight: '600' },
 
   card: {
     backgroundColor: Colors.surface, borderRadius: BorderRadius.lg,
@@ -276,6 +477,7 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
+  cardSelected: { borderColor: Colors.primary, borderWidth: 2 },
   cardAccent:  { width: 4, backgroundColor: Colors.primary },
   cardContent: { flex: 1, padding: Spacing.md, gap: Spacing.xs },
   cardHeader:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.sm },
@@ -301,6 +503,32 @@ const styles = StyleSheet.create({
   deleteIcon:   { fontSize: 18 },
 
   center:        { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
+  emptyText:     { fontSize: FontSize.md, color: Colors.textSecondary },
+
+  // Modal
+  modalContainer:    { flex: 1, paddingHorizontal: Spacing.lg },
+  modalHeader: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'space-between', paddingVertical: Spacing.lg,
+  },
+  modalHeaderSpacer: { width: 60 },
+  modalCancelText:   { color: Colors.primary, fontSize: FontSize.md },
+  modalTitle:        { fontSize: FontSize.lg, fontWeight: '700', color: Colors.textPrimary },
+  modalSubtitle:     { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.md },
+  athleteList:       { paddingBottom: Spacing.xl },
+  athleteRow: {
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
+    paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.surface,
+  },
+  athleteAvatar: {
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
+  },
+  athleteAvatarText: { color: '#fff', fontWeight: '700', fontSize: FontSize.md },
+  athleteInfo:       { flex: 1 },
+  athleteName:       { fontSize: FontSize.md, fontWeight: '600', color: Colors.textPrimary },
+  athleteEmail:      { fontSize: FontSize.xs, color: Colors.textSecondary },
+  assignIcon:        { fontSize: FontSize.xl, color: Colors.primary, fontWeight: '700' },
   emptyEmoji:    { fontSize: 48 },
   emptyTitle:    { fontSize: FontSize.lg, fontWeight: '700', color: Colors.textPrimary },
   emptySubtitle: { fontSize: FontSize.sm, color: Colors.textSecondary, textAlign: 'center' },
