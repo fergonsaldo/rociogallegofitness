@@ -15,7 +15,7 @@ import { Strings } from '../../../src/shared/constants/strings';
 export default function RecipesScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { recipes, isListLoading, error, fetchRecipes, deleteRecipe } = useRecipeStore();
+  const { recipes, isListLoading, isSubmitting, error, fetchRecipes, deleteRecipe, setAllVisibility } = useRecipeStore();
 
   const [query,      setQuery]      = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -33,6 +33,18 @@ export default function RecipesScreen() {
     setActiveTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
+
+  const handleSetAllVisibility = (visible: boolean) => {
+    if (!user?.id) return;
+    Alert.alert(
+      visible ? Strings.recipeShowAllTitle : Strings.recipeHideAllTitle,
+      visible ? Strings.recipeShowAllMessage : Strings.recipeHideAllMessage,
+      [
+        { text: Strings.recipeVisibilityCancel, style: 'cancel' },
+        { text: Strings.recipeVisibilityConfirm, onPress: () => setAllVisibility(user.id!, visible) },
+      ],
+    );
+  };
 
   const handleDelete = (recipe: Recipe) => {
     Alert.alert(
@@ -68,6 +80,26 @@ export default function RecipesScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.createButtonText}>{Strings.recipeNewButton}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Bulk visibility actions */}
+        <View style={styles.bulkRow}>
+          <TouchableOpacity
+            style={[styles.bulkButton, (recipes.length === 0 || isSubmitting) && styles.bulkButtonDisabled]}
+            onPress={() => handleSetAllVisibility(true)}
+            disabled={recipes.length === 0 || isSubmitting}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.bulkButtonText}>{Strings.recipeShowAllButton}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.bulkButton, (recipes.length === 0 || isSubmitting) && styles.bulkButtonDisabled]}
+            onPress={() => handleSetAllVisibility(false)}
+            disabled={recipes.length === 0 || isSubmitting}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.bulkButtonText}>{Strings.recipeHideAllButton}</Text>
           </TouchableOpacity>
         </View>
 
@@ -164,6 +196,11 @@ function RecipeCard({ recipe, onPress, onDelete }: RecipeCardProps) {
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardName} numberOfLines={1}>{recipe.name}</Text>
+          <View style={[styles.visibilityBadge, recipe.visibleToClients ? styles.visibilityBadgeVisible : styles.visibilityBadgeHidden]}>
+            <Text style={styles.visibilityBadgeText}>
+              {recipe.visibleToClients ? Strings.recipeVisibleBadge : Strings.recipeHiddenBadge}
+            </Text>
+          </View>
         </View>
         {recipe.tags.length > 0 && (
           <View style={styles.tagRow}>
@@ -262,4 +299,14 @@ const styles = StyleSheet.create({
 
   deleteButton: { justifyContent: 'center', paddingHorizontal: Spacing.md },
   deleteIcon:   { fontSize: 18 },
+
+  bulkRow:             { flexDirection: 'row', gap: Spacing.sm, marginBottom: Spacing.sm },
+  bulkButton:          { flex: 1, borderWidth: 1, borderColor: Colors.border, borderRadius: BorderRadius.md, paddingVertical: Spacing.xs, alignItems: 'center' },
+  bulkButtonDisabled:  { opacity: 0.4 },
+  bulkButtonText:      { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '600' },
+
+  visibilityBadge:        { borderRadius: BorderRadius.full, paddingHorizontal: Spacing.sm, paddingVertical: 2, marginLeft: Spacing.xs },
+  visibilityBadgeVisible: { backgroundColor: `${Colors.success}20` },
+  visibilityBadgeHidden:  { backgroundColor: Colors.border },
+  visibilityBadgeText:    { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
 });

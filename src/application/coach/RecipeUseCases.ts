@@ -64,6 +64,17 @@ export async function deleteRecipeUseCase(
   return repo.deleteRecipe(id);
 }
 
+// ── SetAllVisibility ──────────────────────────────────────────────────────────
+
+export async function setAllRecipesVisibilityUseCase(
+  coachId: string,
+  visible: boolean,
+  repo: IRecipeRepository,
+): Promise<void> {
+  if (!coachId) throw new Error('coachId is required');
+  return repo.setAllVisibility(coachId, visible);
+}
+
 // ── filterRecipes (pure) ──────────────────────────────────────────────────────
 
 export function filterRecipes(

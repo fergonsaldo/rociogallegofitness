@@ -4,6 +4,7 @@ import {
   createRecipeUseCase,
   updateRecipeUseCase,
   deleteRecipeUseCase,
+  setAllRecipesVisibilityUseCase,
   filterRecipes,
   computeRecipeMacros,
 } from '../../../src/application/coach/RecipeUseCases';
@@ -68,6 +69,7 @@ const mockRepo: jest.Mocked<IRecipeRepository> = {
   createRecipe:      jest.fn(),
   updateRecipe:      jest.fn(),
   deleteRecipe:      jest.fn(),
+  setAllVisibility:  jest.fn(),
   uploadImage:       jest.fn(),
   deleteImage:       jest.fn(),
 };
@@ -353,5 +355,40 @@ describe('computeRecipeMacros', () => {
     const macros = computeRecipeMacros([ingredient]);
     expect(macros.calories).toBe(83);         // round(165 * 0.5) = round(82.5) = 83 (Math.round)
     expect(macros.proteinG).toBe(15.5);       // 31 * 0.5
+  });
+});
+
+// ── setAllRecipesVisibilityUseCase ────────────────────────────────────────────
+
+describe('setAllRecipesVisibilityUseCase', () => {
+  it('llama al repo con coachId y visible=true', async () => {
+    mockRepo.setAllVisibility.mockResolvedValue();
+
+    await setAllRecipesVisibilityUseCase(COACH_ID, true, mockRepo);
+
+    expect(mockRepo.setAllVisibility).toHaveBeenCalledWith(COACH_ID, true);
+  });
+
+  it('llama al repo con coachId y visible=false', async () => {
+    mockRepo.setAllVisibility.mockResolvedValue();
+
+    await setAllRecipesVisibilityUseCase(COACH_ID, false, mockRepo);
+
+    expect(mockRepo.setAllVisibility).toHaveBeenCalledWith(COACH_ID, false);
+  });
+
+  it('lanza si coachId está vacío', async () => {
+    await expect(
+      setAllRecipesVisibilityUseCase('', true, mockRepo),
+    ).rejects.toThrow('coachId is required');
+    expect(mockRepo.setAllVisibility).not.toHaveBeenCalled();
+  });
+
+  it('propaga el error del repositorio', async () => {
+    mockRepo.setAllVisibility.mockRejectedValue(new Error('DB update failed'));
+
+    await expect(
+      setAllRecipesVisibilityUseCase(COACH_ID, true, mockRepo),
+    ).rejects.toThrow('DB update failed');
   });
 });

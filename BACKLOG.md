@@ -2,6 +2,35 @@
 
 ## ✅ Completado
 
+#### RF-E6-06 — Publicación controlada de recetas
+
+**¿Qué hace?**
+El entrenador puede mostrar u ocultar masivamente sus recetas para los atletas con dos botones en la pantalla de recetas: "Mostrar todas" y "Ocultar todas". Ambas acciones piden confirmación antes de ejecutarse. Cada tarjeta de receta muestra un pill de visibilidad ("Visible" / "Oculta") que refleja el estado actual de `visible_to_clients`. Los botones se deshabilitan cuando no hay recetas o durante la operación.
+
+**Pantallas / flujo:**
+- `app/(coach)/recipes/index.tsx` — modificada
+  - Dos botones bulk bajo el header: "Mostrar todas" / "Ocultar todas"
+  - Confirmación con `Alert.alert` antes de ejecutar
+  - Pill de visibilidad en cada `RecipeCard` (verde "Visible" / gris "Oculta")
+  - Botones deshabilitados si lista vacía o `isSubmitting`
+
+**Decisiones de diseño:**
+- El campo `visible_to_clients` ya existía en la BD y en la entidad. Sin migración necesaria.
+- El UPDATE bulk usa RLS existente (`coach_id = auth.uid()`): una sola query actualiza todas las recetas del coach.
+- El estado local se actualiza optimistamente (map en el store) sin refetch para evitar flicker.
+
+**Implementación técnica:**
+- `IRecipeRepository.ts` — nuevo método `setAllVisibility(coachId, visible)`
+- `RecipeRemoteRepository.ts` — `UPDATE recipes SET visible_to_clients WHERE coach_id`
+- `RecipeUseCases.ts` — `setAllRecipesVisibilityUseCase(coachId, visible, repo)`
+- `recipeStore.ts` — nueva acción `setAllVisibility(coachId, visible) → boolean`
+- `strings.ts` — 11 nuevas claves en sección RF-E6-06
+
+**Métricas finales:**
+- Test Suites: 61/61 ✅ | Tests: 1185/1185 ✅ (+12 tests nuevos: 4 use case + 8 store)
+
+---
+
 #### RF-E6-05 — Agrupaciones de planes nutricionales
 
 **¿Qué hace?**
@@ -1052,16 +1081,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 
 ---
-
-#### RF-E6-06 (P1) Publicación controlada de contenido de librería Harbiz
-**Requisito:** Capacidad de exponer u ocultar masivamente recetas del catálogo base.
-
-**Criterios de aceptación:**
-- Botón "Mostrar todas" (o equivalente) con confirmación previa.
-- Aplicación masiva reversible.
-- Impacto reflejado en visibilidad individual por receta.
-
-**Dependencia de plan:** No observada.
 
 ---
 

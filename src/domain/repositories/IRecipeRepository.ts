@@ -11,6 +11,7 @@ export interface IRecipeRepository {
   createRecipe(input: CreateRecipeInput): Promise<Recipe>;
   updateRecipe(id: string, coachId: string, input: UpdateRecipeInput): Promise<Recipe>;
   deleteRecipe(id: string): Promise<void>;
+  setAllVisibility(coachId: string, visible: boolean): Promise<void>;
   uploadImage(coachId: string, localUri: string): Promise<string>;
   deleteImage(imagePath: string): Promise<void>;
 }

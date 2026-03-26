@@ -201,6 +201,14 @@ export class RecipeRemoteRepository implements IRecipeRepository {
     return filename;
   }
 
+  async setAllVisibility(coachId: string, visible: boolean): Promise<void> {
+    const { error } = await supabase
+      .from('recipes')
+      .update({ visible_to_clients: visible })
+      .eq('coach_id', coachId);
+    if (error) throw new Error(error.message);
+  }
+
   async deleteImage(imagePath: string): Promise<void> {
     const { error } = await supabase.storage.from(BUCKET).remove([imagePath]);
     if (error) throw new Error(error.message);

@@ -576,6 +576,19 @@ export const Strings = {
   foodFormNameRequired:        'El nombre es obligatorio',
   foodNutritionLink:           'Alimentos →',
 
+  // ── Recetas (RF-E6-03 + RF-E6-06) ───────────────────────────────────────
+  recipeVisibleBadge:               'Visible',
+  recipeHiddenBadge:                'Oculta',
+  recipeShowAllButton:              'Mostrar todas',
+  recipeHideAllButton:              'Ocultar todas',
+  recipeShowAllTitle:               'Mostrar todas las recetas',
+  recipeShowAllMessage:             'Todas tus recetas serán visibles para tus atletas. ¿Continuar?',
+  recipeHideAllTitle:               'Ocultar todas las recetas',
+  recipeHideAllMessage:             'Todas tus recetas dejarán de ser visibles para tus atletas. ¿Continuar?',
+  recipeVisibilityConfirm:          'Confirmar',
+  recipeVisibilityCancel:           'Cancelar',
+  errorFailedSetVisibility:         'Error al actualizar la visibilidad',
+
   // ── Recetas (RF-E6-03) ────────────────────────────────────────────────────
   recipeTitle:                      'Recetas',
   recipeSubtitle:                   (n: number) => `${n} ${n === 1 ? 'receta' : 'recetas'}`,

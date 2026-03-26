@@ -12,6 +12,7 @@ import {
   createRecipeUseCase,
   updateRecipeUseCase,
   deleteRecipeUseCase,
+  setAllRecipesVisibilityUseCase,
 } from '@/application/coach/RecipeUseCases';
 import { Strings } from '@/shared/constants/strings';
 
@@ -28,6 +29,7 @@ interface RecipeState {
   createRecipe(input: CreateRecipeInput, localImageUri?: string): Promise<Recipe | null>;
   updateRecipe(id: string, coachId: string, input: UpdateRecipeInput, localImageUri?: string, oldImagePath?: string | null): Promise<Recipe | null>;
   deleteRecipe(id: string, imagePath?: string | null): Promise<void>;
+  setAllVisibility(coachId: string, visible: boolean): Promise<boolean>;
   clearCurrentRecipe(): void;
   clearError(): void;
 }
@@ -118,6 +120,21 @@ export const useRecipeStore = create<RecipeState>((set, get) => ({
       set({ recipes: get().recipes.filter((r) => r.id !== id) });
     } catch (err) {
       set({ error: (err as any)?.message ?? Strings.errorFallback });
+    }
+  },
+
+  setAllVisibility: async (coachId, visible) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      await setAllRecipesVisibilityUseCase(coachId, visible, repo);
+      set((s) => ({
+        recipes: s.recipes.map((r) => ({ ...r, visibleToClients: visible })),
+        isSubmitting: false,
+      }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback, isSubmitting: false });
+      return false;
     }
   },
 
