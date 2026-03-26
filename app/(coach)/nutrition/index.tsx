@@ -35,7 +35,7 @@ const TYPE_LABELS: Record<PlanType, string> = {
 export default function CoachNutritionScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { coachPlans, coachPlansLoading, error, fetchCoachPlans, deletePlan, assignMultipleToAthlete } =
+  const { coachPlans, coachPlansLoading, error, fetchCoachPlans, deletePlan, duplicatePlan, assignMultipleToAthlete } =
     useNutritionStore();
 
   const [query, setQuery]             = useState('');
@@ -118,6 +118,12 @@ export default function CoachNutritionScreen() {
       handleCancelSelect();
       Alert.alert('✓', Strings.nutritionBulkAssignSuccess(ids.length, athlete.full_name));
     }
+  };
+
+  // ── Duplicate ─────────────────────────────────────────────────────────────
+
+  const handleDuplicate = (plan: NutritionPlan) => {
+    duplicatePlan(plan, user!.id);
   };
 
   // ── Delete ────────────────────────────────────────────────────────────────
@@ -270,6 +276,7 @@ export default function CoachNutritionScreen() {
                       }
                     }}
                     onLongPress={() => handleLongPress(item)}
+                    onDuplicate={handleDuplicate}
                     onDelete={handleDelete}
                     selectMode={selectMode}
                   />
@@ -342,15 +349,16 @@ export default function CoachNutritionScreen() {
 // ── PlanCard ───────────────────────────────────────────────────────────────────
 
 interface PlanCardProps {
-  plan:       NutritionPlan;
-  onPress:    () => void;
+  plan:        NutritionPlan;
+  onPress:     () => void;
   onLongPress?: () => void;
-  onDelete:   (p: NutritionPlan) => void;
-  selected?:  boolean;
+  onDuplicate: (p: NutritionPlan) => void;
+  onDelete:    (p: NutritionPlan) => void;
+  selected?:   boolean;
   selectMode?: boolean;
 }
 
-function PlanCard({ plan, onPress, onLongPress, onDelete, selected, selectMode }: PlanCardProps) {
+function PlanCard({ plan, onPress, onLongPress, onDuplicate, onDelete, selected, selectMode }: PlanCardProps) {
   return (
     <TouchableOpacity
       style={[styles.card, selected && styles.cardSelected]}
@@ -378,13 +386,20 @@ function PlanCard({ plan, onPress, onLongPress, onDelete, selected, selectMode }
         <Text style={styles.mealCount}>{plan.meals.length} {plan.meals.length === 1 ? 'comida' : 'comidas'}</Text>
       </View>
       {!selectMode && (
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={() => onDelete(plan)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={styles.deleteIcon}>🗑</Text>
-        </TouchableOpacity>
+        <View style={styles.cardActions}>
+          <TouchableOpacity
+            onPress={() => onDuplicate(plan)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.cardActionIcon}>📋</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => onDelete(plan)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={styles.cardActionIcon}>🗑</Text>
+          </TouchableOpacity>
+        </View>
       )}
     </TouchableOpacity>
   );
@@ -499,8 +514,8 @@ const styles = StyleSheet.create({
   macroPillLabel: { fontSize: 9, fontWeight: '700', letterSpacing: 0.5 },
   macroPillValue: { fontSize: 9, fontWeight: '600' },
 
-  deleteButton: { justifyContent: 'center', paddingHorizontal: Spacing.md },
-  deleteIcon:   { fontSize: 18 },
+  cardActions:    { justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.md, gap: Spacing.sm },
+  cardActionIcon: { fontSize: 18 },
 
   center:        { flex: 1, alignItems: 'center', justifyContent: 'center', gap: Spacing.md },
   emptyText:     { fontSize: FontSize.md, color: Colors.textSecondary },

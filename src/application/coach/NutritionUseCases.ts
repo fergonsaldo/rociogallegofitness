@@ -53,6 +53,35 @@ export async function unassignNutritionPlanUseCase(
   await repo.unassignFromAthlete(input.planId, input.athleteId);
 }
 
+// ── DuplicatePlan ─────────────────────────────────────────────────────────────
+
+const COPY_PREFIX = '(Copia) ';
+const MAX_NAME_LENGTH = 100;
+
+export async function duplicatePlanUseCase(
+  plan: NutritionPlan,
+  coachId: string,
+  repo: INutritionRepository,
+): Promise<NutritionPlan> {
+  if (!coachId) throw new Error('coachId is required');
+
+  const name = (COPY_PREFIX + plan.name).substring(0, MAX_NAME_LENGTH);
+
+  return repo.createPlan({
+    coachId,
+    name,
+    type:              plan.type,
+    description:       plan.description,
+    dailyTargetMacros: plan.dailyTargetMacros,
+    meals: plan.meals.map((m) => ({
+      name:         m.name,
+      order:        m.order,
+      targetMacros: m.targetMacros,
+      notes:        m.notes,
+    })),
+  });
+}
+
 // ── AssignPlansToAthlete (bulk) ───────────────────────────────────────────────
 
 export async function assignPlansToAthleteUseCase(

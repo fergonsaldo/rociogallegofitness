@@ -2,6 +2,31 @@
 
 ## ✅ Completado
 
+#### RF-E6-07 — Duplicado de planes nutricionales
+
+**¿Qué hace?**
+El entrenador puede duplicar cualquier plan nutricional de su lista con un toque. El plan copia se crea con el nombre "(Copia) Nombre original" (truncado a 100 caracteres si fuera necesario), el mismo tipo, descripción, macros diarios y todas las comidas del original. La copia aparece inmediatamente al principio de la lista sin necesidad de recargar.
+
+**Pantallas / flujo:**
+- `app/(coach)/nutrition/index.tsx` — modificada
+  - Botón 📋 junto al 🗑 en cada tarjeta de plan (columna de acciones vertical)
+  - Ambos botones se ocultan en modo selección (long-press)
+  - Spinner global `isSubmitting` durante la operación
+
+**Decisiones de diseño:**
+- El use case construye el input de creación manualmente, sin pasar por `CreateNutritionPlanSchema.parse`, para evitar el `meals.min(1)` del schema original y soportar el caso borde de planes sin comidas.
+- El `coachId` lo pasa la pantalla desde `useAuthStore`, siguiendo el mismo patrón que `editFood`.
+
+**Implementación técnica:**
+- `NutritionUseCases.ts` — nuevo `duplicatePlanUseCase(plan, coachId, repo)`
+- `nutritionStore.ts` — nueva acción `duplicatePlan(plan, coachId) → Promise<boolean>`
+- `nutrition/index.tsx` — `PlanCard` con prop `onDuplicate`; estilos `cardActions` / `cardActionIcon`
+
+**Métricas finales:**
+- Test Suites: 2/2 ✅ | Tests: 71/71 ✅ (+16 tests nuevos: 8 use case + 8 store)
+
+---
+
 #### RF-E6-08 — Asignación de planes nutricionales a atletas
 
 **¿Qué hace?**
@@ -942,15 +967,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E6-07 (P1) Duplicado de planes nutricionales
-**Requisito:** Copiar un plan existente para crear uno nuevo a partir de él.
-
-**Criterios de aceptación:**
-- Acción "Duplicar" accesible desde la lista de planes.
-- El plan duplicado se crea con el mismo contenido y nombre "(Copia) Nombre original".
-- El duplicado aparece en la lista sin recargar manualmente.
-
-**Dependencia:** RF-E6-01 completado.
 
 ---
 

@@ -487,6 +487,9 @@ export const Strings = {
   nutritionPlanFormNameRequired:    'El nombre del plan es obligatorio',
   nutritionPlanFormMacrosRequired:  'Define los macros objetivo',
 
+  // ── Duplicado de planes (RF-E6-07) ────────────────────────────────────────
+  nutritionDuplicatePrefix:         '(Copia) ',
+
   // ── Asignación de planes (RF-E6-08) ───────────────────────────────────────
   nutritionBulkAssignButton:        'Asignar',
   nutritionSelectionCount:          (n: number) => `${n} ${n === 1 ? 'plan seleccionado' : 'planes seleccionados'}`,
