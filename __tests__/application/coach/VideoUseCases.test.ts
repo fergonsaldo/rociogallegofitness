@@ -224,6 +224,12 @@ describe('filterVideos — text search', () => {
     expect(result[0].id).toBe('v-2');
   });
 
+  it('trims leading and trailing spaces from query before filtering', () => {
+    const result = filterVideos([VIDEO_FUERZA, VIDEO_CARDIO, VIDEO_MOVILIDAD], '  HIIT  ', []);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('v-2');
+  });
+
   it('filters by description', () => {
     const result = filterVideos([VIDEO_FUERZA, VIDEO_CARDIO], 'empuje', []);
     expect(result).toHaveLength(1);
