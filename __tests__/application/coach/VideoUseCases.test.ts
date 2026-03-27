@@ -2,6 +2,7 @@ import {
   getAllVideosUseCase,
   createVideoUseCase,
   deleteVideoUseCase,
+  setVideoVisibilityUseCase,
   filterVideos,
 } from '../../../src/application/coach/VideoUseCases';
 import { IVideoRepository } from '../../../src/domain/repositories/IVideoRepository';
@@ -15,13 +16,14 @@ const NOW      = new Date();
 
 function makeVideo(overrides: Partial<Video> = {}): Video {
   return {
-    id:          VIDEO_ID,
-    coachId:     COACH_ID,
-    title:       'Press de banca tutorial',
-    url:         'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    tags:        ['fuerza', 'pecho'],
-    description: 'Tutorial completo',
-    createdAt:   NOW,
+    id:               VIDEO_ID,
+    coachId:          COACH_ID,
+    title:            'Press de banca tutorial',
+    url:              'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    tags:             ['fuerza', 'pecho'],
+    description:      'Tutorial completo',
+    createdAt:        NOW,
+    visibleToClients: false,
     ...overrides,
   };
 }
@@ -35,9 +37,10 @@ const VALID_INPUT: CreateVideoInput = {
 };
 
 const mockRepo: jest.Mocked<IVideoRepository> = {
-  getAll: jest.fn(),
-  create: jest.fn(),
-  delete: jest.fn(),
+  getAll:         jest.fn(),
+  create:         jest.fn(),
+  delete:         jest.fn(),
+  setVisibility:  jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -146,19 +149,56 @@ describe('deleteVideoUseCase', () => {
   });
 });
 
+// ── setVideoVisibilityUseCase ─────────────────────────────────────────────────
+
+describe('setVideoVisibilityUseCase', () => {
+  it('calls repo.setVisibility with correct params when making visible', async () => {
+    mockRepo.setVisibility.mockResolvedValue(undefined);
+    await setVideoVisibilityUseCase(VIDEO_ID, true, mockRepo);
+    expect(mockRepo.setVisibility).toHaveBeenCalledWith(VIDEO_ID, true);
+  });
+
+  it('calls repo.setVisibility with false when hiding', async () => {
+    mockRepo.setVisibility.mockResolvedValue(undefined);
+    await setVideoVisibilityUseCase(VIDEO_ID, false, mockRepo);
+    expect(mockRepo.setVisibility).toHaveBeenCalledWith(VIDEO_ID, false);
+  });
+
+  it('throws when videoId is not a valid UUID', async () => {
+    await expect(setVideoVisibilityUseCase('not-a-uuid', true, mockRepo))
+      .rejects.toThrow('Invalid video ID');
+    expect(mockRepo.setVisibility).not.toHaveBeenCalled();
+  });
+
+  it('throws when videoId is empty', async () => {
+    await expect(setVideoVisibilityUseCase('', true, mockRepo))
+      .rejects.toThrow('Invalid video ID');
+    expect(mockRepo.setVisibility).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.setVisibility.mockRejectedValue(new Error('RLS denied'));
+    await expect(setVideoVisibilityUseCase(VIDEO_ID, true, mockRepo))
+      .rejects.toThrow('RLS denied');
+  });
+});
+
 // ── filterVideos ──────────────────────────────────────────────────────────────
 
 const VIDEO_FUERZA = makeVideo({
   id: 'v-1', title: 'Press de banca tutorial',
   tags: ['fuerza', 'pecho'], description: 'Ejercicio de empuje',
+  visibleToClients: true,
 });
 const VIDEO_CARDIO = makeVideo({
   id: 'v-2', title: 'HIIT 20 minutos',
   tags: ['cardio', 'quemagrasa'], description: 'Alta intensidad',
+  visibleToClients: false,
 });
 const VIDEO_MOVILIDAD = makeVideo({
   id: 'v-3', title: 'Movilidad de hombros',
   tags: ['movilidad', 'calentamiento'], description: '',
+  visibleToClients: false,
 });
 
 describe('filterVideos — no filters', () => {
@@ -231,5 +271,40 @@ describe('filterVideos — combined text + tag', () => {
   it('returns empty when text matches but tag does not', () => {
     const result = filterVideos([VIDEO_FUERZA], 'press', ['cardio']);
     expect(result).toHaveLength(0);
+  });
+});
+
+describe('filterVideos — visibility filter', () => {
+  const ALL = [VIDEO_FUERZA, VIDEO_CARDIO, VIDEO_MOVILIDAD];
+
+  it('returns all videos when visibility is "all"', () => {
+    expect(filterVideos(ALL, '', [], 'all')).toHaveLength(3);
+  });
+
+  it('returns only visible videos when visibility is "visible"', () => {
+    const result = filterVideos(ALL, '', [], 'visible');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('v-1');
+  });
+
+  it('returns only hidden videos when visibility is "hidden"', () => {
+    const result = filterVideos(ALL, '', [], 'hidden');
+    expect(result).toHaveLength(2);
+    expect(result.map((v) => v.id)).not.toContain('v-1');
+  });
+
+  it('defaults to "all" when visibility param is omitted', () => {
+    expect(filterVideos(ALL, '', [])).toHaveLength(3);
+  });
+
+  it('combines visibility with text search', () => {
+    const result = filterVideos(ALL, 'HIIT', [], 'hidden');
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('v-2');
+  });
+
+  it('returns empty when visibility filter matches nothing', () => {
+    const allHidden = ALL.map((v) => ({ ...v, visibleToClients: false }));
+    expect(filterVideos(allHidden, '', [], 'visible')).toHaveLength(0);
   });
 });

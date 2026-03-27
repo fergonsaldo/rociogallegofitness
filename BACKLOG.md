@@ -950,6 +950,40 @@ Corrección de un bug estructural presente en todos los stores y repositorios: l
 
 ---
 
+#### RF-E5-02/03 — Visibilidad de vídeos
+
+**¿Qué hace?**
+El entrenador puede marcar cada vídeo como visible o no visible para sus clientes desde la biblioteca de vídeos. Al crear un vídeo, decide su visibilidad inicial con un toggle. En la lista, puede alternar la visibilidad de cada vídeo con un toque (👁/🙈) y filtrar la biblioteca por estado: Todos, Visibles u Ocultos. Los vídeos visibles muestran un pill verde "Visible" en su tarjeta.
+
+**Pantallas / flujo:**
+- `app/(coach)/videos/index.tsx` — modificada
+  - Chips de filtro "Todos / Visibles / Ocultos" bajo la barra de búsqueda
+  - Pill "Visible" (verde) en cada tarjeta de vídeo visible
+  - Icono 👁/🙈 tap para alternar visibilidad del vídeo individualmente
+  - Confirmación con Alert tras el cambio
+- `app/(coach)/videos/create.tsx` — modificada
+  - Nuevo toggle Switch "Visible para clientes" antes del botón guardar
+  - Default: oculto (false)
+
+**Decisiones de diseño:**
+- Visibilidad per-vídeo (no bulk), siguiendo el mismo patrón que el toggle individual previsto — más granular que el bulk de recetas.
+- El filtro de visibilidad es un chip de selección única (no multi-select) para simplificar la UX.
+- El update es optimista: el catálogo local se actualiza antes de confirmar respuesta de red.
+
+**Implementación técnica:**
+- `supabase/migrations/20260327100000_add_visible_to_clients_to_videos.sql` — `ALTER TABLE videos ADD COLUMN visible_to_clients boolean NOT NULL DEFAULT false`
+- `Video.ts` — campo `visibleToClients: z.boolean().default(false)` en `CreateVideoSchema` y `VideoSchema`
+- `IVideoRepository.ts` — nuevo método `setVisibility(videoId, visible)`
+- `VideoRemoteRepository.ts` — `VideoRow` ampliado, `mapRow` actualizado, `create` incluye `visible_to_clients`, nuevo método `setVisibility`
+- `VideoUseCases.ts` — `setVideoVisibilityUseCase` + tipo `VisibilityFilter` + parámetro `visibility` en `filterVideos`
+- `videoStore.ts` — estado `visibilityFilter`, acciones `setVisibility` y `setVisibilityFilter`
+- `strings.ts` — 6 nuevas claves en sección RF-E5-02/03
+
+**Métricas finales:**
+- Test Suites: 61/61 ✅ | Tests: 1231/1231 ✅ (+18 tests nuevos: 11 use case + 7 store)
+
+---
+
 ## 💡 Pendiente
 
 ---
@@ -1050,27 +1084,7 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### ÉPICA E5 — Librería: vídeos
 
-> RF-E5-01 (biblioteca de vídeos) completado — ver sección Completado.
-
-#### RF-E5-02 (P1) Alta de vídeo
-**Requisito:** Añadir vídeo con metadatos de publicación.
-
-**Criterios de aceptación:**
-- Acción "Añadir vídeo" accesible desde la biblioteca.
-- Campos mínimos: título, fuente, etiquetas y visibilidad.
-- Previsualización y validación previa al guardado.
-
-**Dependencia de plan:** No observada.
-
----
-
-#### RF-E5-03 (P1) Gestión de visibilidad de vídeos
-**Requisito:** Mostrar u ocultar vídeos para clientes y equipo según reglas.
-
-**Criterios de aceptación:**
-- Estado visible/no visible por elemento.
-- Cambio de estado inmediato y auditable.
-- Filtro por estado de visibilidad.
+> RF-E5-01, RF-E5-02 y RF-E5-03 completados — ver sección Completado.
 
 **Dependencia de plan:** No observada.
 

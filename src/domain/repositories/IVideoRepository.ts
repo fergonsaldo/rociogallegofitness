@@ -4,4 +4,5 @@ export interface IVideoRepository {
   getAll(coachId: string): Promise<Video[]>;
   create(input: CreateVideoInput): Promise<Video>;
   delete(id: string): Promise<void>;
+  setVisibility(videoId: string, visible: boolean): Promise<void>;
 }

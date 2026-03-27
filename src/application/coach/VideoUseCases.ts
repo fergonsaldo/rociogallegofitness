@@ -30,12 +30,24 @@ export async function deleteVideoUseCase(
   await repo.delete(id);
 }
 
+export async function setVideoVisibilityUseCase(
+  videoId: string,
+  visible: boolean,
+  repo: IVideoRepository,
+): Promise<void> {
+  if (!validateUUID(videoId)) throw new Error('Invalid video ID');
+  await repo.setVisibility(videoId, visible);
+}
+
 // ── Pure filter (exported for testing) ───────────────────────────────────────
+
+export type VisibilityFilter = 'all' | 'visible' | 'hidden';
 
 export function filterVideos(
   items: Video[],
   query: string,
   tags: string[],
+  visibility: VisibilityFilter = 'all',
 ): Video[] {
   let result = items;
 
@@ -50,6 +62,12 @@ export function filterVideos(
 
   if (tags.length > 0) {
     result = result.filter((v) => tags.some((t) => v.tags.includes(t)));
+  }
+
+  if (visibility === 'visible') {
+    result = result.filter((v) => v.visibleToClients);
+  } else if (visibility === 'hidden') {
+    result = result.filter((v) => !v.visibleToClients);
   }
 
   return result;

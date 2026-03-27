@@ -5,10 +5,11 @@ import { Video } from '../../../src/domain/entities/Video';
 // ── Mocks ─────────────────────────────────────────────────────────────────────
 
 jest.mock('../../../src/application/coach/VideoUseCases', () => ({
-  getAllVideosUseCase: jest.fn(),
-  createVideoUseCase: jest.fn(),
-  deleteVideoUseCase: jest.fn(),
-  filterVideos:       jest.fn(),
+  getAllVideosUseCase:      jest.fn(),
+  createVideoUseCase:      jest.fn(),
+  deleteVideoUseCase:      jest.fn(),
+  setVideoVisibilityUseCase: jest.fn(),
+  filterVideos:            jest.fn(),
 }));
 
 jest.mock('../../../src/infrastructure/supabase/remote/VideoRemoteRepository', () => ({
@@ -19,25 +20,28 @@ import {
   getAllVideosUseCase,
   createVideoUseCase,
   deleteVideoUseCase,
+  setVideoVisibilityUseCase,
 } from '../../../src/application/coach/VideoUseCases';
 
-const mockGetAll = getAllVideosUseCase as jest.MockedFunction<typeof getAllVideosUseCase>;
-const mockCreate = createVideoUseCase as jest.MockedFunction<typeof createVideoUseCase>;
-const mockDelete = deleteVideoUseCase as jest.MockedFunction<typeof deleteVideoUseCase>;
+const mockGetAll       = getAllVideosUseCase      as jest.MockedFunction<typeof getAllVideosUseCase>;
+const mockCreate       = createVideoUseCase       as jest.MockedFunction<typeof createVideoUseCase>;
+const mockDelete       = deleteVideoUseCase       as jest.MockedFunction<typeof deleteVideoUseCase>;
+const mockSetVisibility = setVideoVisibilityUseCase as jest.MockedFunction<typeof setVideoVisibilityUseCase>;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
 const COACH_ID = '00000000-0000-4000-b000-000000000001';
 const NOW      = new Date();
 
-function makeVideo(id: string, title = `Vídeo ${id}`): Video {
+function makeVideo(id: string, title = `Vídeo ${id}`, visibleToClients = false): Video {
   return {
     id,
-    coachId:   COACH_ID,
+    coachId:          COACH_ID,
     title,
-    url:       'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-    tags:      ['fuerza'],
-    createdAt: NOW,
+    url:              'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    tags:             ['fuerza'],
+    createdAt:        NOW,
+    visibleToClients,
   };
 }
 
@@ -55,7 +59,10 @@ const VALID_INPUT = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function resetStore() {
-  useVideoStore.setState({ catalog: [], isLoading: false, isCreating: false, error: null });
+  useVideoStore.setState({
+    catalog: [], isLoading: false, isCreating: false,
+    error: null, visibilityFilter: 'all',
+  });
 }
 
 beforeEach(() => { jest.clearAllMocks(); resetStore(); });
@@ -173,5 +180,60 @@ describe('useVideoStore — delete', () => {
     mockDelete.mockRejectedValue('unexpected');
     await act(async () => { await useVideoStore.getState().delete('id-a'); });
     expect(useVideoStore.getState().error).toBe('Error al eliminar el vídeo');
+  });
+});
+
+// ── setVisibility ─────────────────────────────────────────────────────────────
+
+describe('useVideoStore — setVisibility', () => {
+  it('updates visibleToClients optimistically on success', async () => {
+    useVideoStore.setState({ catalog: [makeVideo('id-a', 'A', false)] });
+    mockSetVisibility.mockResolvedValue(undefined);
+    await act(async () => { await useVideoStore.getState().setVisibility('id-a', true); });
+    expect(useVideoStore.getState().catalog[0].visibleToClients).toBe(true);
+  });
+
+  it('returns true on success', async () => {
+    useVideoStore.setState({ catalog: [makeVideo('id-a')] });
+    mockSetVisibility.mockResolvedValue(undefined);
+    let result!: boolean;
+    await act(async () => { result = await useVideoStore.getState().setVisibility('id-a', true); });
+    expect(result).toBe(true);
+  });
+
+  it('returns false and sets error on failure', async () => {
+    useVideoStore.setState({ catalog: [makeVideo('id-a')] });
+    mockSetVisibility.mockRejectedValue(new Error('RLS denied'));
+    let result!: boolean;
+    await act(async () => { result = await useVideoStore.getState().setVisibility('id-a', true); });
+    expect(result).toBe(false);
+    expect(useVideoStore.getState().error).toBe('RLS denied');
+  });
+
+  it('does not modify catalog on failure', async () => {
+    useVideoStore.setState({ catalog: [makeVideo('id-a', 'A', false)] });
+    mockSetVisibility.mockRejectedValue(new Error('Error'));
+    await act(async () => { await useVideoStore.getState().setVisibility('id-a', true); });
+    expect(useVideoStore.getState().catalog[0].visibleToClients).toBe(false);
+  });
+});
+
+// ── setVisibilityFilter ───────────────────────────────────────────────────────
+
+describe('useVideoStore — setVisibilityFilter', () => {
+  it('updates visibilityFilter state', () => {
+    useVideoStore.getState().setVisibilityFilter('visible');
+    expect(useVideoStore.getState().visibilityFilter).toBe('visible');
+  });
+
+  it('can set to hidden', () => {
+    useVideoStore.getState().setVisibilityFilter('hidden');
+    expect(useVideoStore.getState().visibilityFilter).toBe('hidden');
+  });
+
+  it('can reset to all', () => {
+    useVideoStore.setState({ visibilityFilter: 'hidden' });
+    useVideoStore.getState().setVisibilityFilter('all');
+    expect(useVideoStore.getState().visibilityFilter).toBe('all');
   });
 });

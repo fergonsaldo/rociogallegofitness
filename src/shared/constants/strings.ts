@@ -706,6 +706,15 @@ export const Strings = {
   errorFailedCreateVideo:   'Error al crear el vídeo',
   errorFailedDeleteVideo:   'Error al eliminar el vídeo',
 
+  // ── Vídeos — visibilidad (RF-E5-02/03) ───────────────────────────────────
+  videoVisibilityAll:       'Todos',
+  videoVisibilityVisible:   'Visibles',
+  videoVisibilityHidden:    'Ocultos',
+  videoVisibilityBadge:     'Visible',
+  videoFormLabelVisibility: 'Visible para clientes',
+  videoVisibilitySuccess:   (title: string, visible: boolean) =>
+    `"${title}" ahora es ${visible ? 'visible' : 'oculto'} para tus clientes`,
+
   // ── Mensajería ──────────────────────────────────────────────────────────────
   tabMessages: 'Mensajes',
   messagesTitle: 'Mensajes',

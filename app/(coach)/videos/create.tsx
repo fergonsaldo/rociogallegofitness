@@ -1,5 +1,5 @@
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView,
+  View, Text, TextInput, TouchableOpacity, ScrollView, Switch,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useState } from 'react';
@@ -14,11 +14,12 @@ export default function CreateVideoScreen() {
   const { user } = useAuthStore();
   const { create, isCreating } = useVideoStore();
 
-  const [title, setTitle]           = useState('');
-  const [url, setUrl]               = useState('');
-  const [tagInput, setTagInput]     = useState('');
-  const [tags, setTags]             = useState<string[]>([]);
-  const [description, setDescription] = useState('');
+  const [title, setTitle]               = useState('');
+  const [url, setUrl]                   = useState('');
+  const [tagInput, setTagInput]         = useState('');
+  const [tags, setTags]                 = useState<string[]>([]);
+  const [description, setDescription]   = useState('');
+  const [visibleToClients, setVisibleToClients] = useState(false);
 
   const handleAddTag = () => {
     const trimmed = tagInput.trim().toLowerCase();
@@ -43,11 +44,12 @@ export default function CreateVideoScreen() {
     }
 
     const result = await create({
-      coachId:     user!.id,
-      title:       title.trim(),
-      url:         url.trim(),
+      coachId:          user!.id,
+      title:            title.trim(),
+      url:              url.trim(),
       tags,
-      description: description.trim() || undefined,
+      description:      description.trim() || undefined,
+      visibleToClients,
     });
 
     if (result) {
@@ -133,6 +135,17 @@ export default function CreateVideoScreen() {
           maxLength={500}
         />
 
+        {/* Visibilidad */}
+        <View style={styles.switchRow}>
+          <Text style={styles.switchLabel}>{Strings.videoFormLabelVisibility}</Text>
+          <Switch
+            value={visibleToClients}
+            onValueChange={setVisibleToClients}
+            trackColor={{ false: Colors.border, true: Colors.primary }}
+            thumbColor="#fff"
+          />
+        </View>
+
         {/* Submit */}
         <TouchableOpacity
           style={[styles.submitButton, isCreating && styles.submitButtonDisabled]}
@@ -195,4 +208,11 @@ const styles = StyleSheet.create({
   },
   submitButtonDisabled: { opacity: 0.6 },
   submitButtonText: { color: '#fff', fontSize: FontSize.md, fontWeight: '700' },
+
+  switchRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: Spacing.md, paddingVertical: Spacing.sm,
+    borderTopWidth: 1, borderTopColor: Colors.border,
+  },
+  switchLabel: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textSecondary },
 });

@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useVideoStore } from '../../../src/presentation/stores/videoStore';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { Video } from '../../../src/domain/entities/Video';
-import { filterVideos } from '../../../src/application/coach/VideoUseCases';
+import { filterVideos, VisibilityFilter } from '../../../src/application/coach/VideoUseCases';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
 
@@ -17,7 +17,11 @@ import { Strings } from '../../../src/shared/constants/strings';
 export default function CoachVideosScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { catalog, isLoading, error, fetchAll, delete: deleteVideo } = useVideoStore();
+  const {
+    catalog, isLoading, error,
+    visibilityFilter,
+    fetchAll, delete: deleteVideo, setVisibility, setVisibilityFilter,
+  } = useVideoStore();
 
   const [query, setQuery]           = useState('');
   const [activeTags, setActiveTags] = useState<string[]>([]);
@@ -29,7 +33,7 @@ export default function CoachVideosScreen() {
   );
 
   const availableTags = [...new Set(catalog.flatMap((v) => v.tags))].sort();
-  const filtered = filterVideos(catalog, query, activeTags);
+  const filtered = filterVideos(catalog, query, activeTags, visibilityFilter);
 
   const toggleTag = (tag: string) =>
     setActiveTags((prev) =>
@@ -46,6 +50,18 @@ export default function CoachVideosScreen() {
       ],
     );
   };
+
+  const handleToggleVisibility = async (video: Video) => {
+    const newVisible = !video.visibleToClients;
+    await setVisibility(video.id, newVisible);
+    Alert.alert('✓', Strings.videoVisibilitySuccess(video.title, newVisible));
+  };
+
+  const VISIBILITY_OPTIONS: { label: string; value: VisibilityFilter }[] = [
+    { label: Strings.videoVisibilityAll,     value: 'all' },
+    { label: Strings.videoVisibilityVisible, value: 'visible' },
+    { label: Strings.videoVisibilityHidden,  value: 'hidden' },
+  ];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -77,6 +93,21 @@ export default function CoachVideosScreen() {
           value={query}
           onChangeText={setQuery}
         />
+
+        {/* Visibility filter chips */}
+        <View style={styles.visibilityRow}>
+          {VISIBILITY_OPTIONS.map((opt) => (
+            <TouchableOpacity
+              key={opt.value}
+              style={[styles.visChip, visibilityFilter === opt.value && styles.visChipActive]}
+              onPress={() => setVisibilityFilter(opt.value)}
+            >
+              <Text style={[styles.visChipText, visibilityFilter === opt.value && styles.visChipTextActive]}>
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* Tag chips (derived from catalog) */}
         {availableTags.length > 0 && (
@@ -132,7 +163,7 @@ export default function CoachVideosScreen() {
             data={filtered}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <VideoCard video={item} onDelete={handleDelete} />
+              <VideoCard video={item} onDelete={handleDelete} onToggleVisibility={handleToggleVisibility} />
             )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
@@ -146,24 +177,39 @@ export default function CoachVideosScreen() {
 // ── VideoCard ──────────────────────────────────────────────────────────────────
 
 interface VideoCardProps {
-  video:    Video;
-  onDelete: (v: Video) => void;
+  video:               Video;
+  onDelete:            (v: Video) => void;
+  onToggleVisibility:  (v: Video) => void;
 }
 
-function VideoCard({ video, onDelete }: VideoCardProps) {
+function VideoCard({ video, onDelete, onToggleVisibility }: VideoCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardAccent} />
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle} numberOfLines={1}>{video.title}</Text>
-          <TouchableOpacity
-            style={styles.deleteButton}
-            onPress={() => onDelete(video)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.deleteIcon}>🗑</Text>
-          </TouchableOpacity>
+          <View style={styles.cardActions}>
+            {video.visibleToClients && (
+              <View style={styles.visibilityBadge}>
+                <Text style={styles.visibilityBadgeText}>{Strings.videoVisibilityBadge}</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.visibilityToggle}
+              onPress={() => onToggleVisibility(video)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.visibilityIcon}>{video.visibleToClients ? '👁' : '🙈'}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.deleteButton}
+              onPress={() => onDelete(video)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.deleteIcon}>🗑</Text>
+            </TouchableOpacity>
+          </View>
         </View>
         <Text style={styles.cardUrl} numberOfLines={1}>{video.url}</Text>
         {video.description ? (
@@ -209,6 +255,16 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md, color: Colors.textPrimary, marginBottom: Spacing.xs,
   },
 
+  visibilityRow: { flexDirection: 'row', gap: Spacing.xs, marginBottom: Spacing.xs },
+  visChip: {
+    paddingHorizontal: Spacing.md, paddingVertical: 6,
+    borderRadius: BorderRadius.full, borderWidth: 1,
+    borderColor: Colors.border, backgroundColor: Colors.surface,
+  },
+  visChipActive:     { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  visChipText:       { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '500' },
+  visChipTextActive: { color: '#fff' },
+
   chipsRow:     { flexGrow: 0, marginBottom: Spacing.xs },
   chipsContent: { gap: Spacing.xs, paddingRight: Spacing.md },
   chip: {
@@ -235,8 +291,17 @@ const styles = StyleSheet.create({
   cardTitle:       { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary, flex: 1 },
   cardUrl:         { fontSize: FontSize.xs, color: Colors.textSecondary },
   cardDescription: { fontSize: FontSize.xs, color: Colors.textMuted },
-  deleteButton:    { justifyContent: 'center', paddingLeft: Spacing.sm },
+  cardActions:     { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  deleteButton:    { justifyContent: 'center', paddingLeft: Spacing.xs },
   deleteIcon:      { fontSize: 18 },
+  visibilityToggle: { justifyContent: 'center' },
+  visibilityIcon:   { fontSize: 18 },
+  visibilityBadge: {
+    backgroundColor: '#10b98115', borderRadius: BorderRadius.full,
+    paddingHorizontal: Spacing.sm, paddingVertical: 2,
+    borderWidth: 1, borderColor: '#10b98130',
+  },
+  visibilityBadgeText: { fontSize: FontSize.xs, color: '#10b981', fontWeight: '600' },
 
   tagRow:       { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.xs, marginTop: 2 },
   tagChip:      { backgroundColor: `${Colors.primary}15`, borderRadius: BorderRadius.full, paddingHorizontal: Spacing.sm, paddingVertical: 2 },
