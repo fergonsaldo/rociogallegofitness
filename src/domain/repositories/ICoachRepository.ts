@@ -17,6 +17,19 @@ export interface AthleteRoutineAssignment {
   assignedAt: Date;
 }
 
+export interface AthleteCardioAssignment {
+  cardioId: string;
+  cardioName: string;
+  assignedAt: Date;
+}
+
+export interface AthleteNutritionAssignment {
+  planId: string;
+  planName: string;
+  planType: string;
+  assignedAt: Date;
+}
+
 export interface AthleteSession {
   id: string;
   startedAt: Date;
@@ -44,6 +57,12 @@ export interface ICoachRepository {
 
   /** Returns routines currently assigned to an athlete */
   getAthleteAssignments(athleteId: string): Promise<AthleteRoutineAssignment[]>;
+
+  /** Returns cardios currently assigned to an athlete */
+  getAthleteCardioAssignments(athleteId: string): Promise<AthleteCardioAssignment[]>;
+
+  /** Returns nutrition plans assigned to an athlete, newest first */
+  getAthleteNutritionAssignments(athleteId: string): Promise<AthleteNutritionAssignment[]>;
 
   /** Returns the N most recent sessions for an athlete */
   getAthleteSessions(athleteId: string, limit: number): Promise<AthleteSession[]>;

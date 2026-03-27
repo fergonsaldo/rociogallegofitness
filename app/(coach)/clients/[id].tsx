@@ -32,7 +32,7 @@ export default function ClientDetailScreen() {
   const { getOrOpenConversation } = useMessageStore();
   const { tags: coachTags, fetchTags } = useTagStore();
 
-  const [detail, setDetail] = useState<AthleteDetail>({ assignments: [], sessions: [] });
+  const [detail, setDetail] = useState<AthleteDetail>({ assignments: [], cardioAssignments: [], nutritionAssignments: [], sessions: [] });
   const [athleteTags, setAthleteTags] = useState<ClientTag[]>([]);
   const [pickerVisible, setPickerVisible] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -111,7 +111,7 @@ export default function ClientDetailScreen() {
     return `${mins} min`;
   };
 
-  const { assignments, sessions } = detail;
+  const { assignments, cardioAssignments, nutritionAssignments, sessions } = detail;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -221,6 +221,53 @@ export default function ClientDetailScreen() {
           </View>
 
           <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{Strings.sectionCardios}</Text>
+            {cardioAssignments.length === 0 ? (
+              <View style={styles.emptySection}>
+                <Text style={styles.emptySectionText}>{Strings.clientNoCardiosAssigned}</Text>
+              </View>
+            ) : cardioAssignments.map((c) => (
+              <TouchableOpacity
+                key={c.cardioId}
+                style={styles.routineCard}
+                onPress={() => router.push({ pathname: '/(coach)/cardios', params: {} })}
+              >
+                <View style={[styles.routineAccent, styles.cardioAccent]} />
+                <View style={styles.routineContent}>
+                  <Text style={styles.routineName}>{c.cardioName}</Text>
+                  <Text style={styles.routineDate}>
+                    {Strings.labelAssigned(c.assignedAt.toLocaleDateString('es', { month: 'short', day: 'numeric', year: 'numeric' }))}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>{Strings.sectionNutritionPlan}</Text>
+            {nutritionAssignments.length === 0 ? (
+              <View style={styles.emptySection}>
+                <Text style={styles.emptySectionText}>{Strings.clientNoNutritionPlan}</Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.routineCard}
+                onPress={() => router.push({ pathname: '/(coach)/nutrition/[id]', params: { id: nutritionAssignments[0].planId } })}
+              >
+                <View style={[styles.routineAccent, styles.nutritionAccent]} />
+                <View style={styles.routineContent}>
+                  <Text style={styles.routineName}>{nutritionAssignments[0].planName}</Text>
+                  <Text style={styles.routineDate}>
+                    {Strings.clientNutritionPlanAssigned(
+                      nutritionAssignments[0].assignedAt.toLocaleDateString('es', { month: 'short', day: 'numeric', year: 'numeric' })
+                    )}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <View style={styles.section}>
             <Text style={styles.sectionLabel}>SESIONES RECIENTES</Text>
             {sessions.length === 0 ? (
               <View style={styles.emptySection}>
@@ -295,7 +342,9 @@ const styles = StyleSheet.create({
   emptySection: { backgroundColor: Colors.surface, borderRadius: BorderRadius.md, padding: Spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: Colors.border },
   emptySectionText: { color: Colors.textMuted, fontSize: FontSize.sm },
   routineCard: { backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.border, flexDirection: 'row', alignItems: 'center', overflow: 'hidden' },
-  routineAccent: { width: 4, alignSelf: 'stretch', backgroundColor: Colors.primary },
+  routineAccent:   { width: 4, alignSelf: 'stretch', backgroundColor: Colors.primary },
+  cardioAccent:    { backgroundColor: Colors.athlete },
+  nutritionAccent: { backgroundColor: Colors.warning },
   routineContent: { flex: 1, padding: Spacing.md, gap: 2 },
   routineName: { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary },
   routineDate: { fontSize: FontSize.xs, color: Colors.textMuted },

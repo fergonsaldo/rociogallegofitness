@@ -455,6 +455,13 @@ export const Strings = {
   errorFailedDeleteCardio:  'Error al eliminar el cardio',
   errorFailedAssignCardio:  'Error al asignar el cardio',
 
+  // ── Vista consolidada de contenido del atleta (RF-E4-05) ─────────────────
+  sectionCardios:              'CARDIOS ASIGNADOS',
+  sectionNutritionPlan:        'PLAN NUTRICIONAL',
+  clientNoCardiosAssigned:     'Sin cardios asignados aún',
+  clientNoNutritionPlan:       'Sin plan nutricional asignado',
+  clientNutritionPlanAssigned: (date: string) => `Asignado: ${date}`,
+
   // ── Planes nutricionales (RF-E6-01) ──────────────────────────────────────
   nutritionPlanTitle:               'Planes nutricionales',
   nutritionPlanSubtitle:            (n: number) => `${n} ${n === 1 ? 'plan' : 'planes'}`,

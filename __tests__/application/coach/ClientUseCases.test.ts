@@ -7,7 +7,7 @@ import {
   getAthleteDetailUseCase,
   unassignRoutineFromAthleteUseCase,
 } from '../../../src/application/coach/ClientUseCases';
-import { ICoachRepository, CoachAthlete, AthleteRoutineAssignment, AthleteSession, ClientStatus } from '../../../src/domain/repositories/ICoachRepository';
+import { ICoachRepository, CoachAthlete, AthleteRoutineAssignment, AthleteCardioAssignment, AthleteNutritionAssignment, AthleteSession, ClientStatus } from '../../../src/domain/repositories/ICoachRepository';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -18,8 +18,19 @@ const NOW        = new Date();
 
 const ATHLETE: CoachAthlete = { id: ATHLETE_ID, fullName: 'Ana García', email: 'ana@test.com' };
 
+const CARDIO_ID  = 'card-uuid-0001-0000-000000000001';
+const PLAN_ID    = 'plan-uuid-0001-0000-000000000001';
+
 const ASSIGNMENT: AthleteRoutineAssignment = {
   routineId: ROUTINE_ID, routineName: 'Push A', assignedAt: NOW,
+};
+
+const CARDIO_ASSIGNMENT: AthleteCardioAssignment = {
+  cardioId: CARDIO_ID, cardioName: 'Carrera 30 min', assignedAt: NOW,
+};
+
+const NUTRITION_ASSIGNMENT: AthleteNutritionAssignment = {
+  planId: PLAN_ID, planName: 'Déficit verano', planType: 'deficit', assignedAt: NOW,
 };
 
 const SESSION: AthleteSession = {
@@ -29,12 +40,14 @@ const SESSION: AthleteSession = {
 // ── Mock repo ─────────────────────────────────────────────────────────────────
 
 const mockRepo: jest.Mocked<ICoachRepository> = {
-  getAthletes:            jest.fn(),
-  getAthleteAssignments:  jest.fn(),
-  getAthleteSessions:     jest.fn(),
-  unassignRoutine:        jest.fn(),
-  getDashboardSummary:    jest.fn(),
-  updateAthleteStatus:    jest.fn(),
+  getAthletes:                     jest.fn(),
+  getAthleteAssignments:           jest.fn(),
+  getAthleteCardioAssignments:     jest.fn(),
+  getAthleteNutritionAssignments:  jest.fn(),
+  getAthleteSessions:              jest.fn(),
+  unassignRoutine:                 jest.fn(),
+  getDashboardSummary:             jest.fn(),
+  updateAthleteStatus:             jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -69,40 +82,86 @@ describe('getCoachAthletesUseCase', () => {
 // ── getAthleteDetailUseCase ───────────────────────────────────────────────────
 
 describe('getAthleteDetailUseCase', () => {
-  it('returns assignments and sessions in parallel', async () => {
+  it('devuelve rutinas, cardios, planes y sesiones en paralelo', async () => {
     mockRepo.getAthleteAssignments.mockResolvedValue([ASSIGNMENT]);
+    mockRepo.getAthleteCardioAssignments.mockResolvedValue([CARDIO_ASSIGNMENT]);
+    mockRepo.getAthleteNutritionAssignments.mockResolvedValue([NUTRITION_ASSIGNMENT]);
     mockRepo.getAthleteSessions.mockResolvedValue([SESSION]);
 
     const result = await getAthleteDetailUseCase(ATHLETE_ID, mockRepo);
 
     expect(result.assignments).toHaveLength(1);
+    expect(result.cardioAssignments).toHaveLength(1);
+    expect(result.nutritionAssignments).toHaveLength(1);
     expect(result.sessions).toHaveLength(1);
     expect(mockRepo.getAthleteAssignments).toHaveBeenCalledWith(ATHLETE_ID);
+    expect(mockRepo.getAthleteCardioAssignments).toHaveBeenCalledWith(ATHLETE_ID);
+    expect(mockRepo.getAthleteNutritionAssignments).toHaveBeenCalledWith(ATHLETE_ID);
     expect(mockRepo.getAthleteSessions).toHaveBeenCalledWith(ATHLETE_ID, 10);
   });
 
-  it('returns empty arrays when athlete has no data', async () => {
+  it('devuelve arrays vacíos cuando el atleta no tiene contenido asignado', async () => {
     mockRepo.getAthleteAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteCardioAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteNutritionAssignments.mockResolvedValue([]);
     mockRepo.getAthleteSessions.mockResolvedValue([]);
 
     const result = await getAthleteDetailUseCase(ATHLETE_ID, mockRepo);
     expect(result.assignments).toEqual([]);
+    expect(result.cardioAssignments).toEqual([]);
+    expect(result.nutritionAssignments).toEqual([]);
     expect(result.sessions).toEqual([]);
   });
 
-  it('throws when athleteId is empty', async () => {
+  it('devuelve múltiples cardios asignados correctamente', async () => {
+    const cardio2: AthleteCardioAssignment = { cardioId: 'card-002', cardioName: 'Bici 45 min', assignedAt: NOW };
+    mockRepo.getAthleteAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteCardioAssignments.mockResolvedValue([CARDIO_ASSIGNMENT, cardio2]);
+    mockRepo.getAthleteNutritionAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteSessions.mockResolvedValue([]);
+
+    const result = await getAthleteDetailUseCase(ATHLETE_ID, mockRepo);
+    expect(result.cardioAssignments).toHaveLength(2);
+    expect(result.cardioAssignments[0].cardioName).toBe('Carrera 30 min');
+  });
+
+  it('devuelve múltiples planes de nutrición ordenados por fecha (más reciente primero)', async () => {
+    const olderPlan: AthleteNutritionAssignment = { planId: 'plan-002', planName: 'Plan antiguo', planType: 'maintenance', assignedAt: new Date('2024-01-01') };
+    mockRepo.getAthleteAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteCardioAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteNutritionAssignments.mockResolvedValue([NUTRITION_ASSIGNMENT, olderPlan]);
+    mockRepo.getAthleteSessions.mockResolvedValue([]);
+
+    const result = await getAthleteDetailUseCase(ATHLETE_ID, mockRepo);
+    expect(result.nutritionAssignments).toHaveLength(2);
+    expect(result.nutritionAssignments[0].planName).toBe('Déficit verano');
+  });
+
+  it('lanza si athleteId está vacío', async () => {
     await expect(getAthleteDetailUseCase('', mockRepo)).rejects.toThrow('athleteId is required');
     expect(mockRepo.getAthleteAssignments).not.toHaveBeenCalled();
   });
 
-  it('propagates errors from getAthleteAssignments', async () => {
-    mockRepo.getAthleteAssignments.mockRejectedValue(new Error('RLS error'));
+  it('propaga el error de getAthleteCardioAssignments', async () => {
+    mockRepo.getAthleteAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteCardioAssignments.mockRejectedValue(new Error('Cardio RLS error'));
+    mockRepo.getAthleteNutritionAssignments.mockResolvedValue([]);
     mockRepo.getAthleteSessions.mockResolvedValue([]);
-    await expect(getAthleteDetailUseCase(ATHLETE_ID, mockRepo)).rejects.toThrow('RLS error');
+    await expect(getAthleteDetailUseCase(ATHLETE_ID, mockRepo)).rejects.toThrow('Cardio RLS error');
   });
 
-  it('propagates errors from getAthleteSessions', async () => {
+  it('propaga el error de getAthleteNutritionAssignments', async () => {
     mockRepo.getAthleteAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteCardioAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteNutritionAssignments.mockRejectedValue(new Error('Nutrition RLS error'));
+    mockRepo.getAthleteSessions.mockResolvedValue([]);
+    await expect(getAthleteDetailUseCase(ATHLETE_ID, mockRepo)).rejects.toThrow('Nutrition RLS error');
+  });
+
+  it('propaga el error de getAthleteSessions', async () => {
+    mockRepo.getAthleteAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteCardioAssignments.mockResolvedValue([]);
+    mockRepo.getAthleteNutritionAssignments.mockResolvedValue([]);
     mockRepo.getAthleteSessions.mockRejectedValue(new Error('Sessions error'));
     await expect(getAthleteDetailUseCase(ATHLETE_ID, mockRepo)).rejects.toThrow('Sessions error');
   });

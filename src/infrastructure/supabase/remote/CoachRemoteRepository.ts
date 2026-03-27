@@ -3,6 +3,8 @@ import {
   ICoachRepository,
   CoachAthlete,
   AthleteRoutineAssignment,
+  AthleteCardioAssignment,
+  AthleteNutritionAssignment,
   AthleteSession,
   CoachDashboardSummary,
   RecentAthleteSession,
@@ -45,6 +47,43 @@ export class CoachRemoteRepository implements ICoachRepository {
         assignedAt:   new Date(row.assigned_at),
       }))
       .filter((r) => r.routineId);
+  }
+
+  async getAthleteCardioAssignments(athleteId: string): Promise<AthleteCardioAssignment[]> {
+    const { data, error } = await supabase
+      .from('cardio_assignments')
+      .select('assigned_at, cardios ( id, name )')
+      .eq('athlete_id', athleteId)
+      .order('assigned_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return (data ?? [])
+      .map((row: any) => ({
+        cardioId:   row.cardios?.id,
+        cardioName: row.cardios?.name,
+        assignedAt: new Date(row.assigned_at),
+      }))
+      .filter((r) => r.cardioId);
+  }
+
+  async getAthleteNutritionAssignments(athleteId: string): Promise<AthleteNutritionAssignment[]> {
+    const { data, error } = await supabase
+      .from('nutrition_assignments')
+      .select('assigned_at, nutrition_plans ( id, name, type )')
+      .eq('athlete_id', athleteId)
+      .order('assigned_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+
+    return (data ?? [])
+      .map((row: any) => ({
+        planId:    row.nutrition_plans?.id,
+        planName:  row.nutrition_plans?.name,
+        planType:  row.nutrition_plans?.type,
+        assignedAt: new Date(row.assigned_at),
+      }))
+      .filter((r) => r.planId);
   }
 
   async getAthleteSessions(athleteId: string, limit: number): Promise<AthleteSession[]> {

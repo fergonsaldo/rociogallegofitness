@@ -7,6 +7,8 @@ import {
   ICoachRepository,
   CoachAthlete,
   AthleteRoutineAssignment,
+  AthleteCardioAssignment,
+  AthleteNutritionAssignment,
   AthleteSession,
   CoachDashboardSummary,
   ClientStatus,
@@ -14,6 +16,8 @@ import {
 
 export interface AthleteDetail {
   assignments: AthleteRoutineAssignment[];
+  cardioAssignments: AthleteCardioAssignment[];
+  nutritionAssignments: AthleteNutritionAssignment[];
   sessions: AthleteSession[];
 }
 
@@ -35,12 +39,14 @@ export async function getAthleteDetailUseCase(
 ): Promise<AthleteDetail> {
   if (!athleteId) throw new Error('athleteId is required');
 
-  const [assignments, sessions] = await Promise.all([
+  const [assignments, cardioAssignments, nutritionAssignments, sessions] = await Promise.all([
     repo.getAthleteAssignments(athleteId),
+    repo.getAthleteCardioAssignments(athleteId),
+    repo.getAthleteNutritionAssignments(athleteId),
     repo.getAthleteSessions(athleteId, SESSION_HISTORY_LIMIT),
   ]);
 
-  return { assignments, sessions };
+  return { assignments, cardioAssignments, nutritionAssignments, sessions };
 }
 
 export async function unassignRoutineFromAthleteUseCase(

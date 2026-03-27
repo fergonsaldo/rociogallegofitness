@@ -2,6 +2,34 @@
 
 ## ✅ Completado
 
+#### RF-E4-05 — Vista consolidada de contenido asignado a un cliente
+
+**¿Qué hace?**
+En el perfil de cada cliente, el entrenador ve ahora todo el contenido asignado en una sola pantalla: rutinas, cardios y plan nutricional activo. Antes había que navegar módulo a módulo para saber qué tenía asignado un atleta. Ahora está todo agrupado en secciones claras con nombre del ítem y fecha de asignación. El plan nutricional muestra solo el más reciente. Cada ítem es navegable: pulsar sobre él lleva a su detalle.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/[id].tsx` — modificada
+  - Nueva sección "CARDIOS ASIGNADOS": lista de cardios con nombre y fecha, estado vacío si no hay ninguno
+  - Nueva sección "PLAN NUTRICIONAL": muestra el plan más reciente asignado con nombre y fecha; estado vacío si no hay ninguno
+  - Tap en cardio navega a la pantalla de cardios; tap en plan nutricional navega al detalle del plan
+
+**Decisiones de diseño:**
+- El plan nutricional muestra solo el más reciente (primero del array ordenado por `assigned_at desc`). Si el coach asignó varios planes, solo el último es relevante como "plan activo".
+- Los colores de acento diferencian los módulos visualmente: azul para rutinas (ya existía), cian para cardios, ámbar para nutrición.
+- No se añade tienda (store) nueva: la pantalla ya carga datos localmente con `getAthleteDetailUseCase` via `Promise.all`.
+
+**Implementación técnica:**
+- `ICoachRepository.ts` — 2 nuevas interfaces (`AthleteCardioAssignment`, `AthleteNutritionAssignment`) + 2 nuevos métodos de contrato
+- `CoachRemoteRepository.ts` — implementación de `getAthleteCardioAssignments` y `getAthleteNutritionAssignments` con joins a `cardio_assignments` y `nutrition_assignments`
+- `ClientUseCases.ts` — `AthleteDetail` ampliado; `getAthleteDetailUseCase` pasa a 4 queries en paralelo
+- `strings.ts` — 5 nuevas claves en sección RF-E4-05
+- `clients/[id].tsx` — 2 nuevas secciones con estilos de acento diferenciados
+
+**Métricas finales:**
+- Test Suites: 61/61 ✅ | Tests: 1213/1213 ✅ (+8 tests nuevos en ClientUseCases)
+
+---
+
 #### RF-E6-09 — Versionado de planes nutricionales
 
 **¿Qué hace?**
@@ -1017,16 +1045,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 ### ÉPICA E4 — Librería: actividad física (Ejercicios, Workouts, Cardio)
 
 > RF-E4-01 (ejercicios), RF-E4-02 (rutinas/workouts) y RF-E4-04 (cardios) completados — ver sección Completado.
-
-#### RF-E4-05 (P1) Reutilización cross-módulo
-**Requisito:** Ejercicios, workouts y cardios deben poder asignarse en planes, programas y clientes.
-
-**Criterios de aceptación:**
-- Selección desde buscador unificado.
-- Mantener versión referenciada en el momento de asignación.
-- Registrar uso por cliente y programa.
-
-**Dependencia de plan:** No observada.
 
 ---
 
