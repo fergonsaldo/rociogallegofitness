@@ -4,6 +4,7 @@ import {
   NutritionPlan, CreateNutritionPlanInput,
   MealLogEntry, CreateMealLogEntryInput, Macros, PlanType,
   PlanGroup, CreatePlanGroupInput,
+  PlanVersion, UpdatePlanMetaInput,
 } from '@/domain/entities/NutritionPlan';
 
 export class NutritionRemoteRepository implements INutritionRepository {
@@ -242,6 +243,108 @@ export class NutritionRemoteRepository implements INutritionRepository {
 
     if (error) throw new Error(error.message);
     return (data ?? []).map(this.mapLogEntry.bind(this));
+  }
+
+  // ── Plan versions ─────────────────────────────────────────────────────────
+
+  private mapVersion(row: any): PlanVersion {
+    return {
+      id:      row.id,
+      planId:  row.plan_id,
+      savedAt: new Date(row.saved_at),
+      savedBy: row.saved_by,
+      name:    row.name,
+      type:    (row.type ?? 'other') as PlanType,
+      description: row.description ?? undefined,
+      dailyTargetMacros: this.mapMacros(row),
+    };
+  }
+
+  async updatePlanMeta(planId: string, input: UpdatePlanMetaInput): Promise<NutritionPlan> {
+    const payload: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    if (input.name        !== undefined) payload.name        = input.name;
+    if (input.type        !== undefined) payload.type        = input.type;
+    if (input.description !== undefined) payload.description = input.description;
+    if (input.dailyTargetMacros) {
+      payload.calories  = input.dailyTargetMacros.calories;
+      payload.protein_g = input.dailyTargetMacros.proteinG;
+      payload.carbs_g   = input.dailyTargetMacros.carbsG;
+      payload.fat_g     = input.dailyTargetMacros.fatG;
+    }
+
+    const { error } = await supabase
+      .from('nutrition_plans')
+      .update(payload)
+      .eq('id', planId);
+
+    if (error) throw new Error(error.message);
+
+    const updated = await this.getPlanById(planId);
+    if (!updated) throw new Error('Plan not found after update');
+    return updated;
+  }
+
+  async savePlanVersion(planId: string, coachId: string): Promise<void> {
+    const plan = await this.getPlanById(planId);
+    if (!plan) throw new Error('Plan not found');
+
+    const { error } = await supabase.from('plan_versions').insert({
+      plan_id:     planId,
+      saved_by:    coachId,
+      name:        plan.name,
+      type:        plan.type,
+      description: plan.description ?? null,
+      calories:    plan.dailyTargetMacros.calories,
+      protein_g:   plan.dailyTargetMacros.proteinG,
+      carbs_g:     plan.dailyTargetMacros.carbsG,
+      fat_g:       plan.dailyTargetMacros.fatG,
+    });
+    if (error) throw new Error(error.message);
+
+    // Mantener máximo 20 versiones por plan (eliminar las más antiguas)
+    const { data: versions } = await supabase
+      .from('plan_versions')
+      .select('id, saved_at')
+      .eq('plan_id', planId)
+      .order('saved_at', { ascending: false });
+
+    if (versions && versions.length > 20) {
+      const toDelete = versions.slice(20).map((v: any) => v.id);
+      await supabase.from('plan_versions').delete().in('id', toDelete);
+    }
+  }
+
+  async getPlanVersions(planId: string): Promise<PlanVersion[]> {
+    const { data, error } = await supabase
+      .from('plan_versions')
+      .select('*')
+      .eq('plan_id', planId)
+      .order('saved_at', { ascending: false });
+
+    if (error) throw new Error(error.message);
+    return (data ?? []).map(this.mapVersion.bind(this));
+  }
+
+  async restorePlanVersion(versionId: string, planId: string, coachId: string): Promise<NutritionPlan> {
+    const { data: version, error: vErr } = await supabase
+      .from('plan_versions')
+      .select('*')
+      .eq('id', versionId)
+      .single();
+
+    if (vErr || !version) throw new Error('Version not found');
+
+    return this.updatePlanMeta(planId, {
+      name:        version.name,
+      type:        version.type,
+      description: version.description ?? null,
+      dailyTargetMacros: {
+        calories:  version.calories,
+        proteinG:  Number(version.protein_g),
+        carbsG:    Number(version.carbs_g),
+        fatG:      Number(version.fat_g),
+      },
+    });
   }
 
   // ── Plan groups ───────────────────────────────────────────────────────────

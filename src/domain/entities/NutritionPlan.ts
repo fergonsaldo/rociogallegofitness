@@ -103,6 +103,30 @@ export const CreateMealLogEntrySchema = z.object({
 
 export type CreateMealLogEntryInput = z.infer<typeof CreateMealLogEntrySchema>;
 
+// ── PlanVersion ───────────────────────────────────────────────────────────────
+
+export const PlanVersionSchema = z.object({
+  id:                z.string().uuid(),
+  planId:            z.string().uuid(),
+  savedAt:           z.date(),
+  savedBy:           z.string().uuid(),
+  name:              z.string(),
+  type:              z.enum(PLAN_TYPES),
+  description:       z.string().optional(),
+  dailyTargetMacros: MacrosSchema,
+});
+
+export type PlanVersion = z.infer<typeof PlanVersionSchema>;
+
+export const UpdatePlanMetaSchema = z.object({
+  name:              z.string().min(1, 'El nombre es obligatorio').max(100).optional(),
+  type:              z.enum(PLAN_TYPES).optional(),
+  description:       z.string().max(500).nullable().optional(),
+  dailyTargetMacros: MacrosSchema.optional(),
+});
+
+export type UpdatePlanMetaInput = z.infer<typeof UpdatePlanMetaSchema>;
+
 // ── PlanGroup ─────────────────────────────────────────────────────────────────
 
 export const PlanGroupSchema = z.object({

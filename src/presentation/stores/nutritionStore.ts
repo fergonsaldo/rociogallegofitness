@@ -1,8 +1,8 @@
 import { Strings } from '@/shared/constants/strings';
 import { create } from 'zustand';
-import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry, PlanGroup } from '@/domain/entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanInput, DailyNutritionSummary, CreateMealLogEntryInput, MealLogEntry, PlanGroup, PlanVersion } from '@/domain/entities/NutritionPlan';
 import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
-import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase, duplicatePlanUseCase, linkRecipeToMealUseCase, unlinkRecipeFromMealUseCase, createPlanGroupUseCase, deletePlanGroupUseCase, getPlanGroupsUseCase, getPlanGroupDetailUseCase, addPlanToGroupUseCase, removePlanFromGroupUseCase } from '@/application/coach/NutritionUseCases';
+import { createNutritionPlanUseCase, getCoachNutritionPlansUseCase, assignNutritionPlanUseCase, deleteNutritionPlanUseCase, assignPlansToAthleteUseCase, duplicatePlanUseCase, linkRecipeToMealUseCase, unlinkRecipeFromMealUseCase, createPlanGroupUseCase, deletePlanGroupUseCase, getPlanGroupsUseCase, getPlanGroupDetailUseCase, addPlanToGroupUseCase, removePlanFromGroupUseCase, updatePlanMetaUseCase, getPlanVersionsUseCase, restorePlanVersionUseCase } from '@/application/coach/NutritionUseCases';
 import { getAssignedNutritionPlanUseCase, logMealUseCase, getDailyNutritionSummaryUseCase, getWeeklyAdherenceUseCase, WeeklyAdherenceDay } from '@/application/athlete/NutritionUseCases';
 
 const repo = new NutritionRemoteRepository();
@@ -46,6 +46,13 @@ interface NutritionState {
   assignPlan: (planId: string, athleteId: string) => Promise<void>;
   assignMultipleToAthlete: (planIds: string[], athleteId: string) => Promise<boolean>;
   deletePlan: (planId: string) => Promise<void>;
+
+  // Plan versioning
+  planVersions: PlanVersion[];
+  planVersionsLoading: boolean;
+  fetchPlanVersions: (planId: string) => Promise<void>;
+  updatePlanMeta: (planId: string, coachId: string, input: unknown) => Promise<boolean>;
+  restoreVersion: (versionId: string, planId: string, coachId: string) => Promise<boolean>;
 
   // Athlete actions
   fetchAssignedPlan: (athleteId: string) => Promise<void>;
@@ -147,6 +154,8 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
 
   coachPlans: [],
   coachPlansLoading: false,
+  planVersions: [],
+  planVersionsLoading: false,
   assignedPlan: null,
   assignedPlanLoading: false,
   dailySummary: null,
@@ -255,6 +264,46 @@ export const useNutritionStore = create<NutritionState>((set, get) => ({
       set((s) => ({ coachPlans: s.coachPlans.filter((p) => p.id !== planId) }));
     } catch (err) {
       set({ error: (err as any)?.message ?? Strings.errorFailedDeletePlan });
+    }
+  },
+
+  fetchPlanVersions: async (planId) => {
+    set({ planVersionsLoading: true, error: null });
+    try {
+      const versions = await getPlanVersionsUseCase(planId, repo);
+      set({ planVersions: versions, planVersionsLoading: false });
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback, planVersionsLoading: false });
+    }
+  },
+
+  updatePlanMeta: async (planId, coachId, input) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const updated = await updatePlanMetaUseCase(planId, coachId, input, repo);
+      set((s) => ({
+        coachPlans: s.coachPlans.map((p) => (p.id === planId ? updated : p)),
+        isSubmitting: false,
+      }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback, isSubmitting: false });
+      return false;
+    }
+  },
+
+  restoreVersion: async (versionId, planId, coachId) => {
+    set({ isSubmitting: true, error: null });
+    try {
+      const restored = await restorePlanVersionUseCase(versionId, planId, coachId, repo);
+      set((s) => ({
+        coachPlans: s.coachPlans.map((p) => (p.id === planId ? restored : p)),
+        isSubmitting: false,
+      }));
+      return true;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback, isSubmitting: false });
+      return false;
     }
   },
 

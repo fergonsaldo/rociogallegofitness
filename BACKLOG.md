@@ -2,6 +2,37 @@
 
 ## ✅ Completado
 
+#### RF-E6-09 — Versionado de planes nutricionales
+
+**¿Qué hace?**
+El entrenador puede editar los metadatos de un plan nutricional (nombre, tipo, descripción y macros diarios) desde el detalle del plan. Antes de guardar cada cambio, el sistema crea automáticamente una instantánea de la versión actual. El coach puede abrir el historial de versiones, ver cuándo se guardó cada una y restaurar cualquier versión anterior; la restauración también guarda una instantánea previa antes de sobreescribir.
+
+**Pantallas / flujo:**
+- `app/(coach)/nutrition/[id].tsx` — modificada
+  - Topbar con dos nuevos iconos: ✏️ (editar) y 🕐 (historial)
+  - Modal "Editar plan" (pageSheet): nombre, tipo (chips), descripción, macros con auto-cálculo de calorías
+  - Modal "Historial" (pageSheet): lista de versiones ordenadas; cada versión muestra nombre, tipo, fecha, macros y botón "Restaurar"
+  - Confirmación Alert antes de restaurar
+
+**Decisiones de diseño:**
+- La tabla `plan_versions` guarda solo los metadatos (nombre, tipo, descripción, macros) — no duplica las comidas, que no cambian en esta operación.
+- El snapshot se toma en el use case *antes* de aplicar el cambio (save-first), garantizando que siempre hay una versión previa recuperable.
+- Las comidas siguen gestionándose por separado (RF-E6-10). El modal de edición solo cubre los metadatos del plan.
+
+**Implementación técnica:**
+- `NutritionPlan.ts` — nuevos `PlanVersionSchema`, `UpdatePlanMetaSchema`, `PlanVersion`, `UpdatePlanMetaInput`
+- `INutritionRepository.ts` — 4 nuevos métodos: `updatePlanMeta`, `savePlanVersion`, `getPlanVersions`, `restorePlanVersion`
+- `NutritionRemoteRepository.ts` — implementación con `mapVersion`; `restorePlanVersion` aplica snapshot + `updatePlanMeta`
+- `NutritionUseCases.ts` — 3 nuevos use cases: `updatePlanMetaUseCase`, `getPlanVersionsUseCase`, `restorePlanVersionUseCase`
+- `nutritionStore.ts` — estado `planVersions`, `planVersionsLoading` + 3 nuevas acciones
+- `strings.ts` — 18 nuevas claves en sección RF-E6-09
+- `supabase/migrations/20260326200000_add_plan_versions.sql` — tabla + índice + RLS
+
+**Métricas finales:**
+- Test Suites: 61/61 ✅ | Tests: 1210/1210 ✅ (+25 tests nuevos: 16 use case + 9 store)
+
+---
+
 #### RF-E6-06 — Publicación controlada de recetas
 
 **¿Qué hace?**
@@ -1064,16 +1095,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-
-#### RF-E6-09 (P2) Versionado de planes nutricionales
-**Requisito:** Historial de cambios por plan para trazabilidad.
-
-**Criterios de aceptación:**
-- Al editar un plan se crea una nueva versión en lugar de sobrescribir.
-- Vista de historial de versiones por plan con fecha y autor.
-- Posibilidad de restaurar una versión anterior.
-
-**Dependencia:** RF-E6-01 + RF-E6-07 completados.
 
 ---
 

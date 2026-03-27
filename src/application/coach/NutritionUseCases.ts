@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { NutritionPlan, CreateNutritionPlanSchema, PlanType, PlanGroup, CreatePlanGroupSchema } from '@/domain/entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanSchema, PlanType, PlanGroup, CreatePlanGroupSchema, PlanVersion, UpdatePlanMetaSchema, UpdatePlanMetaInput } from '@/domain/entities/NutritionPlan';
 import { INutritionRepository } from '@/domain/repositories/INutritionRepository';
 
 // ── CreateNutritionPlan ───────────────────────────────────────────────────────
@@ -126,6 +126,42 @@ export async function deleteNutritionPlanUseCase(
 ): Promise<void> {
   if (!planId) throw new Error('planId is required');
   await repo.deletePlan(planId);
+}
+
+// ── Plan versions ─────────────────────────────────────────────────────────────
+
+export async function updatePlanMetaUseCase(
+  planId: string,
+  coachId: string,
+  input: unknown,
+  repo: INutritionRepository,
+): Promise<NutritionPlan> {
+  if (!planId)  throw new Error('planId is required');
+  if (!coachId) throw new Error('coachId is required');
+  const validated: UpdatePlanMetaInput = UpdatePlanMetaSchema.parse(input);
+  await repo.savePlanVersion(planId, coachId);
+  return repo.updatePlanMeta(planId, validated);
+}
+
+export async function getPlanVersionsUseCase(
+  planId: string,
+  repo: INutritionRepository,
+): Promise<PlanVersion[]> {
+  if (!planId) throw new Error('planId is required');
+  return repo.getPlanVersions(planId);
+}
+
+export async function restorePlanVersionUseCase(
+  versionId: string,
+  planId: string,
+  coachId: string,
+  repo: INutritionRepository,
+): Promise<NutritionPlan> {
+  if (!versionId) throw new Error('versionId is required');
+  if (!planId)    throw new Error('planId is required');
+  if (!coachId)   throw new Error('coachId is required');
+  await repo.savePlanVersion(planId, coachId);
+  return repo.restorePlanVersion(versionId, planId, coachId);
 }
 
 // ── Plan groups ───────────────────────────────────────────────────────────────

@@ -1,6 +1,12 @@
-import { NutritionPlan, CreateNutritionPlanInput, MealLogEntry, CreateMealLogEntryInput, LinkedRecipe, PlanGroup, CreatePlanGroupInput } from '../entities/NutritionPlan';
+import { NutritionPlan, CreateNutritionPlanInput, MealLogEntry, CreateMealLogEntryInput, LinkedRecipe, PlanGroup, CreatePlanGroupInput, PlanVersion, UpdatePlanMetaInput } from '../entities/NutritionPlan';
 
 export interface INutritionRepository {
+  // ── Plan versions ─────────────────────────────────────────────────────────
+  updatePlanMeta(planId: string, input: UpdatePlanMetaInput): Promise<NutritionPlan>;
+  savePlanVersion(planId: string, coachId: string): Promise<void>;
+  getPlanVersions(planId: string): Promise<PlanVersion[]>;
+  restorePlanVersion(versionId: string, planId: string, coachId: string): Promise<NutritionPlan>;
+
   // ── Plan groups ───────────────────────────────────────────────────────────
   createPlanGroup(input: CreatePlanGroupInput): Promise<PlanGroup>;
   deletePlanGroup(groupId: string): Promise<void>;

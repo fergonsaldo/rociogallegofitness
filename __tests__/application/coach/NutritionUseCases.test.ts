@@ -9,9 +9,12 @@ import {
   getPlanGroupDetailUseCase,
   addPlanToGroupUseCase,
   removePlanFromGroupUseCase,
+  updatePlanMetaUseCase,
+  getPlanVersionsUseCase,
+  restorePlanVersionUseCase,
 } from '../../../src/application/coach/NutritionUseCases';
 import { INutritionRepository } from '../../../src/domain/repositories/INutritionRepository';
-import { NutritionPlan, PlanGroup } from '../../../src/domain/entities/NutritionPlan';
+import { NutritionPlan, PlanGroup, PlanVersion } from '../../../src/domain/entities/NutritionPlan';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -25,7 +28,8 @@ const mockRepo: jest.Mocked<Pick<
   INutritionRepository,
   'assignToAthlete' | 'createPlan' | 'linkRecipeToMeal' | 'unlinkRecipeFromMeal' |
   'createPlanGroup' | 'deletePlanGroup' | 'getPlanGroups' | 'getPlanGroupDetail' |
-  'addPlanToGroup' | 'removePlanFromGroup'
+  'addPlanToGroup' | 'removePlanFromGroup' |
+  'updatePlanMeta' | 'savePlanVersion' | 'getPlanVersions' | 'restorePlanVersion'
 >> = {
   assignToAthlete:      jest.fn(),
   createPlan:           jest.fn(),
@@ -37,6 +41,10 @@ const mockRepo: jest.Mocked<Pick<
   getPlanGroupDetail:   jest.fn(),
   addPlanToGroup:       jest.fn(),
   removePlanFromGroup:  jest.fn(),
+  updatePlanMeta:       jest.fn(),
+  savePlanVersion:      jest.fn(),
+  getPlanVersions:      jest.fn(),
+  restorePlanVersion:   jest.fn(),
 };
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -502,5 +510,167 @@ describe('removePlanFromGroupUseCase', () => {
     await expect(
       removePlanFromGroupUseCase(GROUP_ID, PLAN_ID_A, mockRepo as any),
     ).rejects.toThrow('Delete failed');
+  });
+});
+
+// ── updatePlanMetaUseCase ─────────────────────────────────────────────────────
+
+const VERSION_ID = 'vvvvvvvv-0000-4000-b000-000000000001';
+
+function makeVersion(overrides: Partial<PlanVersion> = {}): PlanVersion {
+  return {
+    id:      VERSION_ID,
+    planId:  PLAN_ID_A,
+    savedAt: new Date('2024-01-01'),
+    savedBy: COACH_ID,
+    name:    'Plan base',
+    type:    'deficit',
+    description: undefined,
+    dailyTargetMacros: { calories: 2000, proteinG: 150, carbsG: 200, fatG: 60 },
+    ...overrides,
+  };
+}
+
+describe('updatePlanMetaUseCase', () => {
+  it('llama a savePlanVersion antes de updatePlanMeta', async () => {
+    const order: string[] = [];
+    mockRepo.savePlanVersion.mockImplementation(async () => { order.push('save'); });
+    mockRepo.updatePlanMeta.mockImplementation(async () => { order.push('update'); return makePlan(); });
+
+    await updatePlanMetaUseCase(PLAN_ID_A, COACH_ID, { name: 'Nuevo nombre' }, mockRepo as any);
+
+    expect(order).toEqual(['save', 'update']);
+  });
+
+  it('devuelve el plan actualizado por el repo', async () => {
+    const updated = makePlan({ name: 'Nuevo nombre' });
+    mockRepo.savePlanVersion.mockResolvedValue(undefined);
+    mockRepo.updatePlanMeta.mockResolvedValue(updated);
+
+    const result = await updatePlanMetaUseCase(PLAN_ID_A, COACH_ID, { name: 'Nuevo nombre' }, mockRepo as any);
+
+    expect(result).toEqual(updated);
+  });
+
+  it('lanza ZodError si el nombre está vacío', async () => {
+    await expect(
+      updatePlanMetaUseCase(PLAN_ID_A, COACH_ID, { name: '' }, mockRepo as any),
+    ).rejects.toThrow();
+    expect(mockRepo.savePlanVersion).not.toHaveBeenCalled();
+  });
+
+  it('lanza si planId está vacío', async () => {
+    await expect(
+      updatePlanMetaUseCase('', COACH_ID, { name: 'Test' }, mockRepo as any),
+    ).rejects.toThrow('planId is required');
+    expect(mockRepo.savePlanVersion).not.toHaveBeenCalled();
+  });
+
+  it('lanza si coachId está vacío', async () => {
+    await expect(
+      updatePlanMetaUseCase(PLAN_ID_A, '', { name: 'Test' }, mockRepo as any),
+    ).rejects.toThrow('coachId is required');
+    expect(mockRepo.savePlanVersion).not.toHaveBeenCalled();
+  });
+
+  it('propaga el error si savePlanVersion falla', async () => {
+    mockRepo.savePlanVersion.mockRejectedValue(new Error('Save failed'));
+
+    await expect(
+      updatePlanMetaUseCase(PLAN_ID_A, COACH_ID, { name: 'Test' }, mockRepo as any),
+    ).rejects.toThrow('Save failed');
+    expect(mockRepo.updatePlanMeta).not.toHaveBeenCalled();
+  });
+});
+
+// ── getPlanVersionsUseCase ────────────────────────────────────────────────────
+
+describe('getPlanVersionsUseCase', () => {
+  it('devuelve la lista de versiones del plan', async () => {
+    const versions = [makeVersion(), makeVersion({ id: 'vvvvvvvv-0000-4000-b000-000000000002' })];
+    mockRepo.getPlanVersions.mockResolvedValue(versions);
+
+    const result = await getPlanVersionsUseCase(PLAN_ID_A, mockRepo as any);
+
+    expect(result).toEqual(versions);
+    expect(mockRepo.getPlanVersions).toHaveBeenCalledWith(PLAN_ID_A);
+  });
+
+  it('devuelve array vacío si no hay versiones', async () => {
+    mockRepo.getPlanVersions.mockResolvedValue([]);
+
+    const result = await getPlanVersionsUseCase(PLAN_ID_A, mockRepo as any);
+
+    expect(result).toEqual([]);
+  });
+
+  it('lanza si planId está vacío', async () => {
+    await expect(
+      getPlanVersionsUseCase('', mockRepo as any),
+    ).rejects.toThrow('planId is required');
+    expect(mockRepo.getPlanVersions).not.toHaveBeenCalled();
+  });
+
+  it('propaga el error del repositorio', async () => {
+    mockRepo.getPlanVersions.mockRejectedValue(new Error('Fetch failed'));
+
+    await expect(
+      getPlanVersionsUseCase(PLAN_ID_A, mockRepo as any),
+    ).rejects.toThrow('Fetch failed');
+  });
+});
+
+// ── restorePlanVersionUseCase ─────────────────────────────────────────────────
+
+describe('restorePlanVersionUseCase', () => {
+  it('llama a savePlanVersion antes de restorePlanVersion', async () => {
+    const order: string[] = [];
+    mockRepo.savePlanVersion.mockImplementation(async () => { order.push('save'); });
+    mockRepo.restorePlanVersion.mockImplementation(async () => { order.push('restore'); return makePlan(); });
+
+    await restorePlanVersionUseCase(VERSION_ID, PLAN_ID_A, COACH_ID, mockRepo as any);
+
+    expect(order).toEqual(['save', 'restore']);
+  });
+
+  it('devuelve el plan restaurado por el repo', async () => {
+    const restored = makePlan({ name: 'Versión anterior' });
+    mockRepo.savePlanVersion.mockResolvedValue(undefined);
+    mockRepo.restorePlanVersion.mockResolvedValue(restored);
+
+    const result = await restorePlanVersionUseCase(VERSION_ID, PLAN_ID_A, COACH_ID, mockRepo as any);
+
+    expect(result).toEqual(restored);
+    expect(mockRepo.restorePlanVersion).toHaveBeenCalledWith(VERSION_ID, PLAN_ID_A, COACH_ID);
+  });
+
+  it('lanza si versionId está vacío', async () => {
+    await expect(
+      restorePlanVersionUseCase('', PLAN_ID_A, COACH_ID, mockRepo as any),
+    ).rejects.toThrow('versionId is required');
+    expect(mockRepo.savePlanVersion).not.toHaveBeenCalled();
+  });
+
+  it('lanza si planId está vacío', async () => {
+    await expect(
+      restorePlanVersionUseCase(VERSION_ID, '', COACH_ID, mockRepo as any),
+    ).rejects.toThrow('planId is required');
+    expect(mockRepo.savePlanVersion).not.toHaveBeenCalled();
+  });
+
+  it('lanza si coachId está vacío', async () => {
+    await expect(
+      restorePlanVersionUseCase(VERSION_ID, PLAN_ID_A, '', mockRepo as any),
+    ).rejects.toThrow('coachId is required');
+    expect(mockRepo.savePlanVersion).not.toHaveBeenCalled();
+  });
+
+  it('propaga el error si restorePlanVersion falla', async () => {
+    mockRepo.savePlanVersion.mockResolvedValue(undefined);
+    mockRepo.restorePlanVersion.mockRejectedValue(new Error('Restore failed'));
+
+    await expect(
+      restorePlanVersionUseCase(VERSION_ID, PLAN_ID_A, COACH_ID, mockRepo as any),
+    ).rejects.toThrow('Restore failed');
   });
 });

@@ -19,6 +19,9 @@ jest.mock('../../../src/application/coach/NutritionUseCases', () => ({
   getPlanGroupDetailUseCase:      jest.fn(),
   addPlanToGroupUseCase:          jest.fn(),
   removePlanFromGroupUseCase:     jest.fn(),
+  updatePlanMetaUseCase:          jest.fn(),
+  getPlanVersionsUseCase:         jest.fn(),
+  restorePlanVersionUseCase:      jest.fn(),
 }));
 
 jest.mock('../../../src/application/athlete/NutritionUseCases', () => ({
@@ -47,19 +50,25 @@ import {
   getPlanGroupDetailUseCase,
   addPlanToGroupUseCase,
   removePlanFromGroupUseCase,
+  updatePlanMetaUseCase,
+  getPlanVersionsUseCase,
+  restorePlanVersionUseCase,
 } from '../../../src/application/coach/NutritionUseCases';
-import { NutritionPlan, PlanGroup } from '../../../src/domain/entities/NutritionPlan';
+import { NutritionPlan, PlanGroup, PlanVersion } from '../../../src/domain/entities/NutritionPlan';
 
-const mockAssignPlans       = assignPlansToAthleteUseCase  as jest.MockedFunction<typeof assignPlansToAthleteUseCase>;
-const mockDuplicate         = duplicatePlanUseCase          as jest.MockedFunction<typeof duplicatePlanUseCase>;
-const mockLinkRecipe        = linkRecipeToMealUseCase       as jest.MockedFunction<typeof linkRecipeToMealUseCase>;
-const mockUnlinkRecipe      = unlinkRecipeFromMealUseCase   as jest.MockedFunction<typeof unlinkRecipeFromMealUseCase>;
-const mockCreateGroup       = createPlanGroupUseCase        as jest.MockedFunction<typeof createPlanGroupUseCase>;
-const mockDeleteGroup       = deletePlanGroupUseCase        as jest.MockedFunction<typeof deletePlanGroupUseCase>;
-const mockGetGroups         = getPlanGroupsUseCase          as jest.MockedFunction<typeof getPlanGroupsUseCase>;
-const mockGetGroupDetail    = getPlanGroupDetailUseCase     as jest.MockedFunction<typeof getPlanGroupDetailUseCase>;
-const mockAddPlanToGroup    = addPlanToGroupUseCase         as jest.MockedFunction<typeof addPlanToGroupUseCase>;
-const mockRemovePlanFromGroup = removePlanFromGroupUseCase  as jest.MockedFunction<typeof removePlanFromGroupUseCase>;
+const mockAssignPlans         = assignPlansToAthleteUseCase  as jest.MockedFunction<typeof assignPlansToAthleteUseCase>;
+const mockDuplicate           = duplicatePlanUseCase          as jest.MockedFunction<typeof duplicatePlanUseCase>;
+const mockLinkRecipe          = linkRecipeToMealUseCase       as jest.MockedFunction<typeof linkRecipeToMealUseCase>;
+const mockUnlinkRecipe        = unlinkRecipeFromMealUseCase   as jest.MockedFunction<typeof unlinkRecipeFromMealUseCase>;
+const mockCreateGroup         = createPlanGroupUseCase        as jest.MockedFunction<typeof createPlanGroupUseCase>;
+const mockDeleteGroup         = deletePlanGroupUseCase        as jest.MockedFunction<typeof deletePlanGroupUseCase>;
+const mockGetGroups           = getPlanGroupsUseCase          as jest.MockedFunction<typeof getPlanGroupsUseCase>;
+const mockGetGroupDetail      = getPlanGroupDetailUseCase     as jest.MockedFunction<typeof getPlanGroupDetailUseCase>;
+const mockAddPlanToGroup      = addPlanToGroupUseCase         as jest.MockedFunction<typeof addPlanToGroupUseCase>;
+const mockRemovePlanFromGroup = removePlanFromGroupUseCase    as jest.MockedFunction<typeof removePlanFromGroupUseCase>;
+const mockUpdatePlanMeta      = updatePlanMetaUseCase         as jest.MockedFunction<typeof updatePlanMetaUseCase>;
+const mockGetPlanVersions     = getPlanVersionsUseCase        as jest.MockedFunction<typeof getPlanVersionsUseCase>;
+const mockRestoreVersion      = restorePlanVersionUseCase     as jest.MockedFunction<typeof restorePlanVersionUseCase>;
 
 // Access the repo instance exposed by the mock factory
 const mockGetPlanById: jest.Mock =
@@ -76,12 +85,22 @@ const PLAN_ID_B  = 'bbbbbbbb-0000-4000-b000-000000000002';
 const GROUP_ID   = 'gggggggg-0000-4000-b000-000000000001';
 const MEAL_ID    = 'mmmmmmmm-0000-4000-b000-000000000001';
 const RECIPE_ID  = 'rrrrrrrr-0000-4000-b000-000000000001';
+const VERSION_ID = 'vvvvvvvv-0000-4000-b000-000000000001';
 const NOW        = new Date('2024-01-01');
 
 function makeGroup(overrides: Partial<PlanGroup> = {}): PlanGroup {
   return {
     id: GROUP_ID, coachId: COACH_ID, name: 'Grupo A',
     description: undefined, planCount: 0, createdAt: NOW,
+    ...overrides,
+  };
+}
+
+function makeVersion(overrides: Partial<PlanVersion> = {}): PlanVersion {
+  return {
+    id: VERSION_ID, planId: PLAN_ID_A, savedAt: NOW, savedBy: COACH_ID,
+    name: 'Plan base', type: 'deficit', description: undefined,
+    dailyTargetMacros: { calories: 2000, proteinG: 150, carbsG: 200, fatG: 60 },
     ...overrides,
   };
 }
@@ -103,6 +122,7 @@ function resetStore() {
     groups: [], groupsLoading: false,
     groupDetail: null, groupDetailLoading: false,
     coachPlans: [], coachPlansLoading: false,
+    planVersions: [], planVersionsLoading: false,
     assignedPlan: null, assignedPlanLoading: false,
     dailySummary: null, dailySummaryLoading: false,
     weeklyAdherence: [], isSubmitting: false, error: null,
@@ -746,5 +766,130 @@ describe('useNutritionStore — removePlanFromGroup', () => {
     await act(async () => { await useNutritionStore.getState().removePlanFromGroup(GROUP_ID, PLAN_ID_A); });
 
     expect(useNutritionStore.getState().groupDetail?.plans).toHaveLength(1);
+  });
+});
+
+// ── fetchPlanVersions ─────────────────────────────────────────────────────────
+
+describe('useNutritionStore — fetchPlanVersions', () => {
+  it('carga versiones y las almacena en planVersions', async () => {
+    const versions = [makeVersion(), makeVersion({ id: 'vvvvvvvv-0000-4000-b000-000000000002' })];
+    mockGetPlanVersions.mockResolvedValue(versions);
+
+    await act(async () => { await useNutritionStore.getState().fetchPlanVersions(PLAN_ID_A); });
+
+    expect(useNutritionStore.getState().planVersions).toEqual(versions);
+    expect(useNutritionStore.getState().planVersionsLoading).toBe(false);
+  });
+
+  it('activa planVersionsLoading durante la carga', async () => {
+    let loadingDuringCall = false;
+    mockGetPlanVersions.mockImplementation(async () => {
+      loadingDuringCall = useNutritionStore.getState().planVersionsLoading;
+      return [];
+    });
+
+    await act(async () => { await useNutritionStore.getState().fetchPlanVersions(PLAN_ID_A); });
+
+    expect(loadingDuringCall).toBe(true);
+    expect(useNutritionStore.getState().planVersionsLoading).toBe(false);
+  });
+
+  it('setea error y limpia planVersionsLoading en caso de fallo', async () => {
+    mockGetPlanVersions.mockRejectedValue(new Error('Fetch failed'));
+
+    await act(async () => { await useNutritionStore.getState().fetchPlanVersions(PLAN_ID_A); });
+
+    expect(useNutritionStore.getState().error).toBeTruthy();
+    expect(useNutritionStore.getState().planVersionsLoading).toBe(false);
+  });
+});
+
+// ── updatePlanMeta ────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — updatePlanMeta', () => {
+  it('actualiza el plan en coachPlans y devuelve true en caso de éxito', async () => {
+    const original = makePlan({ id: PLAN_ID_A, name: 'Plan original' });
+    const updated  = makePlan({ id: PLAN_ID_A, name: 'Plan actualizado' });
+    useNutritionStore.setState({ coachPlans: [original] });
+    mockUpdatePlanMeta.mockResolvedValue(updated);
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().updatePlanMeta(PLAN_ID_A, COACH_ID, { name: 'Plan actualizado' });
+    });
+
+    expect(result).toBe(true);
+    expect(useNutritionStore.getState().coachPlans[0].name).toBe('Plan actualizado');
+  });
+
+  it('no modifica otros planes al actualizar', async () => {
+    const planA    = makePlan({ id: PLAN_ID_A, name: 'Plan A' });
+    const planB    = makePlan({ id: PLAN_ID_B, name: 'Plan B' });
+    const updated  = makePlan({ id: PLAN_ID_A, name: 'Plan A v2' });
+    useNutritionStore.setState({ coachPlans: [planA, planB] });
+    mockUpdatePlanMeta.mockResolvedValue(updated);
+
+    await act(async () => {
+      await useNutritionStore.getState().updatePlanMeta(PLAN_ID_A, COACH_ID, { name: 'Plan A v2' });
+    });
+
+    expect(useNutritionStore.getState().coachPlans).toHaveLength(2);
+    expect(useNutritionStore.getState().coachPlans[1].name).toBe('Plan B');
+  });
+
+  it('devuelve false y setea error en caso de fallo', async () => {
+    mockUpdatePlanMeta.mockRejectedValue(new Error('Update failed'));
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().updatePlanMeta(PLAN_ID_A, COACH_ID, { name: 'Test' });
+    });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Update failed');
+    expect(useNutritionStore.getState().isSubmitting).toBe(false);
+  });
+});
+
+// ── restoreVersion ────────────────────────────────────────────────────────────
+
+describe('useNutritionStore — restoreVersion', () => {
+  it('sustituye el plan en coachPlans con el restaurado y devuelve true', async () => {
+    const current  = makePlan({ id: PLAN_ID_A, name: 'Plan actual' });
+    const restored = makePlan({ id: PLAN_ID_A, name: 'Versión anterior' });
+    useNutritionStore.setState({ coachPlans: [current] });
+    mockRestoreVersion.mockResolvedValue(restored);
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().restoreVersion(VERSION_ID, PLAN_ID_A, COACH_ID);
+    });
+
+    expect(result).toBe(true);
+    expect(useNutritionStore.getState().coachPlans[0].name).toBe('Versión anterior');
+  });
+
+  it('devuelve false y setea error en caso de fallo', async () => {
+    mockRestoreVersion.mockRejectedValue(new Error('Restore failed'));
+
+    let result: boolean | undefined;
+    await act(async () => {
+      result = await useNutritionStore.getState().restoreVersion(VERSION_ID, PLAN_ID_A, COACH_ID);
+    });
+
+    expect(result).toBe(false);
+    expect(useNutritionStore.getState().error).toBe('Restore failed');
+    expect(useNutritionStore.getState().isSubmitting).toBe(false);
+  });
+
+  it('limpia isSubmitting en caso de éxito', async () => {
+    mockRestoreVersion.mockResolvedValue(makePlan());
+
+    await act(async () => {
+      await useNutritionStore.getState().restoreVersion(VERSION_ID, PLAN_ID_A, COACH_ID);
+    });
+
+    expect(useNutritionStore.getState().isSubmitting).toBe(false);
   });
 });

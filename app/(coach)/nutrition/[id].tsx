@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView, TouchableOpacity, FlatList,
-  StyleSheet, SafeAreaView, ActivityIndicator, Alert, Modal,
+  StyleSheet, SafeAreaView, ActivityIndicator, Alert, Modal, TextInput,
 } from 'react-native';
 import { useState, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -8,19 +8,42 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useNutritionStore } from '../../../src/presentation/stores/nutritionStore';
 import { useRecipeStore } from '../../../src/presentation/stores/recipeStore';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
-import { Meal, macroPercentages } from '../../../src/domain/entities/NutritionPlan';
+import { Meal, macroPercentages, PLAN_TYPES, PlanType } from '../../../src/domain/entities/NutritionPlan';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
+
+const PLAN_TYPE_LABELS: Record<PlanType, string> = {
+  deficit:     Strings.nutritionPlanTypeDeficit,
+  maintenance: Strings.nutritionPlanTypeMaintenance,
+  surplus:     Strings.nutritionPlanTypeSurplus,
+  other:       Strings.nutritionPlanTypeOther,
+};
 
 export default function NutritionPlanDetailScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
-  const { coachPlans, linkRecipe, unlinkRecipe, error } = useNutritionStore();
+  const {
+    coachPlans, linkRecipe, unlinkRecipe,
+    updatePlanMeta, fetchPlanVersions, restoreVersion,
+    planVersions, planVersionsLoading, isSubmitting, error,
+  } = useNutritionStore();
   const { recipes, fetchRecipes } = useRecipeStore();
 
-  const [pickerMeal, setPickerMeal] = useState<Meal | null>(null);
-  const [linkingId, setLinkingId]   = useState<string | null>(null);
+  const [pickerMeal, setPickerMeal]     = useState<Meal | null>(null);
+  const [linkingId, setLinkingId]       = useState<string | null>(null);
+
+  // Edit modal state
+  const [showEdit, setShowEdit]         = useState(false);
+  const [editName, setEditName]         = useState('');
+  const [editType, setEditType]         = useState<PlanType>('maintenance');
+  const [editDesc, setEditDesc]         = useState('');
+  const [editProtein, setEditProtein]   = useState('');
+  const [editCarbs, setEditCarbs]       = useState('');
+  const [editFat, setEditFat]           = useState('');
+
+  // History modal state
+  const [showHistory, setShowHistory]   = useState(false);
 
   const plan = coachPlans.find((p) => p.id === id);
 
@@ -45,11 +68,66 @@ export default function NutritionPlanDetailScreen() {
 
   const pct = macroPercentages(plan.dailyTargetMacros);
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  // Auto-calc calories from macros (4-4-9)
+  const calcCalories = (p: number, c: number, f: number) =>
+    Math.round(p * 4 + c * 4 + f * 9);
 
-  const handleOpenPicker = (meal: Meal) => {
-    setPickerMeal(meal);
+  // ── Edit handlers ────────────────────────────────────────────────────────────
+
+  const handleOpenEdit = () => {
+    setEditName(plan.name);
+    setEditType(plan.type);
+    setEditDesc(plan.description ?? '');
+    setEditProtein(String(plan.dailyTargetMacros.proteinG));
+    setEditCarbs(String(plan.dailyTargetMacros.carbsG));
+    setEditFat(String(plan.dailyTargetMacros.fatG));
+    setShowEdit(true);
   };
+
+  const handleSaveEdit = async () => {
+    if (!editName.trim()) return;
+    const proteinG = parseFloat(editProtein) || 0;
+    const carbsG   = parseFloat(editCarbs)   || 0;
+    const fatG     = parseFloat(editFat)     || 0;
+    const ok = await updatePlanMeta(plan.id, user!.id, {
+      name:  editName.trim(),
+      type:  editType,
+      description: editDesc.trim() || null,
+      dailyTargetMacros: {
+        calories: calcCalories(proteinG, carbsG, fatG),
+        proteinG, carbsG, fatG,
+      },
+    });
+    if (ok) setShowEdit(false);
+  };
+
+  // ── History handlers ─────────────────────────────────────────────────────────
+
+  const handleOpenHistory = async () => {
+    await fetchPlanVersions(plan.id);
+    setShowHistory(true);
+  };
+
+  const handleRestore = (versionId: string) => {
+    Alert.alert(
+      Strings.planVersionRestoreTitle,
+      Strings.planVersionRestoreMessage,
+      [
+        { text: Strings.planVersionRestoreCancel, style: 'cancel' },
+        {
+          text: Strings.planVersionRestoreConfirm, style: 'default',
+          onPress: async () => {
+            const ok = await restoreVersion(versionId, plan.id, user!.id);
+            if (ok) setShowHistory(false);
+          },
+        },
+      ],
+    );
+  };
+
+  // ── Recipe handlers ──────────────────────────────────────────────────────────
+
+  const handleOpenPicker = (meal: Meal) => setPickerMeal(meal);
 
   const handleLink = async (recipeId: string) => {
     if (!pickerMeal) return;
@@ -73,10 +151,15 @@ export default function NutritionPlanDetailScreen() {
     );
   };
 
-  // Recipes not yet linked to the open meal
   const availableRecipes = pickerMeal
     ? recipes.filter((r) => !pickerMeal.linkedRecipes.some((lr) => lr.id === r.id))
     : [];
+
+  const editCalories = calcCalories(
+    parseFloat(editProtein) || 0,
+    parseFloat(editCarbs)   || 0,
+    parseFloat(editFat)     || 0,
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -85,7 +168,14 @@ export default function NutritionPlanDetailScreen() {
           <Text style={styles.backText}>{Strings.nutritionPlanDetailBack}</Text>
         </TouchableOpacity>
         <Text style={styles.topbarTitle} numberOfLines={1}>{plan.name}</Text>
-        <View style={styles.topbarSpacer} />
+        <View style={styles.topbarActions}>
+          <TouchableOpacity onPress={handleOpenHistory} style={styles.topbarAction}>
+            <Text style={styles.topbarActionText}>🕐</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleOpenEdit} style={styles.topbarAction}>
+            <Text style={styles.topbarActionText}>✏️</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {error && (
@@ -166,7 +256,153 @@ export default function NutritionPlanDetailScreen() {
 
       </ScrollView>
 
-      {/* Recipe picker modal */}
+      {/* ── Edit modal ──────────────────────────────────────────────────────── */}
+      <Modal
+        visible={showEdit}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowEdit(false)}
+      >
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setShowEdit(false)}>
+                <Text style={styles.modalCancelText}>{Strings.planEditCancel}</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{Strings.planEditModalTitle}</Text>
+              <TouchableOpacity onPress={handleSaveEdit} disabled={isSubmitting || !editName.trim()}>
+                {isSubmitting
+                  ? <ActivityIndicator size="small" color={Colors.primary} />
+                  : <Text style={[styles.modalSaveText, !editName.trim() && styles.disabledText]}>
+                      {Strings.planEditSave}
+                    </Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>{Strings.nutritionPlanFormLabelName}</Text>
+                <TextInput
+                  style={styles.formInput}
+                  value={editName}
+                  onChangeText={setEditName}
+                  placeholder="Nombre del plan"
+                  placeholderTextColor={Colors.textMuted}
+                  maxLength={100}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>{Strings.nutritionPlanFormLabelType}</Text>
+                <View style={styles.typeRow}>
+                  {PLAN_TYPES.map((t) => (
+                    <TouchableOpacity
+                      key={t}
+                      style={[styles.typeChip, editType === t && styles.typeChipActive]}
+                      onPress={() => setEditType(t)}
+                    >
+                      <Text style={[styles.typeChipText, editType === t && styles.typeChipTextActive]}>
+                        {PLAN_TYPE_LABELS[t]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>DESCRIPCIÓN (OPCIONAL)</Text>
+                <TextInput
+                  style={[styles.formInput, styles.formTextArea]}
+                  value={editDesc}
+                  onChangeText={setEditDesc}
+                  placeholder="Descripción del plan..."
+                  placeholderTextColor={Colors.textMuted}
+                  multiline
+                  numberOfLines={3}
+                  maxLength={500}
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>{Strings.nutritionPlanFormMacrosTitle}</Text>
+                <Text style={styles.formHint}>{Strings.nutritionPlanFormMacrosHint}</Text>
+                <View style={styles.macroInputRow}>
+                  <MacroInput label="PROTEÍNA (g)" value={editProtein} onChange={setEditProtein} />
+                  <MacroInput label="CARBOS (g)"   value={editCarbs}   onChange={setEditCarbs} />
+                  <MacroInput label="GRASA (g)"    value={editFat}     onChange={setEditFat} />
+                </View>
+                <Text style={styles.calsPreview}>
+                  {Strings.nutritionPlanFormTotalCals}: {editCalories} kcal
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── History modal ────────────────────────────────────────────────────── */}
+      <Modal
+        visible={showHistory}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowHistory(false)}
+      >
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderSpacer} />
+              <Text style={styles.modalTitle}>{Strings.planHistoryTitle}</Text>
+              <TouchableOpacity onPress={() => setShowHistory(false)}>
+                <Text style={styles.modalCancelText}>{Strings.planHistoryClose}</Text>
+              </TouchableOpacity>
+            </View>
+
+            {planVersionsLoading ? (
+              <View style={styles.center}>
+                <ActivityIndicator color={Colors.primary} />
+              </View>
+            ) : planVersions.length === 0 ? (
+              <View style={styles.center}>
+                <Text style={styles.emptyEmoji}>🕐</Text>
+                <Text style={styles.emptyText}>{Strings.planHistoryEmpty}</Text>
+                <Text style={styles.emptySubtext}>{Strings.planHistoryEmptySubtitle}</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={planVersions}
+                keyExtractor={(v) => v.id}
+                contentContainerStyle={styles.versionList}
+                renderItem={({ item }) => (
+                  <View style={styles.versionCard}>
+                    <View style={styles.versionInfo}>
+                      <Text style={styles.versionName} numberOfLines={1}>{item.name}</Text>
+                      <Text style={styles.versionType}>{PLAN_TYPE_LABELS[item.type]}</Text>
+                      <Text style={styles.versionDate}>
+                        {Strings.planVersionSavedAt(
+                          item.savedAt.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        )}
+                      </Text>
+                      <Text style={styles.versionMacros}>
+                        {item.dailyTargetMacros.calories} kcal · P {item.dailyTargetMacros.proteinG}g · C {item.dailyTargetMacros.carbsG}g · G {item.dailyTargetMacros.fatG}g
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.restoreButton}
+                      onPress={() => handleRestore(item.id)}
+                      disabled={isSubmitting}
+                    >
+                      <Text style={styles.restoreButtonText}>{Strings.planVersionRestoreButton}</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              />
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
+
+      {/* ── Recipe picker modal ──────────────────────────────────────────────── */}
       <Modal
         visible={pickerMeal !== null}
         animationType="slide"
@@ -248,6 +484,22 @@ function MealMacro({ label, value, pct, color }: { label: string; value: number;
   );
 }
 
+function MacroInput({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <View style={styles.macroInputItem}>
+      <Text style={styles.macroInputLabel}>{label}</Text>
+      <TextInput
+        style={styles.macroInputField}
+        value={value}
+        onChangeText={onChange}
+        keyboardType="decimal-pad"
+        placeholderTextColor={Colors.textMuted}
+        placeholder="0"
+      />
+    </View>
+  );
+}
+
 // ── Styles ─────────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
@@ -260,7 +512,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
   topbarTitle:   { flex: 1, textAlign: 'center', fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary, marginHorizontal: Spacing.sm },
-  topbarSpacer:  { width: 60 },
+  topbarActions: { flexDirection: 'row', gap: Spacing.xs },
+  topbarAction:  { paddingHorizontal: Spacing.xs },
+  topbarActionText: { fontSize: FontSize.lg },
   backText:      { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '600' },
 
   errorBanner: {
@@ -342,7 +596,7 @@ const styles = StyleSheet.create({
   },
   addRecipeText: { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '600' },
 
-  // Modal
+  // Modal shared
   modalContainer:    { flex: 1, paddingHorizontal: Spacing.lg },
   modalHeader: {
     flexDirection: 'row', alignItems: 'center',
@@ -350,9 +604,66 @@ const styles = StyleSheet.create({
   },
   modalHeaderSpacer: { width: 60 },
   modalCancelText:   { color: Colors.primary, fontSize: FontSize.md },
+  modalSaveText:     { color: Colors.primary, fontSize: FontSize.md, fontWeight: '700' },
+  disabledText:      { opacity: 0.3 },
   modalTitle:        { fontSize: FontSize.lg, fontWeight: '700', color: Colors.textPrimary },
   modalSubtitle:     { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.md },
-  recipeList:        { paddingBottom: Spacing.xl },
+
+  // Edit form
+  formGroup: { marginBottom: Spacing.lg, gap: Spacing.sm },
+  formLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '700', letterSpacing: 1 },
+  formHint:  { fontSize: FontSize.xs, color: Colors.textMuted, fontStyle: 'italic' },
+  formInput: {
+    borderWidth: 1, borderColor: Colors.border, borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    fontSize: FontSize.md, color: Colors.textPrimary, backgroundColor: Colors.surface,
+  },
+  formTextArea: { minHeight: 80, textAlignVertical: 'top' },
+  typeRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+  typeChip: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full, borderWidth: 1, borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  typeChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  typeChipText:   { fontSize: FontSize.sm, color: Colors.textSecondary, fontWeight: '600' },
+  typeChipTextActive: { color: '#fff' },
+  macroInputRow:  { flexDirection: 'row', gap: Spacing.sm },
+  macroInputItem: { flex: 1, gap: 4 },
+  macroInputLabel: { fontSize: 9, color: Colors.textMuted, fontWeight: '700', letterSpacing: 0.5 },
+  macroInputField: {
+    borderWidth: 1, borderColor: Colors.border, borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.sm, paddingVertical: Spacing.sm,
+    fontSize: FontSize.md, color: Colors.textPrimary,
+    backgroundColor: Colors.surface, textAlign: 'center',
+  },
+  calsPreview: {
+    marginTop: Spacing.sm, fontSize: FontSize.sm,
+    color: Colors.primary, fontWeight: '700', textAlign: 'center',
+  },
+
+  // History
+  versionList: { paddingBottom: Spacing.xl, gap: Spacing.md },
+  versionCard: {
+    backgroundColor: Colors.surface, borderRadius: BorderRadius.lg,
+    borderWidth: 1, borderColor: Colors.border, padding: Spacing.md,
+    flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
+  },
+  versionInfo:  { flex: 1, gap: 2 },
+  versionName:  { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary },
+  versionType:  { fontSize: FontSize.xs, color: Colors.textSecondary },
+  versionDate:  { fontSize: FontSize.xs, color: Colors.textMuted, marginTop: 2 },
+  versionMacros:{ fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  restoreButton: {
+    paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.md, backgroundColor: Colors.primarySubtle,
+    borderWidth: 1, borderColor: Colors.primary,
+  },
+  restoreButtonText: { fontSize: FontSize.xs, color: Colors.primary, fontWeight: '700' },
+  emptySubtext: { fontSize: FontSize.sm, color: Colors.textMuted, textAlign: 'center' },
+
+  // Recipe picker
+  recipeList:      { paddingBottom: Spacing.xl },
   recipePickerRow: {
     flexDirection: 'row', alignItems: 'center', gap: Spacing.md,
     paddingVertical: Spacing.md, borderBottomWidth: 1, borderBottomColor: Colors.surface,

@@ -630,6 +630,25 @@ export const Strings = {
   recipeDetailNoIngredients:        'Sin ingredientes',
   recipeDetailNoInstructions:       'Sin instrucciones',
 
+  // ── Versionado de planes (RF-E6-09) ──────────────────────────────────────
+  planEditButton:                   'Editar plan',
+  planEditModalTitle:               'Editar plan',
+  planEditSave:                     'Guardar cambios',
+  planEditCancel:                   'Cancelar',
+  planHistoryButton:                'Historial de versiones',
+  planHistoryTitle:                 'Historial',
+  planHistoryEmpty:                 'Sin versiones guardadas',
+  planHistoryEmptySubtitle:         'Las versiones se guardan automáticamente al editar',
+  planHistoryClose:                 'Cerrar',
+  planVersionRestoreButton:         'Restaurar',
+  planVersionRestoreTitle:          'Restaurar versión',
+  planVersionRestoreMessage:        'Se restaurará esta versión. Los cambios actuales se guardarán como nueva versión.',
+  planVersionRestoreConfirm:        'Restaurar',
+  planVersionRestoreCancel:         'Cancelar',
+  planVersionSavedAt:               (date: string) => `Guardada: ${date}`,
+  planVersionSuccessUpdated:        'Plan actualizado correctamente',
+  planVersionSuccessRestored:       'Versión restaurada correctamente',
+
   // ── Documentos (RF-E7-02) ─────────────────────────────────────────────────
   docTitle:                'Documentos',
   docSubtitle:             (n: number) => `${n} ${n === 1 ? 'archivo' : 'archivos'}`,
