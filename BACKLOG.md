@@ -2,6 +2,37 @@
 
 ## ✅ Completado
 
+#### RF-E7-02b — Documentos — lado atleta
+
+**¿Qué hace?**
+El atleta accede a un repositorio de documentos compartidos con su coach desde la sección "Recursos" del dashboard. Puede ver todos los archivos del par coach-atleta, subir nuevos ficheros con las mismas restricciones de extensión que el coach, abrir cualquier documento y eliminar solo los que él mismo ha subido. Los documentos del coach son visibles pero no eliminables.
+
+**Pantallas / flujo:**
+- `app/(athlete)/dashboard.tsx` — modificada
+  - Nueva sección "Recursos" con tarjeta "📁 Documentos"
+- `app/(athlete)/documents/index.tsx` — nueva pantalla
+  - Obtiene coachId de `coach_athletes` (excepción documentada: Supabase directo en presentación)
+  - Lista de documentos con badge de extensión, tamaño, fecha y botón "Abrir" (signed URL)
+  - Botón 🗑 solo en documentos propios del atleta
+  - Estado vacío con texto específico para atleta
+  - Estado de error si el atleta no tiene coach asignado
+
+**Decisiones de diseño:**
+- Sin cambios de backend: store, use cases y repositorio de documentos ya soportan el par (coachId, athleteId) con cualquier uploader.
+- Ruta sin tab (`href: null`) para no saturar la barra de 6 iconos; accesible desde el dashboard.
+- Color de acento `Colors.athlete` en lugar del azul del coach para coherencia visual de la sección atleta.
+
+**Implementación técnica:**
+- `strings.ts` — 3 nuevas claves: `docEmptySubtitleAthlete`, `docNoCoachAssigned`, `docAthleteSubtitle`
+- `app/(athlete)/documents/index.tsx` — nueva pantalla
+- `app/(athlete)/_layout.tsx` — ruta `documents/index` registrada sin tab
+- `app/(athlete)/dashboard.tsx` — sección "Recursos" con enlace a documentos
+
+**Métricas finales:**
+- Test Suites: 62/62 ✅ | Tests: 1248/1248 ✅
+
+---
+
 #### RF-E4-05 — Vista consolidada de contenido asignado a un cliente
 
 **¿Qué hace?**
@@ -1104,26 +1135,7 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### ÉPICA E6 — Librería: nutrición (Planes, Recetas, Alimentos, Agrupaciones)
 
-> RF-E6-01 (planes), RF-E6-03 (recetas) y RF-E6-04 (alimentos) completados — ver sección Completado.
-
-#### RF-E6-11 (P1) Edición de alimentos del catálogo
-**Requisito:** El entrenador puede editar cualquier alimento visible en su catálogo: tanto los del catálogo base genérico (coach_id IS NULL) como los creados por él.
-
-**Criterios de aceptación:**
-- Botón "Editar" visible en todos los alimentos (genéricos y propios).
-- Formulario de edición pre-relleno con los valores actuales (nombre, tipo, macros).
-- Al guardar un alimento genérico, se crea una copia del alimento para ese coach (coach_id = auth.uid()) en lugar de modificar el registro base — así los cambios son locales al entrenador y no afectan a otros.
-- Al guardar un alimento propio, se actualiza el registro directamente.
-- El alimento editado/creado reemplaza al original en la lista sin recargar manualmente.
-- Validación de rangos igual que en creación.
-- Si el alimento está en uso en recetas, la edición es igualmente posible (afecta cálculos futuros).
-
-**Decisión de diseño pendiente:** confirmar si editar un genérico debe crear una copia por-coach o modificar el registro base (afectaría a todos los coaches). Preguntar antes de implementar.
-
-**Dependencia:** RF-E6-04 completado.
-
----
-
+> RF-E6-01, RF-E6-03, RF-E6-04, RF-E6-05, RF-E6-06, RF-E6-07, RF-E6-08, RF-E6-09, RF-E6-10 y RF-E6-11 completados — ver sección Completado.
 
 ---
 
@@ -1141,18 +1153,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 #### RF-E7-01 — Programas
 > **EXCLUIDO** — No aplica en la app de momento. Decisión del producto.
-
----
-
-#### RF-E7-02b (P1) Documentos — lado atleta
-**Requisito:** El atleta puede subir ficheros al repositorio compartido con su coach y descargar los que el coach ha subido.
-
-**Criterios de aceptación:**
-- El atleta ve la misma pantalla de documentos pero accesible desde su área.
-- Puede subir ficheros (mismas restricciones de extensión que el coach).
-- Solo puede eliminar los ficheros que él mismo ha subido.
-
-**Dependencia:** RF-E7-02 completado.
 
 ---
 

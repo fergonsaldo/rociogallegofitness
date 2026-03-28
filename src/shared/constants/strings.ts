@@ -672,6 +672,11 @@ export const Strings = {
   docSizeLabel:            (kb: number) => `${kb} KB`,
   docClientButton:         'Documentos',
 
+  // ── Documentos — lado atleta (RF-E7-02b) ──────────────────────────────────
+  docEmptySubtitleAthlete: 'Sube archivos para compartir con tu entrenador',
+  docNoCoachAssigned:      'No tienes un entrenador asignado todavía',
+  docAthleteSubtitle:      'Archivos compartidos con tu entrenador',
+
   // ── Biblioteca de vídeos (RF-E5-01) ──────────────────────────────────────
   videoTitle:              'Vídeos',
   videoSubtitle:           (n: number) => `${n} ${n === 1 ? 'vídeo' : 'vídeos'}`,

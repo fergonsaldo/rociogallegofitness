@@ -162,6 +162,23 @@ export default function AthleteDashboardScreen() {
           </View>
         )}
 
+        {/* Accesos rápidos */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Recursos</Text>
+          <TouchableOpacity
+            style={styles.resourceRow}
+            onPress={() => router.push('/(athlete)/documents' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.resourceEmoji}>📁</Text>
+            <View style={styles.resourceText}>
+              <Text style={styles.resourceTitle}>{Strings.docTitle}</Text>
+              <Text style={styles.resourceSubtitle}>{Strings.docAthleteSubtitle}</Text>
+            </View>
+            <Text style={styles.resourceChevron}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
     </SafeAreaView>
@@ -284,4 +301,16 @@ const styles = StyleSheet.create({
   },
   pbBadgeText: { fontSize: FontSize.xs, fontWeight: '700', color: Colors.primary },
   pbChevron: { fontSize: 20, color: Colors.textMuted },
+  resourceRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.surface, borderRadius: BorderRadius.md,
+    borderWidth: 1, borderColor: Colors.border, padding: Spacing.md, gap: Spacing.md,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+  },
+  resourceEmoji:    { fontSize: 24 },
+  resourceText:     { flex: 1 },
+  resourceTitle:    { fontSize: FontSize.sm, fontWeight: '700', color: Colors.textPrimary },
+  resourceSubtitle: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  resourceChevron:  { fontSize: 20, color: Colors.textMuted },
 });

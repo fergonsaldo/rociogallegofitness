@@ -92,6 +92,7 @@ export default function AthleteLayout() {
       <Tabs.Screen name="progress/photos/timeline" options={{ href: null }} />
       <Tabs.Screen name="progress/photos/compare"  options={{ href: null }} />
       <Tabs.Screen name="messages/[id]"            options={{ href: null }} />
+      <Tabs.Screen name="documents/index"          options={{ href: null }} />
     </Tabs>
   );
 }
