@@ -1,18 +1,27 @@
 import {
   View, Text, Modal, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { useState, useEffect } from 'react';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../shared/constants/theme';
 import { Strings } from '../../../shared/constants/strings';
 import { ClientTag } from '../../../domain/entities/ClientTag';
 import { TagRemoteRepository } from '../../../infrastructure/supabase/remote/TagRemoteRepository';
+import { TagAutomationRemoteRepository } from '../../../infrastructure/supabase/remote/TagAutomationRemoteRepository';
+import { RoutineRemoteRepository } from '../../../infrastructure/supabase/remote/RoutineRemoteRepository';
+import { CardioRemoteRepository } from '../../../infrastructure/supabase/remote/CardioRemoteRepository';
+import { NutritionRemoteRepository } from '../../../infrastructure/supabase/remote/NutritionRemoteRepository';
 import {
   assignTagToAthleteUseCase,
   removeTagFromAthleteUseCase,
 } from '../../../application/coach/TagUseCases';
+import { executeTagAutomationUseCase } from '../../../application/coach/TagAutomationUseCases';
 
-const repo = new TagRemoteRepository();
+const repo          = new TagRemoteRepository();
+const autoRepo      = new TagAutomationRemoteRepository();
+const routineRepo   = new RoutineRemoteRepository();
+const cardioRepo    = new CardioRemoteRepository();
+const nutritionRepo = new NutritionRemoteRepository();
 
 interface Props {
   visible:    boolean;
@@ -40,6 +49,11 @@ export function TagPickerModal({ visible, athleteId, coachTags, assignedTagIds, 
       } else {
         await assignTagToAthleteUseCase(tag.id, athleteId, repo);
         setSelected((prev) => new Set(prev).add(tag.id));
+        // Fire-and-forget: execute automation after successful assignment
+        executeTagAutomationUseCase(tag.id, athleteId, autoRepo, routineRepo, cardioRepo, nutritionRepo)
+          .catch(() => {
+            Alert.alert(Strings.tagAutomationAlertTitle, Strings.tagAutomationAlertMessage);
+          });
       }
     } finally {
       setToggling(null);

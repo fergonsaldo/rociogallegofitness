@@ -3,11 +3,12 @@ import {
   SafeAreaView, ActivityIndicator, Alert, TextInput, Modal,
 } from 'react-native';
 import { useCallback, useState } from 'react';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { useTagStore } from '../../../src/presentation/stores/tagStore';
+import { useTagAutomationStore } from '../../../src/presentation/stores/tagAutomationStore';
 import { ClientTag } from '../../../src/domain/entities/ClientTag';
 
 const PRESET_COLORS = [
@@ -122,12 +123,16 @@ function TagFormModal({
 
 function TagRow({
   tag,
+  hasAutomation,
   onEdit,
   onDelete,
+  onConfigure,
 }: {
-  tag:      ClientTag;
-  onEdit:   (tag: ClientTag) => void;
-  onDelete: (tag: ClientTag) => void;
+  tag:            ClientTag;
+  hasAutomation:  boolean;
+  onEdit:         (tag: ClientTag) => void;
+  onDelete:       (tag: ClientTag) => void;
+  onConfigure:    (tag: ClientTag) => void;
 }) {
   return (
     <View style={styles.row}>
@@ -137,10 +142,17 @@ function TagRow({
         <Text style={styles.tagMeta}>
           {Strings.tagClients(tag.clientCount)}
           {'  ·  '}
-          {Strings.tagNoAutomations}
+          {hasAutomation ? Strings.tagHasAutomation : Strings.tagNoAutomations}
         </Text>
       </View>
       <View style={styles.rowActions}>
+        <TouchableOpacity
+          style={[styles.actionBtn, hasAutomation && styles.actionBtnActive]}
+          onPress={() => onConfigure(tag)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.actionBtnText}>⚙</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionBtn}
           onPress={() => onEdit(tag)}
@@ -163,17 +175,25 @@ function TagRow({
 // ── Screen ─────────────────────────────────────────────────────────────────────
 
 export default function TagsScreen() {
+  const router                           = useRouter();
   const { user }                         = useAuthStore();
   const { tags, isLoading, error,
           fetchTags, createTag,
           updateTag, deleteTag,
           clearError }                   = useTagStore();
+  const { automations, fetchAutomation } = useTagAutomationStore();
 
   const [formVisible, setFormVisible]   = useState(false);
   const [editingTag,  setEditingTag]    = useState<ClientTag | null>(null);
 
   useFocusEffect(useCallback(() => {
-    if (user?.id) fetchTags(user.id);
+    if (!user?.id) return;
+    fetchTags(user.id).then(() => {
+      // Eagerly fetch automations for all tags so the list shows the right state
+      tags.forEach((t) => {
+        if (automations[t.id] === undefined) fetchAutomation(t.id);
+      });
+    });
   }, [user?.id]));
 
   const openCreate = () => {
@@ -184,6 +204,10 @@ export default function TagsScreen() {
   const openEdit = (tag: ClientTag) => {
     setEditingTag(tag);
     setFormVisible(true);
+  };
+
+  const openAutomation = (tag: ClientTag) => {
+    router.push(`/(coach)/clients/tag-automation?id=${tag.id}&name=${encodeURIComponent(tag.name)}`);
   };
 
   const handleSubmit = async (name: string, color: string) => {
@@ -254,8 +278,10 @@ export default function TagsScreen() {
             <TagRow
               key={tag.id}
               tag={tag}
+              hasAutomation={!!automations[tag.id]}
               onEdit={openEdit}
               onDelete={handleDelete}
+              onConfigure={openAutomation}
             />
           ))}
           <View style={{ height: Spacing.xxl }} />
@@ -297,6 +323,7 @@ const styles = StyleSheet.create({
   rowActions:           { flexDirection: 'row', gap: Spacing.xs },
   actionBtn:            { width: 34, height: 34, borderRadius: 17, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
   actionBtnDestructive: { backgroundColor: `${Colors.error}10`, borderColor: `${Colors.error}30` },
+  actionBtnActive:      { backgroundColor: `${Colors.primary}15`, borderColor: `${Colors.primary}50` },
   actionBtnText:        { fontSize: 14 },
 
   // Modal

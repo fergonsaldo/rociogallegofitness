@@ -2,6 +2,38 @@
 
 ## ✅ Completado
 
+#### RF-E2-06b — Automatizaciones por etiqueta: UI de configuración y trigger
+
+**¿Qué hace?**
+El coach puede configurar qué contenido se asigna automáticamente al aplicar una etiqueta. Cada etiqueta tiene un botón ⚙ que abre una pantalla con tres pickers (rutina, cardio, plan de nutrición). Al guardar, la automatización queda activa. Al asignar la etiqueta desde `TagPickerModal`, el contenido configurado se asigna al atleta de forma automática y silenciosa. Si alguna asignación falla, se muestra un Alert informativo.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/tags.tsx` — modificada
+  - Botón ⚙ por etiqueta (resaltado si tiene automatización activa)
+  - Texto dinámico: "Automatización activa" / "Sin automatizaciones"
+  - Navega a `/(coach)/clients/tag-automation?id=<tagId>&name=<tagName>`
+- `app/(coach)/clients/tag-automation.tsx` — nueva pantalla
+  - Muestra 3 pickers: rutina, cardio, plan de nutrición
+  - Botón "Guardar automatización" (upsert)
+  - Botón "Eliminar automatización" (solo visible si ya existe config)
+
+**Decisiones de diseño:**
+- La pantalla de config lee sus propios datos (routines, cardios, plans) en montaje para no depender del estado previo de otros stores.
+- El trigger es fire-and-forget en `TagPickerModal.toggle()` — no bloquea el flujo de asignación de etiqueta.
+- El store cachea por tagId (`Record<string, TagAutomation | null>`) — `null` = sin config, `undefined` = no cargado aún.
+
+**Implementación técnica:**
+- `tagAutomationStore.ts` — `fetchAutomation`, `saveAutomation`, `deleteAutomation`; caché por tagId
+- `tag-automation.tsx` — pantalla con PickerModal genérico + SectionPicker reutilizable
+- `tags.tsx` — botón ⚙ + lazy-load de automations al hacer focus
+- `TagPickerModal.tsx` — fire-and-forget `executeTagAutomationUseCase` + Alert en caso de fallo
+- `strings.ts` — 16 nuevas claves RF-E2-06
+
+**Métricas finales:**
+- Test Suites: 76/76 ✅ | Tests: 1512/1512 ✅ (+10 store)
+
+---
+
 #### RF-E2-06a — Automatizaciones por etiqueta: capa de datos y lógica de negocio
 
 **¿Qué hace?**
@@ -1420,12 +1452,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E2-06b — Automatizaciones por etiqueta: UI de configuración
-**Requisito:** Pantalla para configurar qué contenido se asigna automáticamente al aplicar una etiqueta. Botón ⚙ por etiqueta en la lista, abre formulario con pickers de rutina, cardio y plan de nutrición.
-
-**Pendiente:** store + pantalla de configuración + integración en TagPickerModal (trigger).
-
----
 
 ### ÉPICA E4 — Librería: actividad física (Ejercicios, Workouts, Cardio)
 
