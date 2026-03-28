@@ -266,8 +266,12 @@ export default function ClientsScreen() {
     }
     setCreating(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+
       const { data, error } = await supabase.functions.invoke('create-athlete', {
         body: { name: newName.trim(), email: newEmail.trim() },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
       if (error) throw error;
