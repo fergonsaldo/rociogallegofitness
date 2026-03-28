@@ -51,24 +51,12 @@ export default function CoachLayout() {
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="👥" label="Clientes" focused={focused} /> }}
       />
       <Tabs.Screen
-        name="routines/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📋" label="Rutinas" focused={focused} /> }}
+        name="library/index"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📚" label={Strings.tabLibrary} focused={focused} /> }}
       />
       <Tabs.Screen
-        name="exercises/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏋️" label="Ejercicios" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="cardios/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🏃" label="Cardio" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="videos/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🎬" label="Vídeos" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="nutrition/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="🥗" label="Nutrición" focused={focused} /> }}
+        name="calendar/index"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📅" label={Strings.tabAgenda} focused={focused} /> }}
       />
       <Tabs.Screen
         name="messages/index"
@@ -87,18 +75,23 @@ export default function CoachLayout() {
 
       {/* Rutas sin tab */}
       <Tabs.Screen name="clients/[id]"      options={{ href: null }} />
+      <Tabs.Screen name="routines/index"    options={{ href: null }} />
       <Tabs.Screen name="routines/[id]"     options={{ href: null }} />
       <Tabs.Screen name="routines/create"   options={{ href: null }} />
+      <Tabs.Screen name="exercises/index"   options={{ href: null }} />
       <Tabs.Screen name="exercises/create"  options={{ href: null }} />
       <Tabs.Screen name="exercises/[id]"    options={{ href: null }} />
+      <Tabs.Screen name="cardios/index"     options={{ href: null }} />
+      <Tabs.Screen name="cardios/create"    options={{ href: null }} />
+      <Tabs.Screen name="videos/index"      options={{ href: null }} />
+      <Tabs.Screen name="videos/create"     options={{ href: null }} />
+      <Tabs.Screen name="nutrition/index"   options={{ href: null }} />
       <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
       <Tabs.Screen name="messages/[id]"     options={{ href: null }} />
       <Tabs.Screen name="clients/tags"      options={{ href: null }} />
-      <Tabs.Screen name="calendar/index"    options={{ href: null }} />
       <Tabs.Screen name="calendar/create"   options={{ href: null }} />
-      <Tabs.Screen name="cardios/create"    options={{ href: null }} />
-      <Tabs.Screen name="videos/create"     options={{ href: null }} />
+      <Tabs.Screen name="calendar/edit"     options={{ href: null }} />
       <Tabs.Screen name="foods"                          options={{ href: null }} />
       <Tabs.Screen name="recipes"                        options={{ href: null }} />
       <Tabs.Screen name="clients/documents"              options={{ href: null }} />

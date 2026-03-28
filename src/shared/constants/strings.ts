@@ -916,4 +916,19 @@ export const Strings = {
   changePasswordErrorMismatch: 'Las contraseñas no coinciden',
   changePasswordErrorTooShort: 'La contraseña debe tener al menos 8 caracteres',
   changePasswordErrorGeneric:  'No se pudo actualizar la contraseña',
+
+  // ── Librería hub (RF-E3-01a) ──────────────────────────────────────────────
+  tabLibrary:                  'Librería',
+  tabAgenda:                   'Agenda',
+  libraryTitle:                'Librería',
+  libraryCardRoutinesTitle:    'Rutinas',
+  libraryCardRoutinesSubtitle: 'Entrenos y bloques de ejercicios',
+  libraryCardExercisesTitle:   'Ejercicios',
+  libraryCardExercisesSubtitle:'Catálogo de movimientos',
+  libraryCardCardioTitle:      'Cardio',
+  libraryCardCardioSubtitle:   'Actividades cardiovasculares',
+  libraryCardVideosTitle:      'Vídeos',
+  libraryCardVideosSubtitle:   'Contenido audiovisual para atletas',
+  libraryCardNutritionTitle:   'Nutrición',
+  libraryCardNutritionSubtitle:'Planes, recetas y alimentos',
 } as const;

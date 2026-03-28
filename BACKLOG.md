@@ -2,6 +2,34 @@
 
 ## ✅ Completado
 
+#### RF-E3-01a + RF-E3-01b — Hub de librería y reorganización de tabs
+
+**¿Qué hace?**
+La barra de navegación inferior del entrenador pasa de 8 tabs a 5: Inicio, Clientes, Librería, Agenda y Mensajes. Las cinco secciones de contenido (Rutinas, Ejercicios, Cardio, Vídeos, Nutrición) se agrupan bajo una nueva pantalla "Librería" que muestra una tarjeta por sección. La Agenda (calendario), que antes era accesible solo desde el dashboard, ahora tiene su propia tab visible.
+
+**Pantallas / flujo:**
+- `app/(coach)/library/index.tsx` — hub con 5 tarjetas de navegación
+  - Cada tarjeta tiene icono, título y subtítulo descriptivo
+  - Pulsar una tarjeta navega a la sección correspondiente
+- `app/(coach)/_layout.tsx` — reorganización de tabs
+  - Tabs visibles: Inicio · Clientes · Librería · Agenda · Mensajes
+  - Las 5 secciones de librería pasan a `href: null` (rutas internas accesibles)
+  - `calendar/edit` registrado como ruta oculta (omisión previa corregida)
+
+**Decisiones de diseño:**
+- `LIBRARY_CARDS` exportado para permitir tests unitarios sobre su estructura.
+- No se añade stack layout propio a `library/` — las secciones ya tienen sus propios `_layout.tsx` con Stack.
+
+**Implementación técnica:**
+- Nueva pantalla `library/index.tsx`: componente de navegación puro, sin store ni API.
+- `_layout.tsx`: 5 tabs visibles, 19 rutas ocultas, sin cambios en lógica de badge de mensajes.
+- 2 strings nuevos en `strings.ts`: `tabLibrary`, `tabAgenda` y 10 strings de contenido del hub.
+
+**Métricas finales:**
+- Test Suites: 83/83 ✅ | Tests: 1629/1629 ✅
+
+---
+
 #### RF-E2-11 — Gestión de contraseña del cliente desde la ficha
 
 **¿Qué hace?**
@@ -1534,44 +1562,7 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 
 ### ÉPICA E3 — Navegación y estructura de la app
 
-#### RF-E3-01a (P1) — Hub de librería de contenido
-
-**Requisito:** Crear una pantalla hub en `app/(coach)/library/index.tsx` que agrupe las cinco secciones de contenido del entrenador (Rutinas, Ejercicios, Cardio, Vídeos, Nutrición) en un grid de tarjetas de acceso rápido.
-
-**Criterios de aceptación:**
-- La pantalla muestra 5 tarjetas, una por sección: Rutinas, Ejercicios, Cardio, Vídeos, Nutrición.
-- Cada tarjeta tiene icono (emoji), nombre de sección y un subtítulo descriptivo.
-- Pulsar una tarjeta navega a la pantalla de índice de esa sección (`/routines`, `/exercises`, etc.).
-- La pantalla tiene cabecera con título "Librería".
-- Diseño coherente con el resto de la app (colores, tipografía, espaciado de `theme.ts`).
-- No contiene lógica de negocio: es una pantalla de navegación pura.
-
-**Scope excluido:**
-- Contadores de ítems en cada tarjeta (requeriría 5 llamadas a red — fuera de scope).
-- Reordenado de tarjetas (no hay requisito de personalización en este nivel).
-
-**Dependencia:** Ninguna. Historia independiente.
-
----
-
-#### RF-E3-01b (P1) — Reorganización de la barra de tabs del entrenador
-
-**Requisito:** Reducir la barra de navegación inferior del entrenador de 8 a 5 tabs, sustituyendo las 5 secciones de librería individuales por una única tab "Librería" y elevando "Agenda" a tab visible.
-
-**Criterios de aceptación:**
-- La barra muestra exactamente 5 tabs: Inicio · Clientes · Librería · Agenda · Mensajes.
-- Las tabs Rutinas, Ejercicios, Cardio, Vídeos y Nutrición desaparecen como tabs visibles; sus rutas permanecen registradas con `href: null` para que la navegación interna siga funcionando.
-- La tab "Librería" (📚) navega a `/(coach)/library` (RF-E3-01a).
-- La tab "Agenda" (📅) navega a `/(coach)/calendar` (antes tenía `href: null`).
-- El badge de mensajes no leídos sigue funcionando en la tab Mensajes.
-- Se registra `calendar/edit` como ruta oculta (`href: null`) — omisión detectada de RF-E8-08.
-- No se rompe ninguna navegación existente: todas las rutas de detalle, creación y formularios siguen accesibles.
-
-**Scope excluido:**
-- Cambios en la barra de tabs del atleta.
-- Animaciones de transición personalizadas.
-
-**Dependencia:** RF-E3-01a debe estar completada antes de iniciar esta historia.
+> RF-E3-01a y RF-E3-01b completados — ver sección Completado.
 
 ---
 
