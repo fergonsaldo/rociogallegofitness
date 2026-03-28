@@ -7,6 +7,7 @@ import {
   getSessionsForRangeUseCase,
   createSessionUseCase,
   deleteSessionUseCase,
+  computeMonthKpis,
 } from '../../../src/application/coach/CoachSessionUseCases';
 import { ICoachSessionRepository } from '../../../src/domain/repositories/ICoachSessionRepository';
 import { CoachSession, CreateCoachSessionInput } from '../../../src/domain/entities/CoachSession';
@@ -210,5 +211,83 @@ describe('getSessionsForRangeUseCase', () => {
     mockRepo.getForRange.mockRejectedValue(new Error('DB error'));
     await expect(getSessionsForRangeUseCase(COACH_ID, FROM, TO, mockRepo))
       .rejects.toThrow('DB error');
+  });
+});
+
+// ── computeMonthKpis ──────────────────────────────────────────────────────────
+
+describe('computeMonthKpis', () => {
+  function makeSession(overrides: Partial<CoachSession> = {}): CoachSession {
+    return { ...SESSION, ...overrides };
+  }
+
+  it('returns all zeros for an empty session list', () => {
+    const kpis = computeMonthKpis([]);
+    expect(kpis).toEqual({ totalSessions: 0, totalHours: 0, inPerson: 0, online: 0 });
+  });
+
+  it('counts total sessions correctly', () => {
+    const sessions = [makeSession(), makeSession({ id: 's2' }), makeSession({ id: 's3' })];
+    expect(computeMonthKpis(sessions).totalSessions).toBe(3);
+  });
+
+  it('sums durationMinutes and converts to hours (60 min = 1 h)', () => {
+    const sessions = [
+      makeSession({ durationMinutes: 60 }),
+      makeSession({ id: 's2', durationMinutes: 60 }),
+    ];
+    expect(computeMonthKpis(sessions).totalHours).toBe(2);
+  });
+
+  it('rounds totalHours to one decimal place (90 min = 1.5 h)', () => {
+    const sessions = [makeSession({ durationMinutes: 90 })];
+    expect(computeMonthKpis(sessions).totalHours).toBe(1.5);
+  });
+
+  it('floors fractional hours to one decimal (100 min ≈ 1.7 h)', () => {
+    const sessions = [makeSession({ durationMinutes: 100 })];
+    expect(computeMonthKpis(sessions).totalHours).toBe(1.7);
+  });
+
+  it('counts in_person sessions', () => {
+    const sessions = [
+      makeSession({ modality: 'in_person' }),
+      makeSession({ id: 's2', modality: 'in_person' }),
+      makeSession({ id: 's3', modality: 'online' }),
+    ];
+    expect(computeMonthKpis(sessions).inPerson).toBe(2);
+  });
+
+  it('counts online sessions', () => {
+    const sessions = [
+      makeSession({ modality: 'online' }),
+      makeSession({ id: 's2', modality: 'in_person' }),
+    ];
+    expect(computeMonthKpis(sessions).online).toBe(1);
+  });
+
+  it('handles a single in_person session', () => {
+    const kpis = computeMonthKpis([makeSession({ modality: 'in_person', durationMinutes: 45 })]);
+    expect(kpis.totalSessions).toBe(1);
+    expect(kpis.totalHours).toBe(0.8);
+    expect(kpis.inPerson).toBe(1);
+    expect(kpis.online).toBe(0);
+  });
+
+  it('handles a single online session', () => {
+    const kpis = computeMonthKpis([makeSession({ modality: 'online', durationMinutes: 30 })]);
+    expect(kpis.online).toBe(1);
+    expect(kpis.inPerson).toBe(0);
+    expect(kpis.totalHours).toBe(0.5);
+  });
+
+  it('inPerson + online equals totalSessions when all sessions have known modality', () => {
+    const sessions = [
+      makeSession({ modality: 'in_person' }),
+      makeSession({ id: 's2', modality: 'online' }),
+      makeSession({ id: 's3', modality: 'in_person' }),
+    ];
+    const kpis = computeMonthKpis(sessions);
+    expect(kpis.inPerson + kpis.online).toBe(kpis.totalSessions);
   });
 });

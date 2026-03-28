@@ -51,3 +51,31 @@ export async function deleteSessionUseCase(
   if (!id) throw new Error('id is required');
   return repo.delete(id);
 }
+
+// ── RF-E8-07: KPIs de agenda ──────────────────────────────────────────────────
+
+export interface MonthKpis {
+  totalSessions: number;
+  totalHours:    number;
+  inPerson:      number;
+  online:        number;
+}
+
+export function computeMonthKpis(sessions: CoachSession[]): MonthKpis {
+  let totalMinutes = 0;
+  let inPerson     = 0;
+  let online       = 0;
+
+  for (const s of sessions) {
+    totalMinutes += s.durationMinutes;
+    if      (s.modality === 'in_person') inPerson++;
+    else if (s.modality === 'online')    online++;
+  }
+
+  return {
+    totalSessions: sessions.length,
+    totalHours:    Math.round((totalMinutes / 60) * 10) / 10,
+    inPerson,
+    online,
+  };
+}

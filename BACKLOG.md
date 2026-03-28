@@ -2,6 +2,60 @@
 
 ## ✅ Completado
 
+#### RF-E8-07 — KPIs de agenda
+
+**¿Qué hace?**
+En la vista de calendario, el coach ve de un vistazo cuatro métricas del mes en curso: número total de sesiones programadas, horas totales, sesiones presenciales y sesiones online. Las cifras se actualizan automáticamente al navegar entre meses.
+
+**Pantallas / flujo:**
+- `app/(coach)/calendar/index.tsx` — modificada
+  - Franja de 4 tarjetas KPI (Sesiones / Horas / Presencial / Online) visible solo en la pestaña "Calendario"
+  - Se muestra entre el toggle de vista y el navegador de meses
+
+**Decisiones de diseño:**
+- `computeMonthKpis` es función pura que recibe el array de sesiones ya cargado; sin llamada adicional a BD.
+- Vive en `CoachSessionUseCases.ts` porque opera sobre el mismo dominio que los use cases de sesión.
+- `totalHours` redondeado a 1 decimal (Math.round × 10 / 10) para evitar `.999` de coma flotante.
+
+**Implementación técnica:**
+- `computeMonthKpis(sessions)` añadida a `CoachSessionUseCases.ts` + tipo `MonthKpis`
+- KPI strip añadida en `app/(coach)/calendar/index.tsx` (solo pestaña "Calendario")
+- `strings.ts` — 4 claves: `calendarKpiSessions`, `calendarKpiHours`, `calendarKpiInPerson`, `calendarKpiOnline`
+
+**Métricas finales:**
+- Test Suites: 68/68 ✅ | Tests: 1366/1366 ✅ (+10 nuevos en CoachSessionUseCases)
+
+---
+
+#### RF-E8-06 — Historial de actividad de agenda
+
+**¿Qué hace?**
+El coach puede consultar un log cronológico de todas las sesiones creadas y eliminadas, filtrado por rango de fechas. Cada entrada muestra el tipo de acción (creada / eliminada), el título y tipo de sesión, la modalidad y la fecha programada. Las sesiones eliminadas aparecen con texto grisado y badge "eliminada". Al pulsar sobre una sesión existente, el calendario se posiciona automáticamente en su fecha.
+
+**Pantallas / flujo:**
+- `app/(coach)/session-activity/index.tsx` — nueva pantalla (sin tab)
+  - Selector de rango con DateTimePicker (desde / hasta)
+  - Lista de `ActivityLogRow` con badge de acción (verde=creada, rojo=eliminada)
+  - Tap en fila navegable → `setSelectedDate` + push a `/(coach)/calendar`
+  - Estado vacío y estado de error con botón "Reintentar"
+
+**Decisiones de diseño:**
+- El log guarda snapshot de los datos de sesión en el momento del evento: el historial permanece intacto aunque la sesión se elimine después (`session_id` usa `ON DELETE SET NULL`).
+- El logging es fire-and-forget en `coachCalendarStore` (no bloquea la operación principal).
+- Rango por defecto: mes en curso (1º día → último día).
+
+**Implementación técnica:**
+- `supabase/migrations/20260328200000_add_session_activity_log.sql` — tabla + índice + RLS
+- `SessionActivityLog.ts` / `ISessionActivityLogRepository.ts` / `SessionActivityLogUseCases.ts` — domain + application
+- `SessionActivityLogRemoteRepository.ts` / `sessionActivityStore.ts` — infrastructure + presentation
+- `coachCalendarStore.ts` — logging en `addSession` y `removeSession`
+- `strings.ts` — 8 nuevas claves RF-E8-06
+
+**Métricas finales:**
+- Test Suites: 68/68 ✅ | Tests: 1356/1356 ✅ (+27 nuevos: 14 use case + 13 store)
+
+---
+
 #### RF-E8-04 — Horarios reservables
 
 **¿Qué hace?**

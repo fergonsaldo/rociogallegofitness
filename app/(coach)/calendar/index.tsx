@@ -10,6 +10,7 @@ import { CoachSession } from '../../../src/domain/entities/CoachSession';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/constants/theme';
 import { Strings } from '../../../src/shared/constants/strings';
 import { SessionListView } from './SessionListView';
+import { computeMonthKpis } from '../../../src/application/coach/CoachSessionUseCases';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -105,6 +106,8 @@ export default function CalendarScreen() {
     } as any);
   }
 
+  const kpis = computeMonthKpis(sessions);
+
   const selectedDateLabel = selectedDay
     ? new Date(year, month - 1, selectedDay)
         .toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -145,6 +148,28 @@ export default function CalendarScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {/* KPI strip */}
+      {activeTab === 'calendar' && (
+        <View style={styles.kpiRow}>
+          <View style={styles.kpiCard}>
+            <Text style={styles.kpiValue}>{kpis.totalSessions}</Text>
+            <Text style={styles.kpiLabel}>{Strings.calendarKpiSessions}</Text>
+          </View>
+          <View style={[styles.kpiCard, styles.kpiCardSeparator]}>
+            <Text style={styles.kpiValue}>{kpis.totalHours}</Text>
+            <Text style={styles.kpiLabel}>{Strings.calendarKpiHours}</Text>
+          </View>
+          <View style={[styles.kpiCard, styles.kpiCardSeparator]}>
+            <Text style={styles.kpiValue}>{kpis.inPerson}</Text>
+            <Text style={styles.kpiLabel}>{Strings.calendarKpiInPerson}</Text>
+          </View>
+          <View style={[styles.kpiCard, styles.kpiCardSeparator]}>
+            <Text style={styles.kpiValue}>{kpis.online}</Text>
+            <Text style={styles.kpiLabel}>{Strings.calendarKpiOnline}</Text>
+          </View>
+        </View>
+      )}
 
       {/* List view */}
       {activeTab === 'list' && user?.id && (
@@ -391,4 +416,23 @@ const styles = StyleSheet.create({
   sessionAthlete: { fontSize: FontSize.xs, color: Colors.textSecondary },
   deleteBtn: { padding: Spacing.xs },
   deleteBtnText: { fontSize: 16 },
+
+  kpiRow: {
+    flexDirection: 'row',
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  kpiCard: {
+    flex: 1, alignItems: 'center', paddingVertical: Spacing.sm, gap: 2,
+  },
+  kpiCardSeparator: {
+    borderLeftWidth: 1, borderLeftColor: Colors.border,
+  },
+  kpiValue: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
+  kpiLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, fontWeight: '500' },
 });
