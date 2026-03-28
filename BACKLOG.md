@@ -2,6 +2,37 @@
 
 ## ✅ Completado
 
+#### RF-E8-08 — Edición de sesiones planificadas con asignación de atleta
+
+**¿Qué hace?**
+El coach puede editar cualquier sesión ya planificada: título, tipo, modalidad, fecha/hora, duración, notas y el atleta asignado. Pulsar ✏️ en la tarjeta de la sesión abre un formulario pre-relleno con los datos actuales. Al guardar, el sistema valida que la nueva fecha no colisione con otra sesión, actualiza el calendario en tiempo real y registra una entrada `'updated'` en el historial de actividad.
+
+**Pantallas / flujo:**
+- `app/(coach)/calendar/index.tsx` — modificada
+  - Botón ✏️ añadido en cada `sessionRow`, antes del botón 🗑
+  - Navega a `/(coach)/calendar/edit?id=<sessionId>`
+- `app/(coach)/calendar/edit.tsx` — nueva pantalla
+  - Formulario idéntico a `create.tsx` pero pre-relleno desde `sessions`/`rangeSessions` del store
+  - Muestra error si la sesión no se encuentra en el store
+
+**Decisiones de diseño:**
+- La exclusión de la sesión editada del check de solapamiento se hace filtrando en el use case (`overlapping.filter(s => s.id !== id)`), sin cambiar la firma de `getOverlapping`.
+- Fire-and-forget para el log `'updated'`, igual que para `created` y `deleted`.
+- `'updated'` añadido a `ActivityAction` (era `'created' | 'deleted'`).
+
+**Implementación técnica:**
+- `SessionActivityLog.ts` — `ActivityAction` ampliado con `'updated'`
+- `CoachSession.ts` — `UpdateCoachSessionSchema` + `UpdateCoachSessionInput`
+- `ICoachSessionRepository.ts` / `CoachSessionRemoteRepository.ts` — método `update`
+- `CoachSessionUseCases.ts` — `updateSessionUseCase` con check de solapamiento excluyendo self
+- `coachCalendarStore.ts` — acción `editSession` + actualiza `sessions` y `rangeSessions`
+- `strings.ts` — 3 nuevas claves RF-E8-08
+
+**Métricas finales:**
+- Test Suites: 4/4 ✅ | Tests: 115/115 ✅ (+51 nuevos: 13 entity + 8 use case + 8 store)
+
+---
+
 #### RF-E5-05 — Edición de vídeo existente
 
 **¿Qué hace?**
@@ -1508,27 +1539,4 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E8-08 (P1) Edición de sesiones planificadas con asignación de atleta
-**Requisito:** El entrenador puede editar cualquier campo de una sesión ya planificada, incluido asignar o cambiar el atleta vinculado.
-
-**Criterios de aceptación:**
-- Desde el detalle de la sesión existe un botón/acción "Editar" que abre el formulario relleno con los datos actuales.
-- Todos los campos editables: título, tipo de sesión, modalidad, fecha/hora, duración, notas y atleta asignado.
-- El atleta puede asignarse por primera vez o cambiarse a otro; también puede desvincularse (dejar sin atleta).
-- Al guardar, se valida que la nueva fecha/hora no colisione con otra sesión existente del mismo entrenador (misma validación que al crear).
-- Si la sesión editada tiene fecha en el pasado, se permite editar igualmente (el entrenador puede corregir registros históricos).
-- Tras guardar, el historial de actividad (`session_activity_log`) registra una entrada con acción `'updated'`.
-- Los cambios se reflejan de inmediato en el calendario sin necesidad de recargar.
-
-**Fuera de scope:**
-- Edición masiva de múltiples sesiones a la vez.
-- Sesiones recurrentes (aún no existen en el modelo).
-- Notificación al atleta cuando se le asigna/cambia la sesión.
-
-**Dependencias:**
-- RF-E8-01 (las sesiones deben existir en BD).
-- RF-E8-06 (tabla `session_activity_log` y use case de log deben existir).
-
----
-
-_Última actualización: 2026-03-28 — RF-E8-08 añadido al backlog._
+_Última actualización: 2026-03-28_
