@@ -144,6 +144,9 @@ App móvil de entrenamiento online con dos roles:
 
 **Cliente**: ejecuta sesiones de entrenamiento, registra series, ve su historial y progreso, sigue su plan nutricional, sube fotos de progreso, se comunica con su entrenador.
 
+**IMPORTANTE — app mono-entrenador:**
+La app está diseñada para un único entrenador. No es una plataforma multi-tenant. No hay registro público de entrenadores, no hay selección de entrenador en el onboarding del cliente, y no se deben añadir abstracciones de aislamiento entre entrenadores. Cualquier funcionalidad nueva debe asumir que existe exactamente un entrenador en el sistema.
+
 
 ## BACKLOG
 
