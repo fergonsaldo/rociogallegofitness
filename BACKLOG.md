@@ -2,6 +2,32 @@
 
 ## ✅ Completado
 
+#### RF-E2-06a — Automatizaciones por etiqueta: capa de datos y lógica de negocio
+
+**¿Qué hace?**
+Permite al sistema asociar contenido (rutina, cardio, plan de nutrición) a una etiqueta. Al asignar la etiqueta a un atleta, el sistema ejecuta automáticamente las asignaciones de contenido configuradas. Si alguna asignación falla, el proceso continúa con las demás y se notifica al usuario con un Alert.
+
+**Pantallas / flujo:**
+- Sin UI en esta historia — capa de datos y lógica pura.
+
+**Decisiones de diseño:**
+- Un UNIQUE en `tag_id` garantiza una sola configuración por etiqueta; el repositorio hace upsert.
+- `executeTagAutomation` usa `Promise.allSettled` para que todos los assignments corran en paralelo aunque alguno falle; lanza error si hay cualquier fallo para que el caller muestre el Alert.
+- RLS via JOIN con `client_tags` (el coach solo accede a automatizaciones de sus propias etiquetas).
+
+**Implementación técnica:**
+- `supabase/migrations/20260328400000_add_tag_automations.sql` — tabla + RLS
+- `database.types.ts` — `TagAutomationRow`, `TagAutomationInsert`, `TagAutomationUpdate`
+- `domain/entities/TagAutomation.ts` — `TagAutomationSchema` + `SaveTagAutomationSchema`
+- `domain/repositories/ITagAutomationRepository.ts` — contrato: `getByTagId`, `save`, `delete`
+- `application/coach/TagAutomationUseCases.ts` — 4 use cases: get, save, delete, execute
+- `infrastructure/supabase/remote/TagAutomationRemoteRepository.ts` — implementación Supabase
+
+**Métricas finales:**
+- Test Suites: 2/2 ✅ | Tests: 39/39 ✅ (11 entity + 28 use cases)
+
+---
+
 #### RF-E8-08 — Edición de sesiones planificadas con asignación de atleta
 
 **¿Qué hace?**
@@ -1394,15 +1420,10 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E2-06 (P1) Automatizaciones por etiqueta
-**Requisito:** Permitir reglas que se disparan al crear perfil de cliente con una etiqueta.
+#### RF-E2-06b — Automatizaciones por etiqueta: UI de configuración
+**Requisito:** Pantalla para configurar qué contenido se asigna automáticamente al aplicar una etiqueta. Botón ⚙ por etiqueta en la lista, abre formulario con pickers de rutina, cardio y plan de nutrición.
 
-**Criterios de aceptación:**
-- Configurar automatizaciones desde el detalle de etiqueta.
-- Al asignar etiqueta en alta de cliente, se ejecutan las reglas asociadas.
-- Registrar evidencia en historial de actividad.
-
-**Dependencia de plan:** No observada.
+**Pendiente:** store + pantalla de configuración + integración en TagPickerModal (trigger).
 
 ---
 

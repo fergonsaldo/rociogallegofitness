@@ -244,3 +244,15 @@ export interface CoachPreferencesRow {
   updated_at:   string;
 }
 export type CoachPreferencesUpsert = Pick<CoachPreferencesRow, 'coach_id' | 'quick_access'>;
+
+// ── tag_automations ───────────────────────────────────────────────────────────
+export interface TagAutomationRow {
+  id:                string;
+  tag_id:            string;
+  routine_id:        string | null;
+  cardio_id:         string | null;
+  nutrition_plan_id: string | null;
+  created_at:        string;
+}
+export type TagAutomationInsert = Omit<TagAutomationRow, 'id' | 'created_at'>;
+export type TagAutomationUpdate = Partial<TagAutomationInsert>;
