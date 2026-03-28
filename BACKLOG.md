@@ -1332,6 +1332,31 @@ Los ejecutables (.exe, .apk, .sh, .bat, .cmd, .ps1, .msi, .deb, .dmg, .bin) est�
 
 ---
 
+## 🔴 Bugs abiertos
+
+#### BUG-03 — Error "Could not find a relationship between meals and meal_recipes" en planes nutricionales
+
+**Síntoma:**
+Al entrar en la pantalla de planes nutricionales aparece el error:
+> `Could not find a relationship between meals and meal_recipes in the schema cache`
+
+**Causa probable:**
+PostgREST no tiene en su caché de esquema la relación FK entre las tablas `meals` y `meal_recipes`. Puede deberse a que la FK existe en BD pero el caché no se ha recargado, o a que la migración que creó esa relación no se aplicó completamente.
+
+**Pasos para reproducir:**
+1. Iniciar sesión como entrenador.
+2. Navegar a la pantalla de planes nutricionales.
+3. El error aparece al cargar la pantalla.
+
+**Resolución pendiente:**
+- Verificar que la FK `meal_recipes.meal_id → meals.id` existe en BD.
+- Ejecutar `NOTIFY pgrst, 'reload schema'` para forzar recarga del caché de PostgREST.
+- Si la FK no existe, aplicar la migración correspondiente.
+
+**Prioridad:** P1 (la pantalla es inutilizable)
+
+---
+
 ## 🐛 Bugs resueltos
 
 #### BUG-01 — Correcciones de defectos (sesión 2026-03-25)
