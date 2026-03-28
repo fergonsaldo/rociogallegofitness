@@ -104,6 +104,7 @@ export default function CoachLayout() {
       <Tabs.Screen name="clients/documents"              options={{ href: null }} />
       <Tabs.Screen name="nutrition/groups/index"         options={{ href: null }} />
       <Tabs.Screen name="nutrition/groups/[id]"          options={{ href: null }} />
+      <Tabs.Screen name="session-types/index"            options={{ href: null }} />
     </Tabs>
   );
 }

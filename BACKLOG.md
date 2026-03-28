@@ -977,10 +977,6 @@ Corrección de un bug estructural presente en todos los stores y repositorios: l
 
 ---
 
-## 🔲 En curso
-
----
-
 #### RF-E5-02/03 — Visibilidad de vídeos
 
 **¿Qué hace?**
@@ -1012,6 +1008,16 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 
 **Métricas finales:**
 - Test Suites: 61/61 ✅ | Tests: 1231/1231 ✅ (+18 tests nuevos: 11 use case + 7 store)
+
+---
+
+## 🔲 En curso
+
+---
+
+#### RF-E8-05 — Tipos de sesión
+
+En progreso.
 
 ---
 

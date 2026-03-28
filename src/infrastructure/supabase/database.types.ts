@@ -177,6 +177,17 @@ export interface CoachSessionRow {
 }
 export type CoachSessionInsert = Omit<CoachSessionRow, 'id' | 'created_at'>;
 
+// ── session_types ─────────────────────────────────────────────────────────────
+export interface SessionTypeRow {
+  id:         string;
+  coach_id:   string;
+  name:       string;
+  color:      string;
+  created_at: string;
+}
+export type SessionTypeInsert = Omit<SessionTypeRow, 'id' | 'created_at'>;
+export type SessionTypeUpdate = Partial<Pick<SessionTypeRow, 'name' | 'color'>>;
+
 // ── conversations ─────────────────────────────────────────────────────────────
 export interface ConversationRow {
   id:         string;
