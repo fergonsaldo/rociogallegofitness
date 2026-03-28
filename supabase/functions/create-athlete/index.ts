@@ -56,8 +56,6 @@ Deno.serve(async (req) => {
 
     const newUserId = inviteData.user.id;
 
-    await supabaseAdmin.auth.admin.updateUserById(newUserId, { email_confirm: true });
-
     const { error: profileError } = await supabaseAdmin.from('users').insert({
       id: newUserId,
       email,
