@@ -1449,6 +1449,49 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 
 ---
 
+### ÉPICA NAV — Navegación y estructura de la app
+
+#### RF-NAV-01a (P1) — Hub de librería de contenido
+
+**Requisito:** Crear una pantalla hub en `app/(coach)/library/index.tsx` que agrupe las cinco secciones de contenido del entrenador (Rutinas, Ejercicios, Cardio, Vídeos, Nutrición) en un grid de tarjetas de acceso rápido.
+
+**Criterios de aceptación:**
+- La pantalla muestra 5 tarjetas, una por sección: Rutinas, Ejercicios, Cardio, Vídeos, Nutrición.
+- Cada tarjeta tiene icono (emoji), nombre de sección y un subtítulo descriptivo.
+- Pulsar una tarjeta navega a la pantalla de índice de esa sección (`/routines`, `/exercises`, etc.).
+- La pantalla tiene cabecera con título "Librería".
+- Diseño coherente con el resto de la app (colores, tipografía, espaciado de `theme.ts`).
+- No contiene lógica de negocio: es una pantalla de navegación pura.
+
+**Scope excluido:**
+- Contadores de ítems en cada tarjeta (requeriría 5 llamadas a red — fuera de scope).
+- Reordenado de tarjetas (no hay requisito de personalización en este nivel).
+
+**Dependencia:** Ninguna. Historia independiente.
+
+---
+
+#### RF-NAV-01b (P1) — Reorganización de la barra de tabs del entrenador
+
+**Requisito:** Reducir la barra de navegación inferior del entrenador de 8 a 5 tabs, sustituyendo las 5 secciones de librería individuales por una única tab "Librería" y elevando "Agenda" a tab visible.
+
+**Criterios de aceptación:**
+- La barra muestra exactamente 5 tabs: Inicio · Clientes · Librería · Agenda · Mensajes.
+- Las tabs Rutinas, Ejercicios, Cardio, Vídeos y Nutrición desaparecen como tabs visibles; sus rutas permanecen registradas con `href: null` para que la navegación interna siga funcionando.
+- La tab "Librería" (📚) navega a `/(coach)/library` (RF-NAV-01a).
+- La tab "Agenda" (📅) navega a `/(coach)/calendar` (antes tenía `href: null`).
+- El badge de mensajes no leídos sigue funcionando en la tab Mensajes.
+- Se registra `calendar/edit` como ruta oculta (`href: null`) — omisión detectada de RF-E8-08.
+- No se rompe ninguna navegación existente: todas las rutas de detalle, creación y formularios siguen accesibles.
+
+**Scope excluido:**
+- Cambios en la barra de tabs del atleta.
+- Animaciones de transición personalizadas.
+
+**Dependencia:** RF-NAV-01a debe estar completada antes de iniciar esta historia.
+
+---
+
 ### Deuda técnica detectada (no bloqueante)
 
 #### DT-01 — Tests de NutritionRemoteRepository desactualizados tras BUG-02 ✅ (2026-03-26)
