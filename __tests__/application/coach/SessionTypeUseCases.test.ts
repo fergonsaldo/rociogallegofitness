@@ -140,6 +140,12 @@ describe('updateSessionTypeUseCase', () => {
     expect(mockRepo.update).not.toHaveBeenCalled();
   });
 
+  it('throws when name is only whitespace', async () => {
+    await expect(updateSessionTypeUseCase(TYPE_ID, { name: '   ' }, mockRepo))
+      .rejects.toThrow('name cannot be empty');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
   it('propagates repository errors', async () => {
     mockRepo.update.mockRejectedValue(new Error('Not found'));
     await expect(updateSessionTypeUseCase(TYPE_ID, { name: 'Cardio' }, mockRepo))

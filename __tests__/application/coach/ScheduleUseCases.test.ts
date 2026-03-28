@@ -83,6 +83,12 @@ describe('calculateTotalSlots', () => {
     // 1 slot/day × 3 days = 3
     expect(calculateTotalSlots(s)).toBe(3);
   });
+
+  it('accounts for non-zero start minutes (09:30 to 11:00 = 90 min → 1 slot of 60)', () => {
+    const s = makeSchedule({ startDate: new Date('2026-04-01'), endDate: new Date('2026-04-01'), startTime: '09:30', endTime: '11:00', slotDurationMinutes: 60 });
+    // (11*60) - (9*60+30) = 660 - 570 = 90 min / 60 = 1 slot
+    expect(calculateTotalSlots(s)).toBe(1);
+  });
 });
 
 // ── getSchedulesUseCase ───────────────────────────────────────────────────────

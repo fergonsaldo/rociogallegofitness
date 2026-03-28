@@ -133,10 +133,22 @@ describe('createSessionUseCase', () => {
     expect(mockRepo.getOverlapping).not.toHaveBeenCalled();
   });
 
+  it('throws when scheduledAt is missing', async () => {
+    await expect(createSessionUseCase({ ...CREATE_INPUT, scheduledAt: undefined as any }, mockRepo))
+      .rejects.toThrow('scheduledAt is required');
+    expect(mockRepo.getOverlapping).not.toHaveBeenCalled();
+  });
+
   it('throws when durationMinutes is less than 1', async () => {
     await expect(createSessionUseCase({ ...CREATE_INPUT, durationMinutes: 0 }, mockRepo))
       .rejects.toThrow('durationMinutes must be at least 1');
     expect(mockRepo.getOverlapping).not.toHaveBeenCalled();
+  });
+
+  it('allows durationMinutes of exactly 1', async () => {
+    mockRepo.getOverlapping.mockResolvedValue([]);
+    mockRepo.create.mockResolvedValue(SESSION);
+    await expect(createSessionUseCase({ ...CREATE_INPUT, durationMinutes: 1 }, mockRepo)).resolves.toBeDefined();
   });
 
   it('propagates errors from getOverlapping', async () => {
@@ -289,5 +301,15 @@ describe('computeMonthKpis', () => {
     ];
     const kpis = computeMonthKpis(sessions);
     expect(kpis.inPerson + kpis.online).toBe(kpis.totalSessions);
+  });
+
+  it('in_person sessions do not count toward online', () => {
+    const sessions = [
+      makeSession({ modality: 'in_person' }),
+      makeSession({ id: 's2', modality: 'in_person' }),
+    ];
+    const kpis = computeMonthKpis(sessions);
+    expect(kpis.online).toBe(0);
+    expect(kpis.inPerson).toBe(2);
   });
 });
