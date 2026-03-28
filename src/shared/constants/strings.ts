@@ -437,6 +437,22 @@ export const Strings = {
   errorFailedUpdateSchedule:        'Error al actualizar el horario',
   errorFailedDeleteSchedule:        'Error al eliminar el horario',
 
+  // ── Historial de actividad de agenda (RF-E8-06) ────────────────────────────
+  activityLogTitle:                 'Historial de actividad',
+  activityLogSubtitle:              (n: number) => n === 1 ? '1 evento' : `${n} eventos`,
+  activityLogEmpty:                 'Sin actividad en el rango seleccionado',
+  activityLogActionCreated:         'Creada',
+  activityLogActionDeleted:         'Eliminada',
+  activityLogDeletedBadge:          'eliminada',
+  activityLogNavigateHint:          'Ver en calendario',
+  errorFailedLoadActivityLog:       'Error al cargar el historial de actividad',
+
+  // ── KPIs de agenda (RF-E8-07) ─────────────────────────────────────────────
+  calendarKpiSessions:              'Sesiones',
+  calendarKpiHours:                 'Horas',
+  calendarKpiInPerson:              'Presencial',
+  calendarKpiOnline:                'Online',
+
   // ── Lista de sesiones (RF-E8-02) ──────────────────────────────────────────
   calendarTabCalendar: 'Calendario',
   calendarTabList: 'Lista',

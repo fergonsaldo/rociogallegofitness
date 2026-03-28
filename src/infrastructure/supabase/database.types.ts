@@ -177,6 +177,20 @@ export interface CoachSessionRow {
 }
 export type CoachSessionInsert = Omit<CoachSessionRow, 'id' | 'created_at'>;
 
+// ── session_activity_log ──────────────────────────────────────────────────────
+export interface SessionActivityLogRow {
+  id:           string;
+  coach_id:     string;
+  session_id:   string | null;
+  action:       'created' | 'deleted';
+  title:        string | null;
+  session_type: string | null;
+  modality:     string | null;
+  scheduled_at: string | null;
+  logged_at:    string;
+}
+export type SessionActivityLogInsert = Omit<SessionActivityLogRow, 'id' | 'logged_at'>;
+
 // ── schedules ─────────────────────────────────────────────────────────────────
 export interface ScheduleRow {
   id:                   string;

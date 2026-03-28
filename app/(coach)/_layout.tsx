@@ -107,6 +107,7 @@ export default function CoachLayout() {
       <Tabs.Screen name="session-types/index"            options={{ href: null }} />
       <Tabs.Screen name="schedules/index"               options={{ href: null }} />
       <Tabs.Screen name="schedules/create"              options={{ href: null }} />
+      <Tabs.Screen name="session-activity/index"        options={{ href: null }} />
     </Tabs>
   );
 }
