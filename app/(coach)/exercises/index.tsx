@@ -73,7 +73,7 @@ export default function CoachExerciseLibraryScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
+        <View style={styles.titleBlock}>
           <Text style={styles.title}>{Strings.exerciseLibraryTitle}</Text>
           <Text style={styles.subtitle}>{filtered.length} ejercicios</Text>
         </View>
@@ -267,16 +267,17 @@ function ExerciseCard({
 const styles = StyleSheet.create({
   safe:              { flex: 1, backgroundColor: Colors.background },
   header:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg, paddingBottom: Spacing.md },
+  titleBlock:        { flex: 1, marginRight: Spacing.sm },
   title:             { fontSize: FontSize.xxl, fontWeight: '800', color: Colors.textPrimary },
   subtitle:          { fontSize: FontSize.sm, color: Colors.textSecondary, marginTop: 2 },
-  newBtn:            { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
+  newBtn:            { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, flexShrink: 0 },
   newBtnText:        { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
 
   searchContainer:   { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm },
   searchInput:       { backgroundColor: Colors.surface, borderRadius: BorderRadius.lg, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, fontSize: FontSize.md, color: Colors.textPrimary, borderWidth: 1, borderColor: Colors.border },
 
-  chipsRow:          { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm, gap: Spacing.xs, flexDirection: 'row' },
-  chip:              { borderRadius: BorderRadius.full, paddingHorizontal: Spacing.md, paddingVertical: 6, backgroundColor: Colors.surfaceMuted, borderWidth: 1, borderColor: Colors.border },
+  chipsRow:          { paddingHorizontal: Spacing.lg, paddingBottom: Spacing.sm, gap: Spacing.xs, flexDirection: 'row', alignItems: 'center' },
+  chip:              { borderRadius: BorderRadius.full, paddingHorizontal: Spacing.md, paddingVertical: 6, backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.textMuted },
   chipActive:        { backgroundColor: Colors.primary, borderColor: Colors.primary },
   chipText:          { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
   chipTextActive:    { color: '#fff' },
