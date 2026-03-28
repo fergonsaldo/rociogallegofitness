@@ -1675,6 +1675,22 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### DEUDA TÉCNICA — Navegación
 
+#### DT-UI-01 — Chips de filtro invisibles en pantalla de cardio
+
+**Problema:**
+Los botones de filtro de la pantalla de cardio no se distinguen del fondo cuando están inactivos. Mismo problema que tenía la librería de ejercicios (corregido en commit e725d42): color `surfaceMuted` casi idéntico al `background`.
+
+**Alcance:**
+Aplicar el mismo fix ya validado en ejercicios: `backgroundColor: Colors.surface` + `borderWidth: 1.5, borderColor: Colors.textMuted` para el estado inactivo del chip.
+
+**Criterios de cierre:**
+- Chips inactivos visibles con contraste suficiente sobre el fondo.
+- Chips activos mantienen su estilo actual (sin regresión).
+
+**Prioridad:** P2
+
+---
+
 #### DT-NAV-01 — Revisión global del botón "Volver"
 
 **Problema:**
