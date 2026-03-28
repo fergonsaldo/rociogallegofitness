@@ -2,7 +2,7 @@
  * Use cases for coach session calendar (RF-E8-01 + RF-E8-03).
  */
 
-import { CoachSession, CreateCoachSessionInput } from '@/domain/entities/CoachSession';
+import { CoachSession, CreateCoachSessionInput, UpdateCoachSessionInput, UpdateCoachSessionSchema } from '@/domain/entities/CoachSession';
 import { ICoachSessionRepository } from '@/domain/repositories/ICoachSessionRepository';
 
 export async function getSessionsForMonthUseCase(
@@ -42,6 +42,29 @@ export async function getSessionsForRangeUseCase(
   if (!coachId) throw new Error('coachId is required');
   if (from >= to) throw new Error('from must be before to');
   return repo.getForRange(coachId, from, to);
+}
+
+export async function updateSessionUseCase(
+  id: string,
+  input: UpdateCoachSessionInput,
+  coachId: string,
+  repo: ICoachSessionRepository,
+): Promise<CoachSession> {
+  if (!id)      throw new Error('id is required');
+  if (!coachId) throw new Error('coachId is required');
+  UpdateCoachSessionSchema.parse(input);
+
+  if (input.scheduledAt !== undefined) {
+    const duration = input.durationMinutes ?? 60;
+    const end = new Date(input.scheduledAt.getTime() + duration * 60_000);
+    const overlapping = await repo.getOverlapping(coachId, input.scheduledAt, end);
+    const conflicts = overlapping.filter((s) => s.id !== id);
+    if (conflicts.length > 0) {
+      throw new Error('La sesión se solapa con otra ya programada');
+    }
+  }
+
+  return repo.update(id, input);
 }
 
 export async function deleteSessionUseCase(

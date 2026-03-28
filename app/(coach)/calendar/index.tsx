@@ -85,6 +85,13 @@ export default function CalendarScreen() {
     setSelectedDate(new Date(year, month - 1, day));
   }
 
+  function navigateToEdit(session: CoachSession) {
+    router.push({
+      pathname: '/(coach)/calendar/edit',
+      params: { id: session.id },
+    } as any);
+  }
+
   function confirmDelete(session: CoachSession) {
     Alert.alert(
       Strings.calendarDeleteSessionTitle,
@@ -288,6 +295,13 @@ export default function CalendarScreen() {
                       </View>
                     </View>
                     <TouchableOpacity
+                      onPress={() => navigateToEdit(session)}
+                      style={styles.editBtn}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      <Text style={styles.editBtnText}>✏️</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
                       onPress={() => confirmDelete(session)}
                       style={styles.deleteBtn}
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -414,6 +428,8 @@ const styles = StyleSheet.create({
   modalityBadge: { borderRadius: BorderRadius.full, paddingHorizontal: 8, paddingVertical: 2 },
   modalityText: { fontSize: FontSize.xs, fontWeight: '600' },
   sessionAthlete: { fontSize: FontSize.xs, color: Colors.textSecondary },
+  editBtn: { padding: Spacing.xs },
+  editBtnText: { fontSize: 16 },
   deleteBtn: { padding: Spacing.xs },
   deleteBtnText: { fontSize: 16 },
 

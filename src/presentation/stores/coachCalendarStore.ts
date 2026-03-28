@@ -1,11 +1,12 @@
 import { create } from 'zustand';
-import { CoachSession, CreateCoachSessionInput } from '@/domain/entities/CoachSession';
+import { CoachSession, CreateCoachSessionInput, UpdateCoachSessionInput } from '@/domain/entities/CoachSession';
 import { CoachSessionRemoteRepository } from '@/infrastructure/supabase/remote/CoachSessionRemoteRepository';
 import { SessionActivityLogRemoteRepository } from '@/infrastructure/supabase/remote/SessionActivityLogRemoteRepository';
 import {
   getSessionsForMonthUseCase,
   getSessionsForRangeUseCase,
   createSessionUseCase,
+  updateSessionUseCase,
   deleteSessionUseCase,
 } from '@/application/coach/CoachSessionUseCases';
 import { logSessionActivityUseCase } from '@/application/coach/SessionActivityLogUseCases';
@@ -54,6 +55,7 @@ interface CoachCalendarState {
   fetchMonth:     (coachId: string, year: number, month: number) => Promise<void>;
   fetchRange:     (coachId: string, from: Date, to: Date) => Promise<void>;
   addSession:     (input: CreateCoachSessionInput) => Promise<CoachSession>;
+  editSession:    (id: string, input: UpdateCoachSessionInput, coachId: string) => Promise<CoachSession>;
   removeSession:  (id: string) => Promise<void>;
   setSelectedDate:(date: Date) => void;
   setListFrom:    (date: Date) => void;
@@ -118,6 +120,31 @@ export const useCoachCalendarStore = create<CoachCalendarState>((set, get) => ({
       return session;
     } catch (err) {
       const message = (err as any)?.message ?? Strings.errorFailedCreateSession;
+      set({ error: message });
+      throw err;
+    }
+  },
+
+  editSession: async (id, input, coachId) => {
+    try {
+      const session = await updateSessionUseCase(id, input, coachId, repo);
+      const replace = (list: CoachSession[]) =>
+        list.map((s) => (s.id === id ? session : s))
+            .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
+      set({ sessions: replace(get().sessions), rangeSessions: replace(get().rangeSessions) });
+      // fire-and-forget activity log
+      logSessionActivityUseCase({
+        coachId:     session.coachId,
+        sessionId:   session.id,
+        action:      'updated',
+        title:       session.title,
+        sessionType: session.sessionType,
+        modality:    session.modality,
+        scheduledAt: session.scheduledAt,
+      }, logRepo).catch(() => {/* non-blocking */});
+      return session;
+    } catch (err) {
+      const message = (err as any)?.message ?? Strings.errorFallback;
       set({ error: message });
       throw err;
     }

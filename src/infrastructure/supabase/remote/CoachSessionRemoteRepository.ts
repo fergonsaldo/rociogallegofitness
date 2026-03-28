@@ -1,5 +1,5 @@
 import { supabase } from '../client';
-import { CoachSession, CreateCoachSessionInput } from '@/domain/entities/CoachSession';
+import { CoachSession, CreateCoachSessionInput, UpdateCoachSessionInput } from '@/domain/entities/CoachSession';
 import { ICoachSessionRepository } from '@/domain/repositories/ICoachSessionRepository';
 import { CoachSessionRow } from '../database.types';
 
@@ -95,6 +95,28 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
     if (error) throw new Error(error.message);
     if (!data) throw new Error('No data returned after insert');
     return this.mapRow(data as CoachSessionRow);
+  }
+
+  async update(id: string, input: UpdateCoachSessionInput): Promise<CoachSession> {
+    const patch: Record<string, unknown> = {};
+    if (input.athleteId       !== undefined) patch.athlete_id       = input.athleteId;
+    if (input.title           !== undefined) patch.title            = input.title;
+    if (input.sessionType     !== undefined) patch.session_type     = input.sessionType;
+    if (input.modality        !== undefined) patch.modality         = input.modality;
+    if (input.scheduledAt     !== undefined) patch.scheduled_at     = input.scheduledAt.toISOString();
+    if (input.durationMinutes !== undefined) patch.duration_minutes = input.durationMinutes;
+    if (input.notes           !== undefined) patch.notes            = input.notes;
+
+    const { data, error } = await supabase
+      .from('coach_sessions')
+      .update(patch)
+      .eq('id', id)
+      .select('*, athlete:users!coach_sessions_athlete_id_fkey(full_name)')
+      .single();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after update');
+    return this.mapRow(data as CoachSessionRow, (data as any).athlete?.full_name ?? null);
   }
 
   async delete(id: string): Promise<void> {

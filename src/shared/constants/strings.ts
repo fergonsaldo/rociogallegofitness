@@ -371,6 +371,11 @@ export const Strings = {
   sessionFormPlaceholderNotes: 'Indicaciones, preparación...',
   sessionFormSubmit: 'Crear sesión',
   sessionFormCancel: 'Cancelar',
+
+  // ── Sesiones — edición (RF-E8-08) ─────────────────────────────────────────
+  sessionEditTitle:   'Editar sesión',
+  sessionEditSubmit:  'Guardar cambios',
+  sessionEditSuccess: 'Sesión actualizada',
   sessionTypeEntrenamiento: 'Entrenamiento',
   sessionTypeEvaluacion: 'Evaluación',
   sessionTypeSeguimiento: 'Seguimiento',

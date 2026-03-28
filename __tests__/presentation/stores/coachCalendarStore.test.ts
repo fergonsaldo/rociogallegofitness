@@ -12,6 +12,7 @@ jest.mock('../../../src/application/coach/CoachSessionUseCases', () => ({
   getSessionsForMonthUseCase:  jest.fn(),
   getSessionsForRangeUseCase:  jest.fn(),
   createSessionUseCase:        jest.fn(),
+  updateSessionUseCase:        jest.fn(),
   deleteSessionUseCase:        jest.fn(),
 }));
 
@@ -23,12 +24,14 @@ import {
   getSessionsForMonthUseCase,
   getSessionsForRangeUseCase,
   createSessionUseCase,
+  updateSessionUseCase,
   deleteSessionUseCase,
 } from '../../../src/application/coach/CoachSessionUseCases';
 
 const mockGetSessions = getSessionsForMonthUseCase as jest.MockedFunction<typeof getSessionsForMonthUseCase>;
 const mockGetRange    = getSessionsForRangeUseCase  as jest.MockedFunction<typeof getSessionsForRangeUseCase>;
 const mockCreate      = createSessionUseCase        as jest.MockedFunction<typeof createSessionUseCase>;
+const mockUpdate      = updateSessionUseCase        as jest.MockedFunction<typeof updateSessionUseCase>;
 const mockDelete      = deleteSessionUseCase        as jest.MockedFunction<typeof deleteSessionUseCase>;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -212,6 +215,104 @@ describe('useCoachCalendarStore — addSession', () => {
     });
 
     expect(useCoachCalendarStore.getState().error).toBe('Error al crear la sesión');
+  });
+});
+
+// ── editSession ───────────────────────────────────────────────────────────────
+
+describe('useCoachCalendarStore — editSession', () => {
+  it('replaces the session in state with the updated version', async () => {
+    useCoachCalendarStore.setState({ sessions: [SESSION_A, SESSION_B] });
+    const updated = { ...SESSION_A, title: 'Editada' };
+    mockUpdate.mockResolvedValue(updated);
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().editSession('id-a', { title: 'Editada' }, COACH_ID);
+    });
+
+    const { sessions } = useCoachCalendarStore.getState();
+    expect(sessions.find((s) => s.id === 'id-a')?.title).toBe('Editada');
+  });
+
+  it('keeps catalog sorted by scheduledAt after update', async () => {
+    useCoachCalendarStore.setState({ sessions: [SESSION_A, SESSION_B] });
+    // move SESSION_A to T14 so it should now come after SESSION_B (T12)
+    const movedA = { ...SESSION_A, scheduledAt: T14, id: 'id-a' };
+    mockUpdate.mockResolvedValue(movedA);
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().editSession('id-a', { scheduledAt: T14 }, COACH_ID);
+    });
+
+    const ids = useCoachCalendarStore.getState().sessions.map((s) => s.id);
+    expect(ids[0]).toBe('id-b');
+    expect(ids[1]).toBe('id-a');
+  });
+
+  it('also updates rangeSessions', async () => {
+    useCoachCalendarStore.setState({
+      sessions:      [],
+      rangeSessions: [SESSION_A, SESSION_B],
+    });
+    const updated = { ...SESSION_A, title: 'Range update' };
+    mockUpdate.mockResolvedValue(updated);
+
+    await act(async () => {
+      await useCoachCalendarStore.getState().editSession('id-a', { title: 'Range update' }, COACH_ID);
+    });
+
+    const { rangeSessions } = useCoachCalendarStore.getState();
+    expect(rangeSessions.find((s) => s.id === 'id-a')?.title).toBe('Range update');
+  });
+
+  it('returns the updated session on success', async () => {
+    useCoachCalendarStore.setState({ sessions: [SESSION_A] });
+    const updated = { ...SESSION_A, title: 'Retorno' };
+    mockUpdate.mockResolvedValue(updated);
+
+    let result: CoachSession | undefined;
+    await act(async () => {
+      result = await useCoachCalendarStore.getState().editSession('id-a', { title: 'Retorno' }, COACH_ID);
+    });
+
+    expect(result?.title).toBe('Retorno');
+  });
+
+  it('sets error and re-throws when use case throws', async () => {
+    mockUpdate.mockRejectedValue(new Error('La sesión se solapa'));
+
+    await act(async () => {
+      await expect(
+        useCoachCalendarStore.getState().editSession('id-a', {}, COACH_ID),
+      ).rejects.toThrow('La sesión se solapa');
+    });
+
+    expect(useCoachCalendarStore.getState().error).toBe('La sesión se solapa');
+  });
+
+  it('sets fallback error string when thrown value has no message', async () => {
+    mockUpdate.mockRejectedValue('boom');
+
+    await act(async () => {
+      await expect(
+        useCoachCalendarStore.getState().editSession('id-a', {}, COACH_ID),
+      ).rejects.toBeTruthy();
+    });
+
+    expect(useCoachCalendarStore.getState().error).toBe('Ha ocurrido un error inesperado');
+  });
+
+  it('does not modify catalog on failure', async () => {
+    useCoachCalendarStore.setState({ sessions: [SESSION_A, SESSION_B] });
+    mockUpdate.mockRejectedValue(new Error('Error'));
+
+    await act(async () => {
+      await expect(
+        useCoachCalendarStore.getState().editSession('id-a', { title: 'X' }, COACH_ID),
+      ).rejects.toBeTruthy();
+    });
+
+    expect(useCoachCalendarStore.getState().sessions[0].title).toBe(SESSION_A.title);
   });
 });
 

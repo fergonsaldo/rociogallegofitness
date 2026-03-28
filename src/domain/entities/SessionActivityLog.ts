@@ -1,4 +1,4 @@
-export type ActivityAction = 'created' | 'deleted';
+export type ActivityAction = 'created' | 'deleted' | 'updated';
 
 export interface SessionActivityLog {
   id:          string;

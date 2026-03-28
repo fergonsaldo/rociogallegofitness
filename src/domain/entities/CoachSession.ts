@@ -17,5 +17,16 @@ export const CoachSessionSchema = CreateCoachSessionSchema.extend({
   createdAt:   z.date(),
 });
 
+export const UpdateCoachSessionSchema = z.object({
+  athleteId:       z.string().uuid().nullable().optional(),
+  title:           z.string().max(100).nullable().optional(),
+  sessionType:     z.string().min(1).max(50).optional(),
+  modality:        z.enum(['online', 'in_person']).optional(),
+  scheduledAt:     z.date().optional(),
+  durationMinutes: z.number().int().min(1, 'La duración mínima es 1 minuto').max(480).optional(),
+  notes:           z.string().nullable().optional(),
+});
+
 export type CreateCoachSessionInput = z.infer<typeof CreateCoachSessionSchema>;
+export type UpdateCoachSessionInput = z.infer<typeof UpdateCoachSessionSchema>;
 export type CoachSession            = z.infer<typeof CoachSessionSchema>;

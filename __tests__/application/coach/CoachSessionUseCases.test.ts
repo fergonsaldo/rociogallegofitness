@@ -6,6 +6,7 @@ import {
   getSessionsForMonthUseCase,
   getSessionsForRangeUseCase,
   createSessionUseCase,
+  updateSessionUseCase,
   deleteSessionUseCase,
   computeMonthKpis,
 } from '../../../src/application/coach/CoachSessionUseCases';
@@ -50,6 +51,7 @@ const mockRepo: jest.Mocked<ICoachSessionRepository> = {
   getForRange:    jest.fn(),
   getOverlapping: jest.fn(),
   create:         jest.fn(),
+  update:         jest.fn(),
   delete:         jest.fn(),
 };
 
@@ -160,6 +162,78 @@ describe('createSessionUseCase', () => {
     mockRepo.getOverlapping.mockResolvedValue([]);
     mockRepo.create.mockRejectedValue(new Error('Insert failed'));
     await expect(createSessionUseCase(CREATE_INPUT, mockRepo)).rejects.toThrow('Insert failed');
+  });
+});
+
+// ── updateSessionUseCase ──────────────────────────────────────────────────────
+
+describe('updateSessionUseCase', () => {
+  it('calls repo.update with id and input and returns updated session', async () => {
+    const updated = { ...SESSION, title: 'Actualizado' };
+    mockRepo.update.mockResolvedValue(updated);
+    mockRepo.getOverlapping.mockResolvedValue([]);
+    const result = await updateSessionUseCase(SESSION_ID, { title: 'Actualizado', scheduledAt: NOW }, COACH_ID, mockRepo);
+    expect(result).toEqual(updated);
+    expect(mockRepo.update).toHaveBeenCalledWith(SESSION_ID, expect.objectContaining({ title: 'Actualizado' }));
+  });
+
+  it('throws when id is empty', async () => {
+    await expect(updateSessionUseCase('', { title: 'X' }, COACH_ID, mockRepo))
+      .rejects.toThrow('id is required');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('throws when coachId is empty', async () => {
+    await expect(updateSessionUseCase(SESSION_ID, { title: 'X' }, '', mockRepo))
+      .rejects.toThrow('coachId is required');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('throws when durationMinutes is 0', async () => {
+    await expect(updateSessionUseCase(SESSION_ID, { durationMinutes: 0 }, COACH_ID, mockRepo))
+      .rejects.toThrow();
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('skips overlap check when scheduledAt is not in input', async () => {
+    const updated = { ...SESSION, title: 'Solo título' };
+    mockRepo.update.mockResolvedValue(updated);
+    await updateSessionUseCase(SESSION_ID, { title: 'Solo título' }, COACH_ID, mockRepo);
+    expect(mockRepo.getOverlapping).not.toHaveBeenCalled();
+    expect(mockRepo.update).toHaveBeenCalled();
+  });
+
+  it('runs overlap check when scheduledAt is provided and passes if only self overlaps', async () => {
+    mockRepo.getOverlapping.mockResolvedValue([SESSION]); // only the same session
+    mockRepo.update.mockResolvedValue(SESSION);
+    await expect(
+      updateSessionUseCase(SESSION_ID, { scheduledAt: NOW }, COACH_ID, mockRepo),
+    ).resolves.not.toThrow();
+  });
+
+  it('throws overlap error when another session conflicts', async () => {
+    const otherSession = { ...SESSION, id: 'other-id' };
+    mockRepo.getOverlapping.mockResolvedValue([otherSession]);
+    await expect(
+      updateSessionUseCase(SESSION_ID, { scheduledAt: NOW }, COACH_ID, mockRepo),
+    ).rejects.toThrow('La sesión se solapa con otra ya programada');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.getOverlapping.mockResolvedValue([]);
+    mockRepo.update.mockRejectedValue(new Error('Update failed'));
+    await expect(
+      updateSessionUseCase(SESSION_ID, { scheduledAt: NOW }, COACH_ID, mockRepo),
+    ).rejects.toThrow('Update failed');
+  });
+
+  it('succeeds with empty input (no changes)', async () => {
+    mockRepo.update.mockResolvedValue(SESSION);
+    await expect(
+      updateSessionUseCase(SESSION_ID, {}, COACH_ID, mockRepo),
+    ).resolves.not.toThrow();
+    expect(mockRepo.getOverlapping).not.toHaveBeenCalled();
   });
 });
 
