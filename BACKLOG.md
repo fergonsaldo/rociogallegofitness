@@ -1357,35 +1357,20 @@ PostgREST no tiene en su caché de esquema la relación FK entre las tablas `mea
 
 ---
 
-#### BUG-04 — Error al crear nuevo cliente: Edge Function devuelve estado no-2xx
+## 🐛 Bugs resueltos
+
+#### BUG-04 — Error al crear nuevo cliente: Edge Function devuelve 401
 
 **Síntoma:**
-Al intentar crear un nuevo cliente desde la app aparece el error:
-> `Error al crear el atleta - Edge function returned a non-2xx status code`
+Al intentar crear un nuevo cliente: `Error al crear el atleta - Edge function returned a non-2xx status code` (HTTP 401).
 
-**Error confirmado:**
-La Edge Function devuelve **HTTP 401 Unauthorized**.
+**Causa raíz:**
+`supabase.functions.invoke` en v2.43.0 sin AsyncStorage configurado usaba la `anon key` como Bearer token en lugar del token de sesión del usuario. La Edge Function llamaba a `getUser()` con la anon key → devuelve `null` → 401.
 
-**Causa probable:**
-La llamada a la Edge Function no incluye el token de autorización correcto, o el token ha expirado. También puede ser que la función requiera el `service_role` key y se esté enviando el `anon` key, o que la función tenga configurada autenticación JWT y el token del usuario no se esté propagando correctamente.
-
-**Pasos para reproducir:**
-1. Iniciar sesión como entrenador.
-2. Navegar a la pantalla de nuevo cliente.
-3. Rellenar los datos y pulsar "Crear".
-4. El error aparece al intentar guardar.
-
-**Resolución pendiente:**
-- Revisar los logs de la Edge Function en el dashboard de Supabase.
-- Verificar que la función está desplegada y activa.
-- Comprobar variables de entorno necesarias (`SUPABASE_SERVICE_ROLE_KEY`, etc.).
-- Verificar que el payload enviado desde la app coincide con lo que espera la función.
-
-**Prioridad:** P1 (bloquea el alta de nuevos clientes)
+**Fix aplicado:**
+Obtener `access_token` de `supabase.auth.getSession()` y pasarlo explícitamente en el header `Authorization` antes de invocar la función. `app/(coach)/clients/index.tsx` — commit `4989328`.
 
 ---
-
-## 🐛 Bugs resueltos
 
 #### BUG-01 — Correcciones de defectos (sesión 2026-03-25)
 
