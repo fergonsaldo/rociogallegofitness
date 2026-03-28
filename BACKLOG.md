@@ -1357,6 +1357,31 @@ PostgREST no tiene en su caché de esquema la relación FK entre las tablas `mea
 
 ---
 
+#### BUG-04 — Error al crear nuevo cliente: Edge Function devuelve estado no-2xx
+
+**Síntoma:**
+Al intentar crear un nuevo cliente desde la app aparece el error:
+> `Error al crear el atleta - Edge function returned a non-2xx status code`
+
+**Causa probable:**
+La Edge Function de Supabase encargada de crear el usuario atleta está fallando. Posibles causas: la función no está desplegada, tiene un error de ejecución interno, le falta alguna variable de entorno, o los permisos del service role no son suficientes.
+
+**Pasos para reproducir:**
+1. Iniciar sesión como entrenador.
+2. Navegar a la pantalla de nuevo cliente.
+3. Rellenar los datos y pulsar "Crear".
+4. El error aparece al intentar guardar.
+
+**Resolución pendiente:**
+- Revisar los logs de la Edge Function en el dashboard de Supabase.
+- Verificar que la función está desplegada y activa.
+- Comprobar variables de entorno necesarias (`SUPABASE_SERVICE_ROLE_KEY`, etc.).
+- Verificar que el payload enviado desde la app coincide con lo que espera la función.
+
+**Prioridad:** P1 (bloquea el alta de nuevos clientes)
+
+---
+
 ## 🐛 Bugs resueltos
 
 #### BUG-01 — Correcciones de defectos (sesión 2026-03-25)
