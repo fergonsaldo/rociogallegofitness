@@ -235,6 +235,22 @@ describe('updateSessionUseCase', () => {
     ).resolves.not.toThrow();
     expect(mockRepo.getOverlapping).not.toHaveBeenCalled();
   });
+
+  it('calls getOverlapping with end = scheduledAt + 60 min when durationMinutes not provided', async () => {
+    mockRepo.getOverlapping.mockResolvedValue([]);
+    mockRepo.update.mockResolvedValue(SESSION);
+    await updateSessionUseCase(SESSION_ID, { scheduledAt: NOW }, COACH_ID, mockRepo);
+    const expectedEnd = new Date(NOW.getTime() + 60 * 60_000);
+    expect(mockRepo.getOverlapping).toHaveBeenCalledWith(COACH_ID, NOW, expectedEnd);
+  });
+
+  it('calls getOverlapping with end = scheduledAt + durationMinutes when durationMinutes provided', async () => {
+    mockRepo.getOverlapping.mockResolvedValue([]);
+    mockRepo.update.mockResolvedValue(SESSION);
+    await updateSessionUseCase(SESSION_ID, { scheduledAt: NOW, durationMinutes: 90 }, COACH_ID, mockRepo);
+    const expectedEnd = new Date(NOW.getTime() + 90 * 60_000);
+    expect(mockRepo.getOverlapping).toHaveBeenCalledWith(COACH_ID, NOW, expectedEnd);
+  });
 });
 
 // ── deleteSessionUseCase ──────────────────────────────────────────────────────
@@ -385,5 +401,13 @@ describe('computeMonthKpis', () => {
     const kpis = computeMonthKpis(sessions);
     expect(kpis.online).toBe(0);
     expect(kpis.inPerson).toBe(2);
+  });
+
+  it('session with unknown modality is not counted as online or in_person', () => {
+    const sessions = [makeSession({ modality: 'hybrid' as any })];
+    const kpis = computeMonthKpis(sessions);
+    expect(kpis.online).toBe(0);
+    expect(kpis.inPerson).toBe(0);
+    expect(kpis.totalSessions).toBe(1);
   });
 });
