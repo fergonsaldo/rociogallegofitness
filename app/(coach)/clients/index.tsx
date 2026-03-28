@@ -91,7 +91,6 @@ export default function ClientsScreen() {
   // Create new athlete
   const [newName, setNewName] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -261,18 +260,14 @@ export default function ClientsScreen() {
   };
 
   const createAthlete = async () => {
-    if (!newName.trim() || !newEmail.trim() || !newPassword.trim()) {
-      Alert.alert('Campos obligatorios', 'Completa nombre, email y contraseña.');
-      return;
-    }
-    if (newPassword.length < 6) {
-      Alert.alert('Contraseña demasiado corta', 'Mínimo 6 caracteres.');
+    if (!newName.trim() || !newEmail.trim()) {
+      Alert.alert('Campos obligatorios', 'Completa nombre y email.');
       return;
     }
     setCreating(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-athlete', {
-        body: { name: newName.trim(), email: newEmail.trim(), password: newPassword },
+        body: { name: newName.trim(), email: newEmail.trim() },
       });
 
       if (error) throw error;
@@ -287,7 +282,7 @@ export default function ClientsScreen() {
       }, ...prev]);
 
       closeModal();
-      Alert.alert('Atleta creado', `${newName.trim()} ya puede acceder con su email y contraseña.`);
+      Alert.alert('Invitación enviada', `Se ha enviado un email a ${newEmail.trim()} para que ${newName.trim()} establezca su contraseña.`);
     } catch (err: any) {
       Alert.alert('Error al crear atleta', err?.message ?? 'Inténtalo de nuevo.');
     } finally {
@@ -299,7 +294,6 @@ export default function ClientsScreen() {
     setModalMode(null);
     setNewName('');
     setNewEmail('');
-    setNewPassword('');
   };
 
   const getInitials = (name: string) =>
@@ -337,7 +331,7 @@ export default function ClientsScreen() {
           <ScrollView contentContainerStyle={styles.createForm} keyboardShouldPersistTaps="handled">
             <View style={styles.createInfo}>
               <Text style={styles.createInfoText}>
-                Crea la cuenta del atleta. Le compartirás su email y contraseña para que pueda acceder.
+                El atleta recibirá un email de invitación para establecer su contraseña y acceder a la app.
               </Text>
             </View>
             <Field label="NOMBRE COMPLETO">
@@ -352,13 +346,6 @@ export default function ClientsScreen() {
                 style={styles.input} value={newEmail} onChangeText={setNewEmail}
                 placeholder="atleta@email.com" placeholderTextColor={Colors.textMuted}
                 keyboardType="email-address" autoCapitalize="none" autoCorrect={false}
-              />
-            </Field>
-            <Field label="CONTRASEÑA INICIAL">
-              <TextInput
-                style={styles.input} value={newPassword} onChangeText={setNewPassword}
-                placeholder="Mínimo 6 caracteres" placeholderTextColor={Colors.textMuted}
-                secureTextEntry
               />
             </Field>
           </ScrollView>

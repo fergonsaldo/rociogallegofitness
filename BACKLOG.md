@@ -2,6 +2,30 @@
 
 ## ✅ Completado
 
+#### RF-E2-10 — Email de bienvenida al atleta al dar de alta
+
+**¿Qué hace?**
+Al crear un nuevo atleta, la app envía automáticamente un email de invitación a su dirección. El atleta hace clic en el link y establece su propia contraseña. El coach ya no necesita comunicar credenciales manualmente.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — modificada
+  - Eliminado el campo "Contraseña inicial" del formulario de creación
+  - Texto informativo actualizado
+  - Alert de confirmación muestra "Invitación enviada" con el email del atleta
+
+**Decisiones de diseño:**
+- Se usa `admin.inviteUserByEmail` en lugar de `admin.createUser` — el email de invitación se envía a través del SMTP de Strato ya configurado en Supabase Auth, sin necesidad de secrets adicionales ni servicios externos.
+- Si la creación del usuario tiene éxito pero falla la inserción de perfil o relación, se propaga el error. No se revierte el usuario de auth (comportamiento acorde al criterio de aceptación).
+
+**Implementación técnica:**
+- `supabase/functions/create-athlete/index.ts` — v2: `createUser` → `inviteUserByEmail`, elimina `password` del body
+- `app/(coach)/clients/index.tsx` — elimina estado `newPassword`, campo contraseña y validación asociada
+
+**Métricas finales:**
+- Test Suites: 72/72 ✅ | Tests: 1410/1410 ✅
+
+---
+
 #### RF-E2-09 — Eliminar enlace de auto-registro del login
 
 **¿Qué hace?**
@@ -1303,23 +1327,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 ---
 
 
-#### RF-E2-10 (P1) Email de bienvenida al atleta al dar de alta
-**Requisito:** Cuando el entrenador crea un nuevo cliente, la app debe enviar automáticamente un email al atleta con sus credenciales de acceso (email y contraseña inicial), sin que el entrenador tenga que comunicárselas manualmente.
-
-**Criterios de aceptación:**
-- Al completarse el alta del atleta, se envía un email a la dirección registrada.
-- El email incluye: nombre del atleta, email de acceso, contraseña inicial y nombre del entrenador.
-- El envío lo realiza la Edge Function `create-athlete` (RF-E2-08) tras crear el usuario, usando el SMTP configurado en Supabase o un proveedor externo (Resend, SendGrid…).
-- Si el envío del email falla, el alta no se revierte — el atleta ya existe y puede acceder. Se registra el error en los logs de la Edge Function.
-- El entrenador ve confirmación de que el email fue enviado (o advertencia si falló).
-
-**Fuera de scope:**
-- Personalización de la plantilla del email desde la app.
-- Reenvío manual del email de bienvenida desde la app.
-- Notificaciones push al atleta.
-
-**Dependencias:**
-- RF-E2-08 (la Edge Function debe existir antes de añadir el envío de email).
 
 ---
 

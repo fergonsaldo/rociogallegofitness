@@ -37,30 +37,29 @@ Deno.serve(async (req) => {
 
     const { data: profile } = await supabaseAdmin
       .from('users')
-      .select('role')
+      .select('role, full_name')
       .eq('id', user.id)
       .single();
 
     if (profile?.role !== 'coach') return errorResponse('Forbidden', 403);
 
-    const { name, email, password } = await req.json();
-    if (!name || !email || !password) return errorResponse('Faltan campos obligatorios.', 400);
+    const { name, email } = await req.json();
+    if (!name || !email) return errorResponse('Faltan campos obligatorios.', 400);
 
-    const { data: authData, error: createError } = await supabaseAdmin.auth.admin.createUser({
+    const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
       email,
-      password,
-      email_confirm: true,
-    });
+      { data: { full_name: name, role: 'athlete' } },
+    );
 
-    if (createError) {
-      const msg = createError.message.toLowerCase();
+    if (inviteError) {
+      const msg = inviteError.message.toLowerCase();
       if (msg.includes('already been registered') || msg.includes('already exists') || msg.includes('unique')) {
         return errorResponse('El email ya está registrado.', 409);
       }
-      throw createError;
+      throw inviteError;
     }
 
-    const newUserId = authData.user.id;
+    const newUserId = inviteData.user.id;
 
     const { error: profileError } = await supabaseAdmin.from('users').insert({
       id: newUserId,
