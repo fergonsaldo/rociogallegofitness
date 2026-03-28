@@ -1,5 +1,5 @@
 /**
- * athleteGroupStore tests — RF-E2-04a
+ * athleteGroupStore tests — RF-E2-04a / RF-E2-04b
  */
 
 import { act, renderHook } from '@testing-library/react-native';
@@ -11,14 +11,18 @@ import { AthleteGroup } from '../../../src/domain/entities/AthleteGroup';
 
 jest.mock('../../../src/application/coach/AthleteGroupUseCases');
 jest.mock('../../../src/infrastructure/supabase/remote/AthleteGroupRemoteRepository');
+jest.mock('../../../src/infrastructure/supabase/remote/RoutineRemoteRepository');
+jest.mock('../../../src/infrastructure/supabase/remote/CardioRemoteRepository');
+jest.mock('../../../src/infrastructure/supabase/remote/NutritionRemoteRepository');
 
-const mockGetGroups    = UseCases.getGroupsUseCase              as jest.MockedFunction<typeof UseCases.getGroupsUseCase>;
-const mockCreate       = UseCases.createGroupUseCase            as jest.MockedFunction<typeof UseCases.createGroupUseCase>;
-const mockUpdate       = UseCases.updateGroupUseCase            as jest.MockedFunction<typeof UseCases.updateGroupUseCase>;
-const mockDelete       = UseCases.deleteGroupUseCase            as jest.MockedFunction<typeof UseCases.deleteGroupUseCase>;
-const mockGetMembers   = UseCases.getGroupMembersUseCase        as jest.MockedFunction<typeof UseCases.getGroupMembersUseCase>;
-const mockAddMember    = UseCases.addMemberToGroupUseCase       as jest.MockedFunction<typeof UseCases.addMemberToGroupUseCase>;
-const mockRemoveMember = UseCases.removeMemberFromGroupUseCase  as jest.MockedFunction<typeof UseCases.removeMemberFromGroupUseCase>;
+const mockGetGroups       = UseCases.getGroupsUseCase              as jest.MockedFunction<typeof UseCases.getGroupsUseCase>;
+const mockCreate          = UseCases.createGroupUseCase            as jest.MockedFunction<typeof UseCases.createGroupUseCase>;
+const mockUpdate          = UseCases.updateGroupUseCase            as jest.MockedFunction<typeof UseCases.updateGroupUseCase>;
+const mockDelete          = UseCases.deleteGroupUseCase            as jest.MockedFunction<typeof UseCases.deleteGroupUseCase>;
+const mockGetMembers      = UseCases.getGroupMembersUseCase        as jest.MockedFunction<typeof UseCases.getGroupMembersUseCase>;
+const mockAddMember       = UseCases.addMemberToGroupUseCase       as jest.MockedFunction<typeof UseCases.addMemberToGroupUseCase>;
+const mockRemoveMember    = UseCases.removeMemberFromGroupUseCase  as jest.MockedFunction<typeof UseCases.removeMemberFromGroupUseCase>;
+const mockAssignContent   = UseCases.assignContentToGroupUseCase   as jest.MockedFunction<typeof UseCases.assignContentToGroupUseCase>;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
@@ -35,7 +39,9 @@ const GROUP: AthleteGroup = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  useAthleteGroupStore.setState({ groups: [], members: {}, isLoading: false, isSaving: false, error: null });
+  useAthleteGroupStore.setState({
+    groups: [], members: {}, isLoading: false, isSaving: false, isAssigning: false, error: null,
+  });
 });
 
 // ── fetchGroups ───────────────────────────────────────────────────────────────
@@ -246,6 +252,43 @@ describe('removeMember', () => {
     });
 
     expect(result.current.error).toBe('Remove failed');
+  });
+});
+
+// ── assignContentToGroup ──────────────────────────────────────────────────────
+
+const ROUTINE_ID   = '00000000-0000-4000-b000-000000000010';
+
+describe('assignContentToGroup', () => {
+  it('calls use case and clears isAssigning on success', async () => {
+    mockAssignContent.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAthleteGroupStore());
+
+    await act(async () => {
+      await result.current.assignContentToGroup(GROUP_ID, { routineId: ROUTINE_ID });
+    });
+
+    expect(mockAssignContent).toHaveBeenCalledWith(
+      GROUP_ID,
+      { routineId: ROUTINE_ID },
+      expect.anything(), expect.anything(), expect.anything(), expect.anything(),
+    );
+    expect(result.current.isAssigning).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('sets error and rethrows on failure', async () => {
+    mockAssignContent.mockRejectedValue(new Error('Assign failed'));
+    const { result } = renderHook(() => useAthleteGroupStore());
+
+    let thrown: unknown;
+    await act(async () => {
+      try { await result.current.assignContentToGroup(GROUP_ID, { routineId: ROUTINE_ID }); } catch (e) { thrown = e; }
+    });
+
+    expect((thrown as Error).message).toBe('Assign failed');
+    expect(result.current.error).toBe('Assign failed');
+    expect(result.current.isAssigning).toBe(false);
   });
 });
 

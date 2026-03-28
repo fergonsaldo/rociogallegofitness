@@ -2,6 +2,34 @@
 
 ## ✅ Completado
 
+#### RF-E2-04b — Grupos de atletas: asignación masiva de contenido
+
+**¿Qué hace?**
+Desde el detalle de un grupo, el coach puede asignar una rutina, un cardio o un plan de nutrición a todos los miembros del grupo en un solo paso. Un modal con tres pickers permite seleccionar el contenido a asignar. El botón "Asignar" está deshabilitado si el grupo no tiene miembros o no se ha seleccionado ningún contenido. Al confirmar, el sistema asigna en paralelo y muestra un Alert de éxito o error.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/group-detail.tsx` — modificada
+  - Botón 📋 en el header (deshabilitado sin miembros) abre `AssignContentModal`
+  - `AssignContentModal`: 3 sección-pickers (rutina, cardio, plan) + botones Asignar/Cancelar
+  - `ContentPickerModal`: picker genérico reutilizable con opción "Sin asignar"
+  - Al asignar: Alert de éxito o Alert de error con mensaje descriptivo
+
+**Decisiones de diseño:**
+- `assignContentToGroupUseCase` usa `Promise.allSettled` para que todas las asignaciones corran aunque alguna falle, luego lanza error si hay fallos — igual que en tag automations.
+- El modal carga listas de contenido en `group-detail` al montar (no en el modal), para no repetir la carga si el modal se abre varias veces.
+- El botón "Asignar" se deshabilita si `isAssigning` está activo (evita doble submit).
+
+**Implementación técnica:**
+- `application/coach/AthleteGroupUseCases.ts` — `assignContentToGroupUseCase` + `AssignContentToGroupInput`
+- `presentation/stores/athleteGroupStore.ts` — `isAssigning` + `assignContentToGroup` action
+- `app/(coach)/clients/group-detail.tsx` — UI completa con `AssignContentModal` y `ContentPickerModal`
+- `shared/constants/strings.ts` — 12 nuevas claves RF-E2-04b
+
+**Métricas finales:**
+- Test Suites: 79/79 ✅ | Tests: 1581/1581 ✅ (+11 use cases + 2 store)
+
+---
+
 #### RF-E2-04a — Grupos de atletas: CRUD y gestión de miembros
 
 **¿Qué hace?**

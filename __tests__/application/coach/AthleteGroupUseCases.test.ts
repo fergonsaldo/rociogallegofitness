@@ -1,5 +1,5 @@
 /**
- * AthleteGroupUseCases tests — RF-E2-04a
+ * AthleteGroupUseCases tests — RF-E2-04a / RF-E2-04b
  */
 
 import {
@@ -10,8 +10,12 @@ import {
   getGroupMembersUseCase,
   addMemberToGroupUseCase,
   removeMemberFromGroupUseCase,
+  assignContentToGroupUseCase,
 } from '../../../src/application/coach/AthleteGroupUseCases';
 import { IAthleteGroupRepository } from '../../../src/domain/repositories/IAthleteGroupRepository';
+import { IRoutineRepository } from '../../../src/domain/repositories/IRoutineRepository';
+import { ICardioRepository } from '../../../src/domain/repositories/ICardioRepository';
+import { INutritionRepository } from '../../../src/domain/repositories/INutritionRepository';
 import { AthleteGroup } from '../../../src/domain/entities/AthleteGroup';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -25,7 +29,7 @@ const GROUP: AthleteGroup = {
   description: null, memberCount: 2, createdAt: new Date(),
 };
 
-// ── Mock repo ─────────────────────────────────────────────────────────────────
+// ── Mock repos ────────────────────────────────────────────────────────────────
 
 const mockRepo: jest.Mocked<IAthleteGroupRepository> = {
   getByCoachId:  jest.fn(),
@@ -36,6 +40,22 @@ const mockRepo: jest.Mocked<IAthleteGroupRepository> = {
   addMember:     jest.fn(),
   removeMember:  jest.fn(),
 };
+
+const ROUTINE_ID   = '00000000-0000-4000-b000-000000000010';
+const CARDIO_ID    = '00000000-0000-4000-b000-000000000011';
+const NUTRITION_ID = '00000000-0000-4000-b000-000000000012';
+
+const mockRoutineRepo = {
+  assignToAthlete: jest.fn(),
+} as unknown as jest.Mocked<IRoutineRepository>;
+
+const mockCardioRepo = {
+  assignToAthlete: jest.fn(),
+} as unknown as jest.Mocked<ICardioRepository>;
+
+const mockNutritionRepo = {
+  assignToAthlete: jest.fn(),
+} as unknown as jest.Mocked<INutritionRepository>;
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -193,5 +213,118 @@ describe('removeMemberFromGroupUseCase', () => {
 
   it('throws when athleteId is empty', async () => {
     await expect(removeMemberFromGroupUseCase(GROUP_ID, '', mockRepo)).rejects.toThrow('athleteId is required');
+  });
+});
+
+// ── assignContentToGroupUseCase ───────────────────────────────────────────────
+
+describe('assignContentToGroupUseCase', () => {
+  beforeEach(() => {
+    (mockRoutineRepo.assignToAthlete as jest.Mock).mockResolvedValue(undefined);
+    (mockCardioRepo.assignToAthlete as jest.Mock).mockResolvedValue(undefined);
+    (mockNutritionRepo.assignToAthlete as jest.Mock).mockResolvedValue(undefined);
+  });
+
+  it('assigns all three content types to every member', async () => {
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID]);
+    await assignContentToGroupUseCase(
+      GROUP_ID,
+      { routineId: ROUTINE_ID, cardioId: CARDIO_ID, nutritionPlanId: NUTRITION_ID },
+      mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+    );
+    expect(mockRoutineRepo.assignToAthlete).toHaveBeenCalledWith(ROUTINE_ID, ATHLETE_ID);
+    expect(mockCardioRepo.assignToAthlete).toHaveBeenCalledWith(CARDIO_ID, ATHLETE_ID);
+    expect(mockNutritionRepo.assignToAthlete).toHaveBeenCalledWith(NUTRITION_ID, ATHLETE_ID);
+  });
+
+  it('assigns only routine when only routineId provided', async () => {
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID]);
+    await assignContentToGroupUseCase(
+      GROUP_ID,
+      { routineId: ROUTINE_ID },
+      mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+    );
+    expect(mockRoutineRepo.assignToAthlete).toHaveBeenCalledTimes(1);
+    expect(mockCardioRepo.assignToAthlete).not.toHaveBeenCalled();
+    expect(mockNutritionRepo.assignToAthlete).not.toHaveBeenCalled();
+  });
+
+  it('assigns to multiple members', async () => {
+    const ATHLETE_B = '00000000-0000-4000-b000-000000000020';
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID, ATHLETE_B]);
+    await assignContentToGroupUseCase(
+      GROUP_ID,
+      { routineId: ROUTINE_ID },
+      mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+    );
+    expect(mockRoutineRepo.assignToAthlete).toHaveBeenCalledTimes(2);
+    expect(mockRoutineRepo.assignToAthlete).toHaveBeenCalledWith(ROUTINE_ID, ATHLETE_ID);
+    expect(mockRoutineRepo.assignToAthlete).toHaveBeenCalledWith(ROUTINE_ID, ATHLETE_B);
+  });
+
+  it('resolves immediately when group has no members', async () => {
+    mockRepo.getMembers.mockResolvedValue([]);
+    await expect(
+      assignContentToGroupUseCase(
+        GROUP_ID,
+        { routineId: ROUTINE_ID },
+        mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+      ),
+    ).resolves.toBeUndefined();
+    expect(mockRoutineRepo.assignToAthlete).not.toHaveBeenCalled();
+  });
+
+  it('throws when groupId is empty', async () => {
+    await expect(
+      assignContentToGroupUseCase('', { routineId: ROUTINE_ID }, mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo),
+    ).rejects.toThrow('groupId is required');
+  });
+
+  it('throws when no content is selected', async () => {
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID]);
+    await expect(
+      assignContentToGroupUseCase(GROUP_ID, {}, mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo),
+    ).rejects.toThrow('Al menos un contenido debe estar seleccionado');
+  });
+
+  it('throws when all content ids are null', async () => {
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID]);
+    await expect(
+      assignContentToGroupUseCase(
+        GROUP_ID,
+        { routineId: null, cardioId: null, nutritionPlanId: null },
+        mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+      ),
+    ).rejects.toThrow('Al menos un contenido debe estar seleccionado');
+  });
+
+  it('throws when any assignment fails', async () => {
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID]);
+    (mockRoutineRepo.assignToAthlete as jest.Mock).mockRejectedValue(new Error('assign error'));
+    await expect(
+      assignContentToGroupUseCase(
+        GROUP_ID,
+        { routineId: ROUTINE_ID },
+        mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+      ),
+    ).rejects.toThrow('Alguna asignación de contenido ha fallado');
+  });
+
+  it('runs all assignments even if one fails (Promise.allSettled)', async () => {
+    const ATHLETE_B = '00000000-0000-4000-b000-000000000020';
+    mockRepo.getMembers.mockResolvedValue([ATHLETE_ID, ATHLETE_B]);
+    (mockRoutineRepo.assignToAthlete as jest.Mock)
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('partial fail'));
+
+    await expect(
+      assignContentToGroupUseCase(
+        GROUP_ID,
+        { routineId: ROUTINE_ID },
+        mockRepo, mockRoutineRepo, mockCardioRepo, mockNutritionRepo,
+      ),
+    ).rejects.toThrow('Alguna asignación de contenido ha fallado');
+
+    expect(mockRoutineRepo.assignToAthlete).toHaveBeenCalledTimes(2);
   });
 });

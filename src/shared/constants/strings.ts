@@ -887,4 +887,18 @@ export const Strings = {
   groupAddAthleteTitle:     'Añadir atletas',
   groupAddAthleteEmpty:     'Todos los atletas ya están en el grupo',
   groupAddAthletePickerDone:'Listo',
+
+  // RF-E2-04b — Asignación masiva de contenido
+  groupAssignTitle:         'Asignar contenido al grupo',
+  groupAssignDescription:   'El contenido seleccionado se asignará a todos los miembros del grupo.',
+  groupAssignRoutine:       'Rutina',
+  groupAssignCardio:        'Cardio',
+  groupAssignNutrition:     'Plan de nutrición',
+  groupAssignNone:          'Sin asignar',
+  groupAssignButton:        'Asignar a todos',
+  groupAssignSuccess:       'Contenido asignado correctamente',
+  groupAssignCancel:        'Cancelar',
+  groupAssignNoMembers:     'El grupo no tiene miembros',
+  groupAssignNoContent:     'Selecciona al menos un contenido para asignar',
+  groupAssignPartialError:  'Alguna asignación ha fallado. El resto se completó correctamente.',
 } as const;

@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { AthleteGroup, CreateAthleteGroupInput, UpdateAthleteGroupInput } from '@/domain/entities/AthleteGroup';
 import { AthleteGroupRemoteRepository } from '@/infrastructure/supabase/remote/AthleteGroupRemoteRepository';
+import { RoutineRemoteRepository } from '@/infrastructure/supabase/remote/RoutineRemoteRepository';
+import { CardioRemoteRepository } from '@/infrastructure/supabase/remote/CardioRemoteRepository';
+import { NutritionRemoteRepository } from '@/infrastructure/supabase/remote/NutritionRemoteRepository';
 import {
   getGroupsUseCase,
   createGroupUseCase,
@@ -9,35 +12,43 @@ import {
   getGroupMembersUseCase,
   addMemberToGroupUseCase,
   removeMemberFromGroupUseCase,
+  assignContentToGroupUseCase,
+  AssignContentToGroupInput,
 } from '@/application/coach/AthleteGroupUseCases';
 import { Strings } from '@/shared/constants/strings';
 
-const repo = new AthleteGroupRemoteRepository();
+const repo          = new AthleteGroupRemoteRepository();
+const routineRepo   = new RoutineRemoteRepository();
+const cardioRepo    = new CardioRemoteRepository();
+const nutritionRepo = new NutritionRemoteRepository();
 
 interface AthleteGroupState {
-  groups:     AthleteGroup[];
+  groups:      AthleteGroup[];
   /** Keyed by groupId — athleteIds of members */
-  members:    Record<string, string[]>;
-  isLoading:  boolean;
-  isSaving:   boolean;
-  error:      string | null;
+  members:     Record<string, string[]>;
+  isLoading:   boolean;
+  isSaving:    boolean;
+  isAssigning: boolean;
+  error:       string | null;
 
-  fetchGroups:   (coachId: string) => Promise<void>;
-  createGroup:   (input: CreateAthleteGroupInput) => Promise<AthleteGroup>;
-  updateGroup:   (id: string, input: UpdateAthleteGroupInput) => Promise<AthleteGroup>;
-  deleteGroup:   (id: string) => Promise<void>;
-  fetchMembers:  (groupId: string) => Promise<void>;
-  addMember:     (groupId: string, athleteId: string) => Promise<void>;
-  removeMember:  (groupId: string, athleteId: string) => Promise<void>;
-  clearError:    () => void;
+  fetchGroups:          (coachId: string) => Promise<void>;
+  createGroup:          (input: CreateAthleteGroupInput) => Promise<AthleteGroup>;
+  updateGroup:          (id: string, input: UpdateAthleteGroupInput) => Promise<AthleteGroup>;
+  deleteGroup:          (id: string) => Promise<void>;
+  fetchMembers:         (groupId: string) => Promise<void>;
+  addMember:            (groupId: string, athleteId: string) => Promise<void>;
+  removeMember:         (groupId: string, athleteId: string) => Promise<void>;
+  assignContentToGroup: (groupId: string, input: AssignContentToGroupInput) => Promise<void>;
+  clearError:           () => void;
 }
 
 export const useAthleteGroupStore = create<AthleteGroupState>((set, get) => ({
-  groups:    [],
-  members:   {},
-  isLoading: false,
-  isSaving:  false,
-  error:     null,
+  groups:      [],
+  members:     {},
+  isLoading:   false,
+  isSaving:    false,
+  isAssigning: false,
+  error:       null,
 
   fetchGroups: async (coachId) => {
     set({ isLoading: true, error: null });
@@ -142,6 +153,17 @@ export const useAthleteGroupStore = create<AthleteGroupState>((set, get) => ({
       }));
     } catch (err) {
       set({ error: err instanceof Error ? err.message : Strings.errorFallback });
+      throw err;
+    }
+  },
+
+  assignContentToGroup: async (groupId, input) => {
+    set({ isAssigning: true, error: null });
+    try {
+      await assignContentToGroupUseCase(groupId, input, repo, routineRepo, cardioRepo, nutritionRepo);
+      set({ isAssigning: false });
+    } catch (err) {
+      set({ error: err instanceof Error ? err.message : Strings.errorFallback, isAssigning: false });
       throw err;
     }
   },
