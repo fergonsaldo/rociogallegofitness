@@ -2,12 +2,16 @@ import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, SafeAreaView, ActivityIndicator,
 } from 'react-native';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/presentation/stores/authStore';
 import { useCoachDashboardStore } from '../../src/presentation/stores/coachDashboardStore';
 import { useCoachCalendarStore } from '../../src/presentation/stores/coachCalendarStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../src/shared/constants/theme';
+import {
+  ActivityStatusFilter,
+  filterActivityByStatus,
+} from '../../src/application/coach/ClientUseCases';
 import { Strings } from '../../src/shared/constants/strings';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -66,6 +70,12 @@ function WidgetClientes({
   );
 }
 
+const ACTIVITY_FILTERS: { key: ActivityStatusFilter; label: string }[] = [
+  { key: 'all',         label: Strings.activityFilterAll },
+  { key: 'completed',   label: Strings.activityFilterCompleted },
+  { key: 'in_progress', label: Strings.activityFilterInProgress },
+];
+
 function ActividadReciente({
   sessions,
   onAthletePress,
@@ -79,17 +89,37 @@ function ActividadReciente({
   }>;
   onAthletePress: (athleteId: string) => void;
 }) {
+  const [activeFilter, setActiveFilter] = useState<ActivityStatusFilter>('all');
+  const filtered = filterActivityByStatus(sessions as any, activeFilter);
+
   return (
     <View style={styles.widget}>
       <View style={styles.widgetHeader}>
         <Text style={styles.widgetLabel}>ACTIVIDAD RECIENTE</Text>
       </View>
-      {sessions.length === 0 ? (
+
+      {/* Chips de filtro */}
+      <View style={styles.filterRow}>
+        {ACTIVITY_FILTERS.map(({ key, label }) => (
+          <TouchableOpacity
+            key={key}
+            style={[styles.filterChip, activeFilter === key && styles.filterChipActive]}
+            onPress={() => setActiveFilter(key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.filterChipText, activeFilter === key && styles.filterChipTextActive]}>
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {filtered.length === 0 ? (
         <View style={styles.activityEmpty}>
           <Text style={styles.activityEmptyText}>Ningún atleta ha entrenado todavía</Text>
         </View>
       ) : (
-        sessions.map((s) => (
+        filtered.map((s) => (
           <TouchableOpacity
             key={s.sessionId}
             style={styles.activityRow}
@@ -116,7 +146,7 @@ function ActividadReciente({
                 styles.activityBadgeText,
                 { color: s.status === 'completed' ? Colors.success : Colors.warning },
               ]}>
-                {s.status === 'completed' ? 'Completada' : 'En curso'}
+                {s.status === 'completed' ? Strings.activityFilterCompleted : Strings.activityFilterInProgress}
               </Text>
             </View>
           </TouchableOpacity>
@@ -373,6 +403,20 @@ const styles = StyleSheet.create({
   statLabel:   { fontSize: FontSize.xs, color: Colors.textSecondary, textAlign: 'center' },
 
   // ── Actividad reciente ────────────────────────────────────────────────────
+  filterRow: { flexDirection: 'row', gap: Spacing.xs },
+  filterChip: {
+    paddingHorizontal: Spacing.sm, paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surfaceMuted,
+    borderWidth: 1, borderColor: Colors.border,
+  },
+  filterChipActive: {
+    backgroundColor: Colors.primarySubtle,
+    borderColor: Colors.primary,
+  },
+  filterChipText:       { fontSize: FontSize.xs, fontWeight: '600', color: Colors.textSecondary },
+  filterChipTextActive: { color: Colors.primary },
+
   activityEmpty:     { paddingVertical: Spacing.md, alignItems: 'center' },
   activityEmptyText: { fontSize: FontSize.sm, color: Colors.textMuted },
 

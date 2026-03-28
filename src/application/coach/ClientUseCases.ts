@@ -11,6 +11,7 @@ import {
   AthleteNutritionAssignment,
   AthleteSession,
   CoachDashboardSummary,
+  RecentAthleteSession,
   ClientStatus,
 } from '@/domain/repositories/ICoachRepository';
 
@@ -87,4 +88,17 @@ export async function getCoachDashboardSummaryUseCase(
 
   const since = new Date(Date.now() - WEEK_IN_MS);
   return repo.getDashboardSummary(coachId, since, DASHBOARD_SESSION_LIMIT);
+}
+
+// ── RF-E1-03: Filtro de actividad reciente ────────────────────────────────────
+
+export type ActivityStatusFilter = 'all' | 'completed' | 'in_progress';
+
+export function filterActivityByStatus(
+  sessions: RecentAthleteSession[],
+  filter:   ActivityStatusFilter,
+): RecentAthleteSession[] {
+  if (filter === 'all')        return sessions;
+  if (filter === 'completed')  return sessions.filter((s) => s.status === 'completed');
+  return sessions.filter((s) => s.status !== 'completed');
 }

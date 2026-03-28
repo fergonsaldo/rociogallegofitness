@@ -2,6 +2,31 @@
 
 ## ✅ Completado
 
+#### RF-E1-03 — Filtro de actividad reciente
+
+**¿Qué hace?**
+El widget "Actividad Reciente" del dashboard del coach muestra ahora tres chips de filtro: Todos, Completada y En curso. Al pulsar un chip, la lista se filtra instantáneamente sin llamada a red. El chip activo queda resaltado en azul.
+
+**Pantallas / flujo:**
+- `app/(coach)/dashboard.tsx` — modificada
+  - Tres chips `[Todos] [Completada] [En curso]` encima de la lista de sesiones
+  - El filtro es estado local del componente; no persiste entre sesiones
+
+**Decisiones de diseño:**
+- Filtro puramente local (no afecta al store ni a la carga de datos) para mantener el scope mínimo.
+- "En curso" agrupa `active` y `abandoned` porque ambos representan sesiones no finalizadas desde el punto de vista del coach.
+
+**Implementación técnica:**
+- `filterActivityByStatus(sessions, filter)` — función pura en `ClientUseCases.ts`
+- `ActivityStatusFilter = 'all' | 'completed' | 'in_progress'` — tipo exportado
+- `strings.ts` — 3 claves: `activityFilterAll`, `activityFilterCompleted`, `activityFilterInProgress`
+- `dashboard.tsx` — chips + estado local `useState<ActivityStatusFilter>('all')`
+
+**Métricas finales:**
+- Test Suites: 69/69 ✅ | Tests: 1384/1384 ✅ (+13 nuevos en filterActivityByStatus)
+
+---
+
 #### RF-E8-07 — KPIs de agenda
 
 **¿Qué hace?**
