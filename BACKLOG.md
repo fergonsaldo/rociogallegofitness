@@ -1361,6 +1361,22 @@ Los ejecutables (.exe, .apk, .sh, .bat, .cmd, .ps1, .msi, .deb, .dmg, .bin) est�
 
 ## 🔴 Bugs abiertos
 
+#### BUG-05 — Login muestra error genérico cuando el email no está confirmado
+
+**Síntoma:**
+Al intentar iniciar sesión un cliente que aún no ha confirmado su email, la app muestra "Ha ocurrido un error inesperado. Inténtalo de nuevo" en lugar de explicar qué tiene que hacer.
+
+**Causa:**
+Supabase devuelve `email_not_confirmed` pero el login use case lo traduce al mensaje de error genérico.
+
+**Resolución pendiente:**
+- Detectar el código de error `email_not_confirmed` en el `LoginUseCase` o en el `mapSupabaseAuthError`.
+- Mostrar un mensaje claro, por ejemplo: "Debes confirmar tu email antes de iniciar sesión. Revisa tu bandeja de entrada y haz clic en el enlace de invitación."
+
+**Prioridad:** P1 (el cliente no sabe qué hacer y no puede acceder)
+
+---
+
 #### BUG-03 — Error "Could not find a relationship between meals and meal_recipes" en planes nutricionales
 
 **Síntoma:**
