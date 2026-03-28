@@ -2,6 +2,35 @@
 
 ## ✅ Completado
 
+#### RF-E8-05 — Tipos de sesión
+
+**¿Qué hace?**
+El coach puede crear, editar y eliminar tipos de sesión con nombre y color. Sirven para categorizar visualmente las sesiones de la agenda. La lista ordena los tipos alfabéticamente y muestra la fecha de creación de cada uno. Los colores se eligen de una paleta fija de 12 colores. Al eliminar, el sistema pide confirmación antes de borrar.
+
+**Pantallas / flujo:**
+- `app/(coach)/session-types/index.tsx` — nueva pantalla (sin tab, accesible desde agenda)
+  - Lista de tipos con chip de color, nombre y fecha de creación
+  - Botones ✏️ y 🗑 por fila
+  - Estado vacío con CTA implícito al botón "Nuevo tipo"
+  - Modal bottom-sheet para crear y editar (nombre + paleta de color)
+  - Alert de confirmación antes de eliminar
+
+**Decisiones de diseño:**
+- Sin FK a `coach_sessions` aún — esa conexión llega con RF-E8-04 para no mezclar responsabilidades.
+- Patrón idéntico a `ClientTag`: misma estructura de entidad, repositorio, use cases y store.
+- Ruta sin tab (`href: null`) para no saturar la barra de navegación.
+
+**Implementación técnica:**
+- `supabase/migrations/20260328000000_add_session_types.sql` — tabla + índice + RLS (`coach_id = auth.uid()`)
+- `SessionType.ts` / `ISessionTypeRepository.ts` / `SessionTypeUseCases.ts` — capas domain y application
+- `SessionTypeRemoteRepository.ts` / `sessionTypeStore.ts` — capas infrastructure y presentation
+- `strings.ts` — 16 nuevas claves en sección RF-E8-05
+
+**Métricas finales:**
+- Test Suites: 64/64 ✅ | Tests: 1285/1285 ✅ (+37 nuevos: 18 use case + 19 store)
+
+---
+
 #### RF-E7-02b — Documentos — lado atleta
 
 **¿Qué hace?**
@@ -1012,12 +1041,6 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 ---
 
 ## 🔲 En curso
-
----
-
-#### RF-E8-05 — Tipos de sesión
-
-En progreso.
 
 ---
 
