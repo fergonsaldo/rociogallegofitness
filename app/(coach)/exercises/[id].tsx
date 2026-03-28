@@ -117,9 +117,6 @@ export default function ExerciseDetailScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.topbar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backText}>‹ Volver</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(true)}>
             <Text style={styles.editBtnText}>✏️ Editar</Text>
         </TouchableOpacity>
@@ -187,9 +184,7 @@ const styles = StyleSheet.create({
   safe:               { flex: 1, backgroundColor: Colors.background },
   center:             { flex: 1, alignItems: 'center', justifyContent: 'center' },
   errorText:          { color: Colors.error, fontSize: FontSize.md },
-  topbar:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  backBtn:            { padding: Spacing.xs },
-  backText:           { fontSize: FontSize.md, color: Colors.primary, fontWeight: '600' },
+  topbar:             { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   editBtn:            { backgroundColor: Colors.primarySubtle, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderColor: Colors.primary },
   editBtnText:        { fontSize: FontSize.sm, color: Colors.primary, fontWeight: '700' },
   content:            { padding: Spacing.lg, gap: Spacing.md },

@@ -71,6 +71,11 @@ Cuando una historia quede completamente cerrada (código + tests + BACKLOG.md ac
 - Si el proyecto ya tiene una solución para un problema, úsala — no crees una alternativa paralela
 - Los nombres de variables, funciones y ficheros deben seguir las convenciones ya establecidas en el proyecto
 
+**Navegación — botón volver (decisión de producto confirmada)**
+- **Pantallas de detalle**: NO mostrar botón "← Volver". El hardware back de Android y el swipe de iOS son suficientes. Eliminar cualquier `TouchableOpacity` con texto "← Volver", "‹ Volver" o similar en pantallas de solo lectura/detalle.
+- **Formularios** (create, edit): SÍ mostrar botón "Cancelar" o "✕" para distinguir "descartar cambios" de "guardar".
+- **Excepción**: mostrar botón volver si la pantalla es accesible desde múltiples puntos de entrada y el contexto importa (ej. búsqueda global). Documentarlo explícitamente si se usa esta excepción.
+
 **Decisiones**
 - Si hay dos formas válidas de resolver algo, elige la más simple
 - Si una decisión afecta a la arquitectura, pregunta antes de implementar

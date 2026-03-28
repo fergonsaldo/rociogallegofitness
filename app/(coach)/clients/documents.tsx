@@ -3,7 +3,7 @@ import {
   StyleSheet, SafeAreaView, ActivityIndicator, Alert, Linking,
 } from 'react-native';
 import { useCallback } from 'react';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useDocumentStore } from '../../../src/presentation/stores/documentStore';
@@ -14,7 +14,6 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/con
 import { Strings } from '../../../src/shared/constants/strings';
 
 export default function ClientDocumentsScreen() {
-  const router = useRouter();
   const { athleteId, athleteName } = useLocalSearchParams<{ athleteId: string; athleteName: string }>();
   const { user } = useAuthStore();
   const { documents, isLoading, isUploading, error, fetchDocuments, uploadDocument, deleteDocument } =
@@ -78,9 +77,6 @@ export default function ClientDocumentsScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backText}>← Volver</Text>
-          </TouchableOpacity>
           <View style={styles.headerCenter}>
             <Text style={styles.title}>{Strings.docTitle}</Text>
             {athleteName ? <Text style={styles.subtitle}>{athleteName}</Text> : null}
@@ -184,7 +180,6 @@ const styles = StyleSheet.create({
 
   header:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.lg },
   headerCenter: { flex: 1, alignItems: 'center' },
-  backText:     { color: Colors.primary, fontSize: FontSize.md, minWidth: 70 },
   title:        { fontSize: FontSize.lg, fontWeight: '700', color: Colors.textPrimary },
   subtitle:     { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
 

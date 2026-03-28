@@ -4,7 +4,7 @@ import {
   Platform, ListRenderItemInfo,
 } from 'react-native';
 import { useCallback, useRef, useState } from 'react';
-import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { useMessageStore } from '../../../src/presentation/stores/messageStore';
 import { Message } from '../../../src/domain/entities/Message';
@@ -31,7 +31,6 @@ function MessageBubble({ message, isOwn }: { message: Message; isOwn: boolean })
 }
 
 export default function ChatScreen() {
-  const router  = useRouter();
   const params  = useLocalSearchParams<{ id: string; name: string }>();
   const { user } = useAuthStore();
   const { messages, isLoading, isSending, fetchMessages, sendMessage } = useMessageStore();
@@ -74,9 +73,6 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backText}>‹</Text>
-        </TouchableOpacity>
         <View style={styles.headerInfo}>
           <View style={styles.headerAvatar}>
             <Text style={styles.headerAvatarText}>{(otherName[0] ?? '?').toUpperCase()}</Text>
@@ -140,8 +136,6 @@ const styles = StyleSheet.create({
   loader:           { flex: 1, marginTop: Spacing.xxl },
   // Header
   header:           { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, gap: Spacing.sm },
-  backBtn:          { padding: Spacing.xs },
-  backText:         { fontSize: 28, color: Colors.primary, lineHeight: 32 },
   headerInfo:       { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flex: 1 },
   headerAvatar:     { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.primarySubtle, alignItems: 'center', justifyContent: 'center' },
   headerAvatarText: { fontSize: FontSize.md, fontWeight: '700', color: Colors.primary },

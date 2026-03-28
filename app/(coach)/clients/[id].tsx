@@ -181,9 +181,6 @@ export default function ClientDetailScreen() {
         }}
       />
       <View style={styles.topbar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>← Volver</Text>
-        </TouchableOpacity>
         <View style={styles.topbarActions}>
           <TouchableOpacity style={styles.iconBtn} onPress={handleOpenChat}>
             <Text style={styles.iconBtnText}>💬</Text>
@@ -420,8 +417,7 @@ function StatPill({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: Colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: Spacing.lg },
-  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
-  backText: { color: Colors.textSecondary, fontSize: FontSize.sm },
+  topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   topbarActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
   iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
   iconBtnText: { fontSize: 16 },

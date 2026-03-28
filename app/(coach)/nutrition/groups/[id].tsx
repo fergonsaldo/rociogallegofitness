@@ -3,7 +3,7 @@ import {
   StyleSheet, SafeAreaView, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import { useCallback, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useNutritionStore } from '../../../../src/presentation/stores/nutritionStore';
 import { useAuthStore } from '../../../../src/presentation/stores/authStore';
@@ -12,7 +12,6 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../../../../src/shared/
 import { Strings } from '../../../../src/shared/constants/strings';
 
 export default function PlanGroupDetailScreen() {
-  const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuthStore();
   const {
@@ -59,9 +58,6 @@ export default function PlanGroupDetailScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
-            <Text style={styles.backButton}>{Strings.planGroupDetailBack}</Text>
-          </TouchableOpacity>
           <Text style={styles.title} numberOfLines={1}>
             {group?.name ?? Strings.planGroupDetailTitle}
           </Text>
@@ -177,7 +173,6 @@ const styles = StyleSheet.create({
   safe:                  { flex: 1, backgroundColor: Colors.background },
   container:             { flex: 1, paddingHorizontal: Spacing.md },
   header:                { paddingTop: Spacing.md, paddingBottom: Spacing.sm },
-  backButton:            { color: Colors.primary, fontSize: FontSize.sm, marginBottom: Spacing.xs },
   title:                 { fontSize: FontSize.xl, fontWeight: '700', color: Colors.text },
   description:           { fontSize: FontSize.sm, color: Colors.textSecondary, marginBottom: Spacing.sm },
   errorBanner:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: `${Colors.error}15`, borderWidth: 1, borderColor: `${Colors.error}30`, borderRadius: BorderRadius.md, padding: Spacing.sm, marginBottom: Spacing.sm },

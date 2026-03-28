@@ -56,11 +56,6 @@ export default function NutritionPlanDetailScreen() {
   if (!plan) {
     return (
       <SafeAreaView style={styles.safe}>
-        <View style={styles.topbar}>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backText}>{Strings.nutritionPlanDetailBack}</Text>
-          </TouchableOpacity>
-        </View>
         <View style={styles.center}><ActivityIndicator color={Colors.primary} /></View>
       </SafeAreaView>
     );
@@ -164,9 +159,6 @@ export default function NutritionPlanDetailScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.topbar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.backText}>{Strings.nutritionPlanDetailBack}</Text>
-        </TouchableOpacity>
         <Text style={styles.topbarTitle} numberOfLines={1}>{plan.name}</Text>
         <View style={styles.topbarActions}>
           <TouchableOpacity onPress={handleOpenHistory} style={styles.topbarAction}>
@@ -511,11 +503,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
     backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border,
   },
-  topbarTitle:   { flex: 1, textAlign: 'center', fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary, marginHorizontal: Spacing.sm },
+  topbarTitle:   { flex: 1, fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary },
   topbarActions: { flexDirection: 'row', gap: Spacing.xs },
   topbarAction:  { paddingHorizontal: Spacing.xs },
   topbarActionText: { fontSize: FontSize.lg },
-  backText:      { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '600' },
 
   errorBanner: {
     backgroundColor: `${Colors.error}15`, borderWidth: 1, borderColor: `${Colors.error}30`,
