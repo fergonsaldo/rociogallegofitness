@@ -177,6 +177,22 @@ export interface CoachSessionRow {
 }
 export type CoachSessionInsert = Omit<CoachSessionRow, 'id' | 'created_at'>;
 
+// ── schedules ─────────────────────────────────────────────────────────────────
+export interface ScheduleRow {
+  id:                   string;
+  coach_id:             string;
+  title:                string;
+  start_date:           string;
+  end_date:             string;
+  start_time:           string;
+  end_time:             string;
+  slot_duration_minutes: number;
+  modality:             'online' | 'in_person';
+  is_active:            boolean;
+  created_at:           string;
+}
+export type ScheduleInsert = Omit<ScheduleRow, 'id' | 'created_at'>;
+
 // ── session_types ─────────────────────────────────────────────────────────────
 export interface SessionTypeRow {
   id:         string;
