@@ -2,6 +2,33 @@
 
 ## ✅ Completado
 
+#### RF-E2-11 — Gestión de contraseña del cliente desde la ficha
+
+**¿Qué hace?**
+Desde la ficha de un cliente, el entrenador puede establecer o cambiar la contraseña de ese cliente. Un botón 🔑 en la barra superior abre un modal con dos campos (nueva contraseña y confirmación). La app valida que la contraseña tenga al menos 8 caracteres y que ambos campos coincidan antes de enviar. Al guardar, la contraseña se actualiza de forma inmediata y el cliente no recibe ninguna notificación.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/[id].tsx` — botón 🔑 en topbar abre modal de cambio de contraseña
+  - Validación en cliente: mínimo 8 caracteres, coincidencia entre campos
+  - Error inline en el modal si la validación falla o si la función devuelve error
+  - Alert de éxito al completar
+
+**Decisiones de diseño:**
+- La operación usa `service_role` vía Edge Function porque la Auth Admin API no está disponible desde el cliente.
+- La Edge Function verifica que existe relación activa `coach_athletes` antes de actualizar, para evitar que un coach modifique contraseñas de clientes ajenos.
+- Validación extraída como función pura exportada (`validatePasswordChange`) para poder testarla de forma independiente.
+
+**Implementación técnica:**
+- `supabase/functions/update-athlete-password/index.ts` — nueva Edge Function (desplegada v1)
+- `app/(coach)/clients/[id].tsx` — botón + modal + handler + `validatePasswordChange` exportada
+- `src/shared/constants/strings.ts` — 11 nuevas claves RF-E2-11
+- `__tests__/presentation/screens/clientDetailValidation.test.ts` — 11 tests sobre validación
+
+**Métricas finales:**
+- Test Suites: 81/81 ✅ | Tests: 1611/1611 ✅
+
+---
+
 #### RF-E2-04b — Grupos de atletas: asignación masiva de contenido
 
 **¿Qué hace?**
@@ -1562,26 +1589,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 ---
 
 
-
----
-
-#### RF-E2-11 (P2) — Gestión de contraseña del cliente desde la ficha
-
-**Requisito:** Desde la ficha de un cliente, el entrenador puede establecer o cambiar la contraseña de ese cliente sin necesidad de que el cliente lo haga por su cuenta.
-
-**Criterios de aceptación:**
-- Botón/opción visible en la ficha del cliente (solo para clientes activos).
-- El entrenador introduce la nueva contraseña (con confirmación).
-- Validación: mínimo 8 caracteres.
-- Al confirmar, la contraseña se actualiza vía Edge Function con `service_role` (el entrenador no tiene permisos para cambiar contraseñas de otros usuarios directamente).
-- Mensaje de éxito o error claro en pantalla.
-- No se envía ningún email al cliente al realizar el cambio.
-
-**Notas de diseño:**
-- Requiere nueva Edge Function `update-athlete-password` o reutilizar la infraestructura de `create-athlete`.
-- La Edge Function verifica que el coach autenticado tiene relación activa con el atleta antes de cambiar la contraseña.
-
-**Dependencia:** RF-E2-08 (alta de atleta) — completado.
 
 ---
 
