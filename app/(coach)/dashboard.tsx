@@ -1,17 +1,22 @@
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, SafeAreaView, ActivityIndicator,
+  ScrollView, SafeAreaView, ActivityIndicator, Modal, Alert,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../src/presentation/stores/authStore';
 import { useCoachDashboardStore } from '../../src/presentation/stores/coachDashboardStore';
 import { useCoachCalendarStore } from '../../src/presentation/stores/coachCalendarStore';
+import { useCoachPreferencesStore } from '../../src/presentation/stores/coachPreferencesStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../src/shared/constants/theme';
 import {
   ActivityStatusFilter,
   filterActivityByStatus,
 } from '../../src/application/coach/ClientUseCases';
+import {
+  QUICK_ACCESS_CATALOG,
+  getActiveShortcuts,
+} from '../../src/shared/constants/quickAccessCatalog';
 import { Strings } from '../../src/shared/constants/strings';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -223,37 +228,39 @@ export default function CoachDashboardScreen() {
   const router = useRouter();
   const { user, logout } = useAuthStore();
   const { summary, isLoading, fetchDashboardSummary } = useCoachDashboardStore();
+  const { quickAccess, isSaving, loadQuickAccess, saveQuickAccess } = useCoachPreferencesStore();
+
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [draftSelection,   setDraftSelection]   = useState<string[]>([]);
 
   useEffect(() => {
-    if (user?.id) fetchDashboardSummary(user.id);
+    if (user?.id) {
+      fetchDashboardSummary(user.id);
+      loadQuickAccess(user.id);
+    }
   }, [user?.id]);
 
-  const acciones = [
-    {
-      emoji: '👥',
-      titulo: 'Clientes',
-      descripcion: 'Gestiona tus atletas',
-      ruta: '/(coach)/clients',
-      color: Colors.primary,
-      subtle: Colors.primarySubtle,
-    },
-    {
-      emoji: '📋',
-      titulo: 'Rutinas',
-      descripcion: 'Crea y asigna rutinas',
-      ruta: '/(coach)/routines',
-      color: '#7C3AED',
-      subtle: '#F5F3FF',
-    },
-    {
-      emoji: '🥗',
-      titulo: 'Nutrición',
-      descripcion: 'Planes de alimentación',
-      ruta: '/(coach)/nutrition',
-      color: '#059669',
-      subtle: '#ECFDF5',
-    },
-  ];
+  function openEditModal() {
+    setDraftSelection([...quickAccess]);
+    setEditModalVisible(true);
+  }
+
+  function toggleDraft(key: string) {
+    setDraftSelection((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key],
+    );
+  }
+
+  async function handleSave() {
+    if (draftSelection.length === 0) {
+      Alert.alert('', Strings.quickAccessMinOneError);
+      return;
+    }
+    if (user?.id) await saveQuickAccess(user.id, draftSelection);
+    setEditModalVisible(false);
+  }
+
+  const activeShortcuts = getActiveShortcuts(quickAccess);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -297,24 +304,72 @@ export default function CoachDashboardScreen() {
 
         {/* Accesos directos */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>ACCESOS RÁPIDOS</Text>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionLabel}>{Strings.quickAccessTitle}</Text>
+            <TouchableOpacity onPress={openEditModal} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.sectionEditBtn}>{Strings.quickAccessEditButton}</Text>
+            </TouchableOpacity>
+          </View>
           <View style={styles.grid}>
-            {acciones.map((accion) => (
+            {activeShortcuts.map((item) => (
               <TouchableOpacity
-                key={accion.titulo}
-                style={[styles.accionCard, { borderColor: accion.color + '30' }]}
-                onPress={() => router.push(accion.ruta as any)}
+                key={item.key}
+                style={[styles.accionCard, { borderColor: item.color + '30' }]}
+                onPress={() => router.push(item.route as any)}
                 activeOpacity={0.7}
               >
-                <View style={[styles.accionIcon, { backgroundColor: accion.subtle }]}>
-                  <Text style={styles.accionEmoji}>{accion.emoji}</Text>
+                <View style={[styles.accionIcon, { backgroundColor: item.subtle }]}>
+                  <Text style={styles.accionEmoji}>{item.emoji}</Text>
                 </View>
-                <Text style={[styles.accionTitulo, { color: accion.color }]}>{accion.titulo}</Text>
-                <Text style={styles.accionDesc}>{accion.descripcion}</Text>
+                <Text style={[styles.accionTitulo, { color: item.color }]}>{item.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
         </View>
+
+        {/* Modal de edición de accesos rápidos */}
+        <Modal
+          visible={editModalVisible}
+          animationType="slide"
+          presentationStyle="pageSheet"
+          onRequestClose={() => setEditModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                <Text style={styles.modalCancel}>{Strings.quickAccessCancelButton}</Text>
+              </TouchableOpacity>
+              <Text style={styles.modalTitle}>{Strings.quickAccessModalTitle}</Text>
+              <TouchableOpacity onPress={handleSave} disabled={isSaving}>
+                <Text style={[styles.modalSave, isSaving && styles.modalSaveDisabled]}>
+                  {Strings.quickAccessSaveButton}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalSubtitle}>{Strings.quickAccessModalSubtitle}</Text>
+            <View style={styles.catalogGrid}>
+              {QUICK_ACCESS_CATALOG.map((item) => {
+                const selected = draftSelection.includes(item.key);
+                return (
+                  <TouchableOpacity
+                    key={item.key}
+                    style={[styles.catalogItem, selected && { borderColor: item.color, borderWidth: 2 }]}
+                    onPress={() => toggleDraft(item.key)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.catalogIcon, { backgroundColor: item.subtle }]}>
+                      <Text style={styles.catalogEmoji}>{item.emoji}</Text>
+                    </View>
+                    <Text style={[styles.catalogLabel, selected && { color: item.color, fontWeight: '700' }]}>
+                      {item.label}
+                    </Text>
+                    {selected && <Text style={[styles.catalogCheck, { color: item.color }]}>✓</Text>}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </Modal>
 
         <View style={{ height: Spacing.xxl }} />
       </ScrollView>
@@ -452,6 +507,9 @@ const styles = StyleSheet.create({
   agendaAthlete: { fontSize: FontSize.xs, color: Colors.textMuted },
 
   // ── Acciones rápidas ──────────────────────────────────────────────────────
+  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sectionEditBtn:   { fontSize: FontSize.xs, color: Colors.primary, fontWeight: '600' },
+
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md },
   accionCard: {
     width: '47%', backgroundColor: Colors.surface,
@@ -466,5 +524,33 @@ const styles = StyleSheet.create({
   },
   accionEmoji:  { fontSize: 24 },
   accionTitulo: { fontSize: FontSize.md, fontWeight: '800' },
-  accionDesc:   { fontSize: FontSize.xs, color: Colors.textSecondary },
+
+  // ── Modal de edición ──────────────────────────────────────────────────────
+  modalContainer: { flex: 1, backgroundColor: Colors.background, paddingTop: Spacing.lg },
+  modalHeader: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg, paddingBottom: Spacing.md,
+    borderBottomWidth: 1, borderBottomColor: Colors.border,
+  },
+  modalTitle:        { fontSize: FontSize.md, fontWeight: '700', color: Colors.textPrimary },
+  modalCancel:       { fontSize: FontSize.md, color: Colors.textSecondary },
+  modalSave:         { fontSize: FontSize.md, color: Colors.primary, fontWeight: '700' },
+  modalSaveDisabled: { opacity: 0.4 },
+  modalSubtitle: {
+    fontSize: FontSize.sm, color: Colors.textSecondary,
+    paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md,
+  },
+  catalogGrid: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  catalogItem: {
+    width: '47%', backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg, borderWidth: 1, borderColor: Colors.border,
+    padding: Spacing.md, gap: Spacing.xs, alignItems: 'center',
+  },
+  catalogIcon:  { width: 52, height: 52, borderRadius: BorderRadius.md, alignItems: 'center', justifyContent: 'center' },
+  catalogEmoji: { fontSize: 26 },
+  catalogLabel: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textPrimary },
+  catalogCheck: { fontSize: FontSize.md, fontWeight: '700', position: 'absolute', top: 8, right: 10 },
 });

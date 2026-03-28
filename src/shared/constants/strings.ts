@@ -792,6 +792,16 @@ export const Strings = {
   videoVisibilitySuccess:   (title: string, visible: boolean) =>
     `"${title}" ahora es ${visible ? 'visible' : 'oculto'} para tus clientes`,
 
+  // ── RF-E1-02: Accesos rápidos configurables ──────────────────────────────────
+  quickAccessTitle:          'ACCESOS RÁPIDOS',
+  quickAccessEditButton:     'Editar',
+  quickAccessModalTitle:     'Editar accesos rápidos',
+  quickAccessModalSubtitle:  'Selecciona los accesos que quieres ver en el inicio',
+  quickAccessSaveButton:     'Guardar',
+  quickAccessCancelButton:   'Cancelar',
+  quickAccessMinOneError:    'Selecciona al menos un acceso',
+  errorFailedSavePreferences:'Error al guardar las preferencias',
+
   // ── RF-E1-03: Filtro actividad reciente ─────────────────────────────────────
   activityFilterAll:        'Todos',
   activityFilterCompleted:  'Completada',

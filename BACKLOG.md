@@ -2,6 +2,36 @@
 
 ## ✅ Completado
 
+#### RF-E1-02 — Accesos rápidos configurables
+
+**¿Qué hace?**
+El coach puede personalizar qué accesos rápidos aparecen en su dashboard. Pulsando "Editar" junto a la sección, se abre un modal con los 6 destinos disponibles (Clientes, Rutinas, Nutrición, Agenda, Vídeos, Mensajes). El coach marca o desmarca cada uno y guarda. La selección se persiste en Supabase y se restaura en cada sesión.
+
+**Pantallas / flujo:**
+- `app/(coach)/dashboard.tsx` — modificada
+  - Botón "Editar" junto al título "ACCESOS RÁPIDOS"
+  - Modal `pageSheet` con grid de 6 chips seleccionables (checkmark visual cuando está activo)
+  - Botones "Cancelar" y "Guardar" en la cabecera del modal
+  - Alert si se intenta guardar con cero shortcuts seleccionados
+
+**Decisiones de diseño:**
+- El catálogo de shortcuts es una constante en `quickAccessCatalog.ts` (no en BD) — no hay necesidad de gestión dinámica.
+- Sin reordenado manual: el orden sigue el del catálogo (scope excluido para no añadir dependencia de drag-and-drop).
+- Preferencias guardadas en tabla `coach_preferences` con upsert, siguiendo el patrón de repositorio del proyecto.
+
+**Implementación técnica:**
+- `supabase/migrations/20260328300000_add_coach_preferences.sql` — tabla + RLS
+- `ICoachPreferencesRepository.ts` / `CoachPreferencesRemoteRepository.ts` — contrato e implementación
+- `CoachPreferencesUseCases.ts` — `getQuickAccessUseCase`, `saveQuickAccessUseCase`
+- `quickAccessCatalog.ts` — catálogo + `getActiveShortcuts` (función pura) + `DEFAULT_QUICK_ACCESS`
+- `coachPreferencesStore.ts` — `loadQuickAccess`, `saveQuickAccess`, `isSaving`
+- `strings.ts` — 7 nuevas claves RF-E1-02
+
+**Métricas finales:**
+- Test Suites: 72/72 ✅ | Tests: 1410/1410 ✅ (+26 nuevos: 9 use cases + 7 catálogo + 10 store)
+
+---
+
 #### RF-E1-03 — Filtro de actividad reciente
 
 **¿Qué hace?**

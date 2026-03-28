@@ -237,3 +237,10 @@ export interface MessageRow {
   read_at:         string | null;
 }
 export type MessageInsert = Omit<MessageRow, 'id' | 'sent_at'>;
+
+export interface CoachPreferencesRow {
+  coach_id:     string;
+  quick_access: string[];
+  updated_at:   string;
+}
+export type CoachPreferencesUpsert = Pick<CoachPreferencesRow, 'coach_id' | 'quick_access'>;
