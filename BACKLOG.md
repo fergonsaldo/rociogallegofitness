@@ -1725,6 +1725,26 @@ Aplicar el mismo fix ya validado en ejercicios: `backgroundColor: Colors.surface
 
 ---
 
+#### DT-NAV-02 — Botón hardware "Atrás" de Android con comportamiento aleatorio
+
+**Problema:**
+La flecha de sistema de Android (hardware back button) no retrocede consistentemente una sola pantalla. El comportamiento es impredecible: a veces salta varias pantallas, a veces no hace nada, a veces cierra la app.
+
+**Alcance:**
+Revisar la configuración de Expo Router (stacks, tabs, modales) para garantizar que el back button de Android siempre retrocede exactamente una pantalla en el historial de navegación. Prestar especial atención a:
+- Pantallas dentro de tabs (el back no debe salir del tab sin motivo).
+- Modales (deben cerrarse, no navegar hacia atrás en el stack).
+- Pantallas de detalle anidadas dentro de tabs.
+
+**Criterios de cierre:**
+- Hardware back button retrocede una pantalla en todos los flujos verificados.
+- Comportamiento consistente entre sesiones y rutas.
+- Verificado en dispositivo físico Android y emulador.
+
+**Prioridad:** P1 (afecta directamente a la experiencia en Android)
+
+---
+
 #### DT-NAV-01 — Revisión global del botón "Volver"
 
 **Problema:**
