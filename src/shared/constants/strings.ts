@@ -901,4 +901,18 @@ export const Strings = {
   groupAssignNoMembers:     'El grupo no tiene miembros',
   groupAssignNoContent:     'Selecciona al menos un contenido para asignar',
   groupAssignPartialError:  'Alguna asignación ha fallado. El resto se completó correctamente.',
+
+  // ── Cambio de contraseña de cliente (RF-E2-11) ────────────────────────────
+  changePasswordButton:        'Cambiar contraseña',
+  changePasswordModalTitle:    'Nueva contraseña',
+  changePasswordFieldNew:      'NUEVA CONTRASEÑA',
+  changePasswordFieldConfirm:  'CONFIRMAR CONTRASEÑA',
+  changePasswordPlaceholder:   'Mínimo 8 caracteres',
+  changePasswordConfirmPlaceholder: 'Repite la contraseña',
+  changePasswordSave:          'Guardar',
+  changePasswordCancel:        'Cancelar',
+  changePasswordSuccess:       'Contraseña actualizada correctamente',
+  changePasswordErrorMismatch: 'Las contraseñas no coinciden',
+  changePasswordErrorTooShort: 'La contraseña debe tener al menos 8 caracteres',
+  changePasswordErrorGeneric:  'No se pudo actualizar la contraseña',
 } as const;

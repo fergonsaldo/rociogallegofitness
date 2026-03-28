@@ -1,6 +1,7 @@
 import {
   View, Text, ScrollView, TouchableOpacity,
   StyleSheet, SafeAreaView, ActivityIndicator, Alert,
+  Modal, TextInput,
 } from 'react-native';
 import { useCallback, useState } from 'react';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
@@ -13,6 +14,7 @@ import {
   AthleteDetail,
 } from '../../../src/application/coach/ClientUseCases';
 import { AthleteRoutineAssignment, AthleteSession } from '../../../src/domain/repositories/ICoachRepository';
+import { supabase } from '../../../src/infrastructure/supabase/client';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { useMessageStore } from '../../../src/presentation/stores/messageStore';
 import { useTagStore } from '../../../src/presentation/stores/tagStore';
@@ -24,6 +26,17 @@ import { getAthleteTagsUseCase } from '../../../src/application/coach/TagUseCase
 const tagRepo = new TagRemoteRepository();
 
 const repo = new CoachRemoteRepository();
+
+// ── Pure helpers ──────────────────────────────────────────────────────────────
+
+export function validatePasswordChange(
+  newPassword: string,
+  confirmPassword: string,
+): string | null {
+  if (newPassword.length < 8) return Strings.changePasswordErrorTooShort;
+  if (newPassword !== confirmPassword) return Strings.changePasswordErrorMismatch;
+  return null;
+}
 
 export default function ClientDetailScreen() {
   const router = useRouter();
@@ -37,6 +50,12 @@ export default function ClientDetailScreen() {
   const [pickerVisible, setPickerVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [pwdModalVisible, setPwdModalVisible] = useState(false);
+  const [newPassword, setNewPassword]         = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwdError, setPwdError]               = useState<string | null>(null);
+  const [pwdSaving, setPwdSaving]             = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -102,6 +121,42 @@ export default function ClientDetailScreen() {
     }
   };
 
+  const openPasswordModal = () => {
+    setNewPassword('');
+    setConfirmPassword('');
+    setPwdError(null);
+    setPwdModalVisible(true);
+  };
+
+  const handleChangePassword = async () => {
+    const validationError = validatePasswordChange(newPassword, confirmPassword);
+    if (validationError) {
+      setPwdError(validationError);
+      return;
+    }
+    setPwdSaving(true);
+    setPwdError(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+
+      const { data, error: fnError } = await supabase.functions.invoke('update-athlete-password', {
+        body: { athleteId: id, password: newPassword },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+
+      if (fnError) throw fnError;
+      if (data?.error) throw new Error(data.error);
+
+      setPwdModalVisible(false);
+      Alert.alert('', Strings.changePasswordSuccess);
+    } catch (err: any) {
+      setPwdError(err?.message ?? Strings.changePasswordErrorGeneric);
+    } finally {
+      setPwdSaving(false);
+    }
+  };
+
   const getInitials = (n: string) =>
     n.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 
@@ -145,8 +200,61 @@ export default function ClientDetailScreen() {
           >
             <Text style={styles.docsBtnText}>{Strings.docClientButton}</Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.pwdBtn} onPress={openPasswordModal}>
+            <Text style={styles.pwdBtnText}>🔑</Text>
+          </TouchableOpacity>
         </View>
       </View>
+
+      <Modal visible={pwdModalVisible} animationType="slide" presentationStyle="pageSheet">
+        <SafeAreaView style={styles.safe}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setPwdModalVisible(false)}>
+              <Text style={styles.modalCancel}>{Strings.changePasswordCancel}</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>{Strings.changePasswordModalTitle}</Text>
+            <TouchableOpacity onPress={handleChangePassword} disabled={pwdSaving}>
+              {pwdSaving
+                ? <ActivityIndicator color={Colors.primary} size="small" />
+                : <Text style={styles.modalSave}>{Strings.changePasswordSave}</Text>}
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={styles.modalBody} keyboardShouldPersistTaps="handled">
+            {pwdError && (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorBannerText}>{pwdError}</Text>
+              </View>
+            )}
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>{Strings.changePasswordFieldNew}</Text>
+              <TextInput
+                style={styles.input}
+                value={newPassword}
+                onChangeText={setNewPassword}
+                placeholder={Strings.changePasswordPlaceholder}
+                placeholderTextColor={Colors.textMuted}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>{Strings.changePasswordFieldConfirm}</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder={Strings.changePasswordConfirmPlaceholder}
+                placeholderTextColor={Colors.textMuted}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
 
       {loading ? (
         <View style={styles.center}><ActivityIndicator color={Colors.primary} size="large" /></View>
@@ -321,7 +429,19 @@ const styles = StyleSheet.create({
   assignBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
   docsBtn: { backgroundColor: Colors.surface, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
   docsBtnText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '600' },
+  pwdBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  pwdBtnText: { fontSize: 16 },
   errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
+  modalCancel: { color: Colors.textSecondary, fontSize: FontSize.sm, width: 70 },
+  modalSave: { color: Colors.primary, fontSize: FontSize.sm, fontWeight: '700', width: 70, textAlign: 'right' },
+  modalTitle: { fontSize: FontSize.lg, fontWeight: '800', color: Colors.textPrimary },
+  modalBody: { padding: Spacing.lg, gap: Spacing.md },
+  errorBanner: { backgroundColor: `${Colors.error}15`, borderRadius: BorderRadius.md, padding: Spacing.md, borderWidth: 1, borderColor: `${Colors.error}30` },
+  errorBannerText: { color: Colors.error, fontSize: FontSize.sm },
+  field: { gap: Spacing.xs },
+  fieldLabel: { fontSize: FontSize.xs, color: Colors.textSecondary, letterSpacing: 2, fontWeight: '600' },
+  input: { backgroundColor: Colors.surface, borderWidth: 1.5, borderColor: Colors.border, borderRadius: BorderRadius.md, padding: Spacing.md, color: Colors.textPrimary, fontSize: FontSize.md },
   profileCard: { backgroundColor: Colors.surface, margin: Spacing.lg, borderRadius: BorderRadius.lg, padding: Spacing.lg, alignItems: 'center', gap: Spacing.md, borderWidth: 1, borderColor: Colors.border, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
   avatarLarge: { width: 72, height: 72, borderRadius: 36, backgroundColor: Colors.primarySubtle, alignItems: 'center', justifyContent: 'center' },
   avatarLargeText: { fontSize: FontSize.xl, fontWeight: '800', color: Colors.primary },
