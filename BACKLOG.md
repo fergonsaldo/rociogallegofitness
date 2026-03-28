@@ -1377,6 +1377,28 @@ Supabase devuelve `email_not_confirmed` pero el login use case lo traduce al men
 
 ---
 
+#### BUG-06 — Subida de fichero .jpg falla con "Network request failed"
+
+**Síntoma:**
+Al intentar subir un fichero `.jpg` desde la pantalla de documentos aparece el error:
+> `Network request failed`
+
+**Causa probable:**
+El mismo bug ya corregido en recetas (BUG-01, defecto 6): `fetch(localUri).blob()` en React Native produce un Blob incompatible con el SDK de Supabase Storage. La solución validada es leer el fichero como base64 con `expo-file-system/legacy` y convertirlo a `Uint8Array` antes de subir.
+
+**Pasos para reproducir:**
+1. Iniciar sesión como entrenador.
+2. Abrir la ficha de un cliente → 📁 Documentos.
+3. Pulsar "Subir documento" y seleccionar un `.jpg`.
+4. El error aparece al intentar subir.
+
+**Resolución pendiente:**
+- Revisar `DocumentRemoteRepository.uploadDocument` y aplicar el mismo patrón que `RecipeRemoteRepository.uploadImage`: leer con `FileSystem.readAsStringAsync(uri, { encoding: 'base64' })` y subir como `Uint8Array`.
+
+**Prioridad:** P1 (la subida de imágenes es inutilizable)
+
+---
+
 #### BUG-03 — Error "Could not find a relationship between meals and meal_recipes" en planes nutricionales
 
 **Síntoma:**
