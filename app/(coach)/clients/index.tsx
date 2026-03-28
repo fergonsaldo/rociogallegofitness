@@ -271,32 +271,14 @@ export default function ClientsScreen() {
     }
     setCreating(true);
     try {
-      const { data: authData, error: authError } = await supabase.auth.admin
-        ? await (supabase.auth as any).admin.createUser({
-            email: newEmail.trim(),
-            password: newPassword,
-            email_confirm: true,
-          })
-        : await supabase.auth.signUp({
-            email: newEmail.trim(),
-            password: newPassword,
-            options: { data: { full_name: newName.trim(), role: 'athlete' } },
-          });
-
-      if (authError) throw authError;
-      const newUserId = authData?.user?.id;
-      if (!newUserId) throw new Error('No se obtuvo el ID del usuario creado.');
-
-      const { error: profileError } = await supabase.from('users').insert({
-        id: newUserId, email: newEmail.trim(), full_name: newName.trim(),
-        role: 'athlete', weight_unit: 'kg',
+      const { data, error } = await supabase.functions.invoke('create-athlete', {
+        body: { name: newName.trim(), email: newEmail.trim(), password: newPassword },
       });
-      if (profileError && profileError.code !== '23505') throw profileError;
 
-      const { error: linkError } = await supabase.from('coach_athletes').insert({
-        coach_id: user!.id, athlete_id: newUserId, status: 'active',
-      });
-      if (linkError) throw linkError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      const newUserId: string = data.id;
 
       setAthletes((prev) => [{
         id: newUserId, email: newEmail.trim(), full_name: newName.trim(),

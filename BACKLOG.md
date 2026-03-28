@@ -2,6 +2,29 @@
 
 ## ✅ Completado
 
+#### RF-E2-08 — Creación de atleta mediante Edge Function
+
+**¿Qué hace?**
+La creación de atletas se ejecuta ahora en el servidor a través de una Supabase Edge Function, eliminando el riesgo de seguridad que suponía llamar a `auth.admin.createUser` desde el cliente móvil. El UX para el coach es idéntico al anterior.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — modificada
+  - `createAthlete` invoca `supabase.functions.invoke('create-athlete', ...)` en lugar de llamar directamente a la API de auth
+
+**Decisiones de diseño:**
+- La Edge Function verifica el JWT del caller y comprueba que su rol sea `coach` antes de ejecutar cualquier operación.
+- La `SUPABASE_SERVICE_ROLE_KEY` solo existe en el entorno de la Edge Function — nunca en el cliente móvil.
+- Si el email ya existe, la función devuelve 409 con mensaje descriptivo; el cliente lo presenta como Alert igual que antes.
+
+**Implementación técnica:**
+- `supabase/functions/create-athlete/index.ts` — Edge Function desplegada en Supabase
+- `app/(coach)/clients/index.tsx` — `createAthlete` refactorizado a `supabase.functions.invoke`
+
+**Métricas finales:**
+- Test Suites: 72/72 ✅ | Tests: 1410/1410 ✅
+
+---
+
 #### RF-E2-07 — Eliminar flujo "vincular atleta existente"
 
 **¿Qué hace?**
@@ -1260,23 +1283,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### ÉPICA E2 — Gestión de clientes
 
-#### RF-E2-08 (P0) Creación de atleta mediante Edge Function (seguridad)
-**Requisito:** La función `createAthlete` actual llama a `supabase.auth.admin.createUser` desde el cliente móvil, lo que requeriría exponer la service role key en la app — un riesgo de seguridad inaceptable. La alternativa de fallback (`signUp`) invalida la sesión del entrenador. Hay que mover la creación a una Supabase Edge Function invocada desde el cliente con la anon key.
-
-**Criterios de aceptación:**
-- Existe una Edge Function `create-athlete` protegida (solo accesible con JWT de usuario autenticado con rol `coach`) que recibe `{ name, email, password }` y ejecuta `supabase.auth.admin.createUser` con la service role key en el servidor.
-- La Edge Function crea el perfil en `users` y la relación en `coach_athletes` en la misma operación.
-- Si el email ya existe, devuelve un error descriptivo.
-- El cliente móvil invoca la Edge Function con `supabase.functions.invoke('create-athlete', ...)` y gestiona los errores de la misma forma que hoy.
-- La sesión del entrenador no se ve afectada en ningún momento.
-- La service role key no aparece en ningún fichero del cliente móvil.
-
-**Fuera de scope:**
-- Envío de email de bienvenida al atleta (historia separada).
-- Edición posterior del perfil del atleta.
-
-**Dependencias:**
-- RF-E2-07 (el menú intermedio debe estar eliminado antes de ajustar el formulario).
 
 ---
 
