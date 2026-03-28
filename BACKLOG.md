@@ -1363,8 +1363,11 @@ PostgREST no tiene en su caché de esquema la relación FK entre las tablas `mea
 Al intentar crear un nuevo cliente desde la app aparece el error:
 > `Error al crear el atleta - Edge function returned a non-2xx status code`
 
+**Error confirmado:**
+La Edge Function devuelve **HTTP 401 Unauthorized**.
+
 **Causa probable:**
-La Edge Function de Supabase encargada de crear el usuario atleta está fallando. Posibles causas: la función no está desplegada, tiene un error de ejecución interno, le falta alguna variable de entorno, o los permisos del service role no son suficientes.
+La llamada a la Edge Function no incluye el token de autorización correcto, o el token ha expirado. También puede ser que la función requiera el `service_role` key y se esté enviando el `anon` key, o que la función tenga configurada autenticación JWT y el token del usuario no se esté propagando correctamente.
 
 **Pasos para reproducir:**
 1. Iniciar sesión como entrenador.
