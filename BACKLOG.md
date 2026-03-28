@@ -1565,6 +1565,26 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
+#### RF-E2-11 (P2) — Gestión de contraseña del cliente desde la ficha
+
+**Requisito:** Desde la ficha de un cliente, el entrenador puede establecer o cambiar la contraseña de ese cliente sin necesidad de que el cliente lo haga por su cuenta.
+
+**Criterios de aceptación:**
+- Botón/opción visible en la ficha del cliente (solo para clientes activos).
+- El entrenador introduce la nueva contraseña (con confirmación).
+- Validación: mínimo 8 caracteres.
+- Al confirmar, la contraseña se actualiza vía Edge Function con `service_role` (el entrenador no tiene permisos para cambiar contraseñas de otros usuarios directamente).
+- Mensaje de éxito o error claro en pantalla.
+- No se envía ningún email al cliente al realizar el cambio.
+
+**Notas de diseño:**
+- Requiere nueva Edge Function `update-athlete-password` o reutilizar la infraestructura de `create-athlete`.
+- La Edge Function verifica que el coach autenticado tiene relación activa con el atleta antes de cambiar la contraseña.
+
+**Dependencia:** RF-E2-08 (alta de atleta) — completado.
+
+---
+
 #### RF-E2-03b (P1) Métricas avanzadas en tarjeta de cliente
 **Requisito:** Exponer columnas de estado operativo adicionales (plan, cumplimiento, pagos, etiquetas).
 
