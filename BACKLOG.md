@@ -2,6 +2,29 @@
 
 ## ✅ Completado
 
+#### RF-E2-07 — Eliminar flujo "vincular atleta existente"
+
+**¿Qué hace?**
+El botón "+" de la pantalla de clientes abre directamente el formulario de creación de atleta, sin pasar por un menú intermedio que ofrecía dos opciones. La opción "Vincular atleta existente" (buscar por nombre/email y añadir un usuario ya registrado) ha sido eliminada por ser irrelevante en el modelo de negocio actual.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — modificada
+  - El botón "+ Añadir" y el CTA del estado vacío abren directamente el modal de creación
+  - Eliminados: modal menú, modal de búsqueda/vinculación
+
+**Decisiones de diseño:**
+- `ModalMode` simplificado de `'menu' | 'link' | 'create'` a `'create'` — un tipo unión con un solo miembro es equivalente a un booleano, pero se mantiene el patrón existente para consistencia.
+
+**Implementación técnica:**
+- Eliminados: `interface AvailableAthlete`, estados `available/search/searching/adding`, funciones `searchAthletes` y `linkAthlete`
+- Eliminados: modal menú y modal búsqueda/vincular del JSX
+- Eliminados: 11 estilos huérfanos + `searchInput` duplicado en StyleSheet
+
+**Métricas finales:**
+- Test Suites: 72/72 ✅ | Tests: 1410/1410 ✅
+
+---
+
 #### RF-E1-02 — Accesos rápidos configurables
 
 **¿Qué hace?**
@@ -1236,21 +1259,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 ---
 
 ### ÉPICA E2 — Gestión de clientes
-
-#### RF-E2-07 (P0) Eliminar flujo "vincular atleta existente"
-**Requisito:** Dado que los clientes no pueden registrarse por su cuenta y solo hay un entrenador, el flujo de búsqueda y vinculación de atletas ya existentes no tiene utilidad. Debe eliminarse del código.
-
-**Criterios de aceptación:**
-- Desaparece la opción "Vincular atleta existente" de la pantalla de clientes.
-- El botón "+" abre directamente el formulario de creación, sin menú intermedio de selección.
-- Se eliminan: `searchAthletes`, `linkAthlete`, `AvailableAthlete`, el modo `'link'` del `ModalMode`, el modal de búsqueda y el menú con dos opciones.
-- El resto del flujo (crear, archivar, restaurar, eliminar) permanece intacto.
-- Los tests existentes siguen pasando.
-
-**Fuera de scope:**
-- Cambios en el formulario de creación de atleta (eso es RF-E2-08).
-
----
 
 #### RF-E2-08 (P0) Creación de atleta mediante Edge Function (seguridad)
 **Requisito:** La función `createAthlete` actual llama a `supabase.auth.admin.createUser` desde el cliente móvil, lo que requeriría exponer la service role key en la app — un riesgo de seguridad inaceptable. La alternativa de fallback (`signUp`) invalida la sesión del entrenador. Hay que mover la creación a una Supabase Edge Function invocada desde el cliente con la anon key.
