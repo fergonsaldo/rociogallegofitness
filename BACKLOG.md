@@ -2,6 +2,22 @@
 
 ## ✅ Completado
 
+#### RF-E2-09 — Eliminar enlace de auto-registro del login
+
+**¿Qué hace?**
+La pantalla de login ya no muestra el footer "¿No tienes cuenta? Crear una". Los clientes no pueden registrarse por su cuenta — el coach los crea. El enlace era incorrecto y se ha eliminado.
+
+**Pantallas / flujo:**
+- `app/(auth)/login.tsx` — eliminado el footer con el enlace a `/(auth)/register`
+
+**Implementación técnica:**
+- Eliminados: JSX del footer, estilos `footer`/`footerText`/`footerLink`, import `useRouter`
+
+**Métricas finales:**
+- Test Suites: 72/72 ✅ | Tests: 1410/1410 ✅
+
+---
+
 #### RF-E2-08 — Creación de atleta mediante Edge Function
 
 **¿Qué hace?**
@@ -1286,18 +1302,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E2-09 (P0) Eliminar enlace de auto-registro en la pantalla de login
-**Requisito:** El pie de la pantalla de login muestra "¿No tienes cuenta? Crear una" y navega a `/(auth)/register`. Dado que los clientes no pueden registrarse por su cuenta, este enlace es incorrecto y debe eliminarse.
-
-**Criterios de aceptación:**
-- Desaparece el footer "¿No tienes cuenta? Crear una" de `app/(auth)/login.tsx`.
-- La pantalla de login muestra solo el formulario de email/contraseña sin opciones de registro.
-- `app/(auth)/register.tsx` puede mantenerse como redirect de seguridad (ya lo es) o eliminarse; cualquiera de las dos opciones es válida.
-
-**Fuera de scope:**
-- Cambios en la lógica de autenticación o en el store de auth.
-
----
 
 #### RF-E2-10 (P1) Email de bienvenida al atleta al dar de alta
 **Requisito:** Cuando el entrenador crea un nuevo cliente, la app debe enviar automáticamente un email al atleta con sus credenciales de acceso (email y contraseña inicial), sin que el entrenador tenga que comunicárselas manualmente.

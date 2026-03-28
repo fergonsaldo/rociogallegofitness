@@ -8,13 +8,11 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { useAuthStore } from '../../src/presentation/stores/authStore';
 import { Colors, Spacing, FontSize, BorderRadius } from '../../src/shared/constants/theme';
 
 export default function LoginScreen() {
-  const router = useRouter();
   const { login, status, error, clearError } = useAuthStore();
 
   const [email, setEmail] = useState('');
@@ -88,13 +86,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>¿No tienes cuenta? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text style={styles.footerLink}>Crear una</Text>
-          </TouchableOpacity>
-        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -182,19 +173,5 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     fontWeight: '700',
     letterSpacing: 1,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: Spacing.xl,
-  },
-  footerText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.sm,
-  },
-  footerLink: {
-    color: Colors.primary,
-    fontSize: FontSize.sm,
-    fontWeight: '600',
   },
 });
