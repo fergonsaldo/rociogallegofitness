@@ -1465,27 +1465,13 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E7-04 (P1) Flujo de validación de contenido
-**Requisito:** Revisar y aprobar contenido generado por colaboradores antes de publicar.
-
-**Criterios de aceptación:**
-- Bandeja "Contenido a validar" con filtros aplicables.
-- Acciones aprobar/rechazar con motivo obligatorio.
-- Notificación al creador del resultado de la validación.
-
-**Dependencia de plan:** No observada.
+#### RF-E7-04 — Flujo de validación de contenido
+> **EXCLUIDO** — Depende del rol "colaborador" que no va a existir en la app. Sin actor que genere contenido externo para validar, la historia no tiene caso de uso real.
 
 ---
 
-#### RF-E7-05 (P1) Trazabilidad editorial
-**Requisito:** Registrar quién crea, quién valida y cuándo se publica cada contenido.
-
-**Criterios de aceptación:**
-- Metadata por contenido: creador, validador, fechas.
-- Historial accesible desde el detalle de cada contenido.
-- Exportable para auditoría.
-
-**Dependencia de plan:** No observada.
+#### RF-E7-05 — Trazabilidad editorial
+> **EXCLUIDO** — Depende del flujo de validación (RF-E7-04) y del rol "colaborador". Sin ambos, no hay trazabilidad que registrar.
 
 ---
 
