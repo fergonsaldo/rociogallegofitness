@@ -2,6 +2,32 @@
 
 ## ✅ Completado
 
+#### RF-E2-12 — Eliminar cliente: borrar entrada en Supabase Auth
+
+**¿Qué hace?**
+El entrenador puede eliminar un cliente de forma definitiva desde su ficha de detalle. Al confirmar, el cliente queda borrado de Supabase Auth y ya no puede iniciar sesión. Las relaciones en la base de datos (coach_athletes, users) se eliminan por cascade automáticamente.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/[id].tsx` — botón "🗑 Eliminar cliente" en la ficha del cliente
+  - Muestra Alert de confirmación con texto destructivo antes de proceder
+  - Tras eliminar, vuelve al listado de clientes automáticamente
+
+**Decisiones de diseño:**
+- El borrado se delega a la Edge Function `delete-athlete` con `service_role` (igual que `create-athlete` y `update-athlete-password`), ya que `auth.admin.deleteUser` no está disponible desde el cliente.
+- La Edge Function verifica que el atleta pertenece al coach antes de borrarlo.
+- La atomicidad la garantiza Supabase: al borrar de `auth.users`, las FKs en `coach_athletes` y `users` se eliminan por CASCADE.
+- El patrón de llamada a Edge Function desde la pantalla directamente sigue el mismo patrón establecido en `handleChangePassword` (excepción documentada).
+
+**Implementación técnica:**
+- Nueva Edge Function `supabase/functions/delete-athlete/index.ts` — verifica coach, verifica pertenencia, llama `auth.admin.deleteUser`
+- `src/shared/constants/strings.ts` — añadidos `deleteClientButton`, `deleteClientSuccess`, `deleteClientError`
+- `app/(coach)/clients/[id].tsx` — handler `handleDeleteAthlete` + botón destructivo en profileCard
+
+**Métricas finales:**
+- Test Suites: 83/83 ✅ | Tests: 1629/1629 ✅
+
+---
+
 #### RF-E3-01a + RF-E3-01b — Hub de librería y reorganización de tabs
 
 **¿Qué hace?**
@@ -1598,24 +1624,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 ---
 
 
-
----
-
-#### RF-E2-12 (P1) — Eliminar cliente: borrar entrada en Supabase Auth
-
-**Requisito:** Al eliminar un cliente, además de borrar su fila en `coach_athletes`, hay que eliminar su usuario de Supabase Auth para que no quede como usuario huérfano en el sistema de autenticación.
-
-**Criterios de aceptación:**
-- Al confirmar la eliminación de un cliente, se borra su entrada en `auth.users` vía Admin API.
-- Si el borrado en Auth falla, se informa al entrenador con un mensaje de error.
-- Si el borrado en Auth tiene éxito, el cliente ya no puede iniciar sesión.
-- La eliminación de `coach_athletes` y de `auth.users` es atómica: si falla Auth, no se borra `coach_athletes`.
-
-**Notas de diseño:**
-- Requiere Edge Function con `service_role` (igual que `create-athlete` y `update-athlete-password`), ya que `auth.admin.deleteUser` no está disponible desde el cliente.
-- La Edge Function verifica que el coach tiene relación con el atleta antes de borrarlo.
-
-**Dependencia:** RF-E2-08 (alta de atleta) — completado.
 
 ---
 

@@ -111,6 +111,10 @@ export const Strings = {
   alertDeleteClientMessage: (name: string) =>
     `¿Eliminar a ${name} definitivamente? Esta acción no se puede deshacer.`,
 
+  deleteClientButton:           'Eliminar cliente',
+  deleteClientSuccess:          'Cliente eliminado correctamente.',
+  deleteClientError:            'No se pudo eliminar el cliente. Inténtalo de nuevo.',
+
   errorFailedArchiveClient: 'Error al archivar el cliente',
   errorFailedRestoreClient: 'Error al restaurar el cliente',
 

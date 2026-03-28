@@ -128,6 +128,39 @@ export default function ClientDetailScreen() {
     setPwdModalVisible(true);
   };
 
+  const handleDeleteAthlete = () => {
+    Alert.alert(
+      Strings.alertDeleteClientTitle,
+      Strings.alertDeleteClientMessage(name ?? ''),
+      [
+        { text: Strings.alertDeleteCancel, style: 'cancel' },
+        {
+          text: Strings.alertDeleteConfirm,
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const { data: { session } } = await supabase.auth.getSession();
+              if (!session?.access_token) throw new Error('Sesión expirada. Vuelve a iniciar sesión.');
+
+              const { data, error: fnError } = await supabase.functions.invoke('delete-athlete', {
+                body: { athleteId: id },
+                headers: { Authorization: `Bearer ${session.access_token}` },
+              });
+
+              if (fnError) throw fnError;
+              if (data?.error) throw new Error(data.error);
+
+              Alert.alert('', Strings.deleteClientSuccess);
+              router.back();
+            } catch (err: any) {
+              Alert.alert('Error', err?.message ?? Strings.deleteClientError);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   const handleChangePassword = async () => {
     const validationError = validatePasswordChange(newPassword, confirmPassword);
     if (validationError) {
@@ -275,6 +308,9 @@ export default function ClientDetailScreen() {
             </View>
             <TouchableOpacity style={styles.pwdBtn} onPress={openPasswordModal}>
               <Text style={styles.pwdBtnText}>🔑 {Strings.changePasswordButton}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.pwdBtn, styles.deleteBtn]} onPress={handleDeleteAthlete}>
+              <Text style={styles.deleteBtnText}>🗑 {Strings.deleteClientButton}</Text>
             </TouchableOpacity>
           </View>
 
@@ -469,4 +505,6 @@ const styles = StyleSheet.create({
   sessionInfo: { flex: 1 },
   sessionDate: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textPrimary },
   sessionMeta: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
+  deleteBtn:     { borderColor: `${Colors.error}50`, backgroundColor: `${Colors.error}10` },
+  deleteBtnText: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.error },
 });
