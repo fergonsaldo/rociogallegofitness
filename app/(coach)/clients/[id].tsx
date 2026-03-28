@@ -185,20 +185,20 @@ export default function ClientDetailScreen() {
           <Text style={styles.backText}>← Volver</Text>
         </TouchableOpacity>
         <View style={styles.topbarActions}>
-          <TouchableOpacity style={styles.msgBtn} onPress={handleOpenChat}>
-            <Text style={styles.msgBtnText}>💬 {Strings.buttonMessage}</Text>
+          <TouchableOpacity style={styles.iconBtn} onPress={handleOpenChat}>
+            <Text style={styles.iconBtnText}>💬</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.assignBtn}
+            style={styles.iconBtn}
             onPress={() => router.push({ pathname: '/(coach)/routines', params: { assignTo: id, assignName: name } })}
           >
-            <Text style={styles.assignBtnText}>Asignar rutina</Text>
+            <Text style={styles.iconBtnText}>📋</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.docsBtn}
+            style={styles.iconBtn}
             onPress={() => router.push({ pathname: '/(coach)/clients/documents', params: { athleteId: id, athleteName: name } })}
           >
-            <Text style={styles.docsBtnText}>{Strings.docClientButton}</Text>
+            <Text style={styles.iconBtnText}>📁</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -423,12 +423,8 @@ const styles = StyleSheet.create({
   topbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   backText: { color: Colors.textSecondary, fontSize: FontSize.sm },
   topbarActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  msgBtn: { backgroundColor: Colors.athleteSubtle, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: Colors.border },
-  msgBtnText: { color: Colors.athlete, fontSize: 13, fontWeight: '600' },
-  assignBtn: { backgroundColor: Colors.primary, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm },
-  assignBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
-  docsBtn: { backgroundColor: Colors.surface, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
-  docsBtnText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '600' },
+  iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  iconBtnText: { fontSize: 16 },
   pwdBtn: { borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: Colors.surfaceMuted, borderWidth: 1, borderColor: Colors.border },
   pwdBtnText: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textSecondary },
   errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
