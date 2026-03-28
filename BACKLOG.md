@@ -2,6 +2,35 @@
 
 ## ✅ Completado
 
+#### RF-E8-04 — Horarios reservables
+
+**¿Qué hace?**
+El coach puede crear ventanas de disponibilidad (horarios) con rango de fechas, franja horaria diaria, duración de slot y modalidad. Cada horario muestra el total de slots disponibles calculado automáticamente. El coach puede activar o desactivar cada horario con un toggle sin abrir formulario, y eliminarlos con confirmación.
+
+**Pantallas / flujo:**
+- `app/(coach)/schedules/index.tsx` — lista de horarios (sin tab)
+  - Tarjeta por horario con título, fechas, franja, duración, modality pill, badge activo/inactivo y total de slots
+  - Switch por tarjeta para activar/desactivar al momento
+  - Botón 🗑 con Alert de confirmación
+- `app/(coach)/schedules/create.tsx` — formulario con DateTimePicker nativo (ya instalado)
+  - Fecha inicio/fin, hora inicio/fin, chips de duración, toggle modalidad, switch "Activo al crear"
+
+**Decisiones de diseño:**
+- `calculateTotalSlots` es función pura (días × slots/día) — no requiere BD, se calcula en cliente. Sin ocupación real hasta que haya booking de cliente.
+- Patrón de pantalla separada para create (no modal), igual que `calendar/create.tsx`, por la cantidad de campos con DateTimePicker.
+- Validaciones cruzadas de fechas y horas en el use case, no en Zod, para mensajes de error descriptivos.
+
+**Implementación técnica:**
+- `supabase/migrations/20260328100000_add_schedules.sql` — tabla + índice + RLS
+- `Schedule.ts` / `IScheduleRepository.ts` / `ScheduleUseCases.ts` — domain + application
+- `ScheduleRemoteRepository.ts` / `scheduleStore.ts` — infrastructure + presentation
+- `strings.ts` — 34 nuevas claves RF-E8-04
+
+**Métricas finales:**
+- Test Suites: 66/66 ✅ | Tests: 1329/1329 ✅ (+44 nuevos: 25 use case + 19 store)
+
+---
+
 #### RF-E8-05 — Tipos de sesión
 
 **¿Qué hace?**
