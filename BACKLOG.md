@@ -1675,6 +1675,23 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### DEUDA TÉCNICA — Navegación
 
+#### DT-DOM-01 — Catálogo de ejercicios: tipo único, sin distinción predeterminado/propio
+
+**Problema:**
+El diseño actual contempla diferenciar ejercicios "predeterminados" (del sistema) de ejercicios "creados por el entrenador". Esto no es correcto: existe un único catálogo y todos los ejercicios son del mismo tipo, independientemente de quién los creó.
+
+**Alcance:**
+Revisar el dominio, use cases, repositorio y UI para eliminar cualquier lógica, campo o distinción que asuma que existen dos categorías de ejercicio. Si hay campos como `isDefault`, `source`, `coachId` usado para clasificar tipo (no para ownership), o filtros "mis ejercicios vs. predeterminados", deben unificarse.
+
+**Criterios de cierre:**
+- Un único tipo de ejercicio en todo el stack.
+- Sin bifurcaciones de lógica basadas en el origen del ejercicio.
+- Tests actualizados si la refactorización afecta a contratos existentes.
+
+**Prioridad:** P2
+
+---
+
 #### DT-UI-01 — Chips de filtro invisibles en pantalla de cardio
 
 **Problema:**
