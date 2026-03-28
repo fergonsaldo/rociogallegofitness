@@ -18,5 +18,14 @@ export const VideoSchema = CreateVideoSchema.omit({ coachId: true }).extend({
   createdAt: z.date(),
 });
 
+export const UpdateVideoSchema = z.object({
+  title:            z.string().min(1, 'El título es obligatorio').max(100).optional(),
+  url:              z.string().regex(YOUTUBE_URL_REGEX, 'La URL debe ser de YouTube').optional(),
+  tags:             z.array(z.string().min(1).max(50)).optional(),
+  description:      z.string().max(500).optional(),
+  visibleToClients: z.boolean().optional(),
+});
+
 export type CreateVideoInput = z.infer<typeof CreateVideoSchema>;
+export type UpdateVideoInput = z.infer<typeof UpdateVideoSchema>;
 export type Video            = z.infer<typeof VideoSchema>;

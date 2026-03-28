@@ -2,6 +2,38 @@
 
 ## ✅ Completado
 
+#### RF-E5-05 — Edición de vídeo existente
+
+**¿Qué hace?**
+El coach puede editar los metadatos de cualquier vídeo de su biblioteca: título, URL de YouTube, etiquetas y descripción. Pulsando el botón ✏️ en la tarjeta del vídeo se abre un formulario pre-relleno con los datos actuales. Al guardar, la biblioteca se actualiza de inmediato sin recargar.
+
+**Pantallas / flujo:**
+- `app/(coach)/videos/index.tsx` — modificada
+  - `VideoCard` tiene nuevo botón ✏️ en la zona de acciones
+  - Navega a `/(coach)/videos/edit?id=<videoId>` al pulsar
+- `app/(coach)/videos/edit.tsx` — nueva pantalla
+  - Formulario idéntico al de creación pero pre-relleno con los datos del vídeo
+  - Lee el vídeo desde el catalog del store (sin llamada de red extra)
+  - Muestra "Vídeo no encontrado" si el id no está en catalog
+
+**Decisiones de diseño:**
+- Los vídeos son URLs de YouTube, no ficheros en Storage — no hay operaciones de Storage en esta historia.
+- La pantalla lee el vídeo del catalog del store en lugar de hacer un `getById` — el catalog siempre está cargado al llegar desde el listado.
+- `visibleToClients` es editable en el formulario (aunque RF-E5-02/03 tienen su propio toggle en la lista); ambas vías son válidas.
+
+**Implementación técnica:**
+- `Video.ts` — `UpdateVideoSchema` + tipo `UpdateVideoInput` (todos los campos opcionales)
+- `IVideoRepository.ts` — método `update(id, input)` añadido al contrato
+- `VideoRemoteRepository.ts` — implementación con `supabase.update().eq('id', id).select().single()`
+- `VideoUseCases.ts` — `updateVideoUseCase` (valida UUID + schema antes de llamar al repo)
+- `videoStore.ts` — acción `update` con estado `isUpdating`
+- `strings.ts` — 4 nuevas claves: `videoEditTitle`, `videoEditSubmit`, `videoEditSuccess`, `videoEditButtonLabel`
+
+**Métricas finales:**
+- Test Suites: 3/3 ✅ | Tests: 98/98 ✅ (+29 nuevos: 9 UpdateVideoSchema + 7 updateVideoUseCase + 13 store update)
+
+---
+
 #### RF-E2-10 — Email de bienvenida al atleta al dar de alta
 
 **¿Qué hace?**
@@ -1285,29 +1317,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 ### ÉPICA E1 — Home profesional y productividad
 
 
-#### RF-E1-02 (P1) Accesos rápidos configurables
-**Requisito:** El usuario puede configurar accesos rápidos de acciones frecuentes.
-
-**Criterios de aceptación:**
-- Existe botón "Editar accesos rápidos".
-- Se puede agregar, quitar y reordenar accesos.
-- Los cambios persisten por usuario.
-
-**Dependencia de plan:** No observada.
-
----
-
-#### RF-E1-03 (P1) Filtro de actividad reciente
-**Requisito:** Permitir filtrar el feed de actividad por tipo, evento, cliente o profesional.
-
-**Criterios de aceptación:**
-- El botón "Filtrar actividad" abre panel de filtros.
-- El listado se actualiza según filtros aplicados.
-- Se puede resetear filtros.
-
-**Dependencia de plan:** No observada.
-
----
 
 #### RF-E1-04 (P2) Recomendaciones contextuales / ayuda
 **Requisito:** Mostrar carrusel de descubrimiento (tutoriales/promos) contextual al uso.
@@ -1380,26 +1389,6 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E5-05 (P1) Edición de vídeo existente
-**Requisito:** El entrenador puede editar los metadatos de un vídeo ya subido: nombre, etiquetas y el propio fichero de vídeo.
-
-**Criterios de aceptación:**
-- Desde el detalle o listado de un vídeo existe una acción "Editar" que abre el formulario relleno con los datos actuales.
-- Campos editables: nombre, etiquetas (añadir/quitar) y fichero de vídeo (reemplazar por uno nuevo).
-- Si se reemplaza el fichero, el anterior se elimina de Storage para no acumular huérfanos.
-- Nombre obligatorio; al menos una etiqueta requerida si el modelo lo exige (consistente con RF-E5-01).
-- Tras guardar, la biblioteca refleja los cambios de inmediato sin recargar.
-- Si solo se editan metadatos (sin cambiar fichero), no se realiza ninguna operación sobre Storage.
-
-**Fuera de scope:**
-- Edición masiva de varios vídeos a la vez.
-- Transcodificación o procesado del vídeo tras la sustitución.
-- Cambiar la visibilidad del vídeo (cubierto por RF-E5-02/03).
-
-**Dependencias:**
-- RF-E5-01 (los vídeos deben existir con su modelo de datos).
-
----
 
 #### RF-E5-04 (P2) Add-on de clases profesionales
 **Requisito:** Activación de paquete premium de vídeos.

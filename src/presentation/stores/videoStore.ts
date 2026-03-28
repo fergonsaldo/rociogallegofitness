@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { Strings } from '@/shared/constants/strings';
-import { Video, CreateVideoInput } from '@/domain/entities/Video';
+import { Video, CreateVideoInput, UpdateVideoInput } from '@/domain/entities/Video';
 import { VideoRemoteRepository } from '@/infrastructure/supabase/remote/VideoRemoteRepository';
 import {
   getAllVideosUseCase,
   createVideoUseCase,
+  updateVideoUseCase,
   deleteVideoUseCase,
   setVideoVisibilityUseCase,
   VisibilityFilter,
@@ -16,11 +17,13 @@ interface VideoState {
   catalog:          Video[];
   isLoading:        boolean;
   isCreating:       boolean;
+  isUpdating:       boolean;
   error:            string | null;
   visibilityFilter: VisibilityFilter;
 
   fetchAll:      (coachId: string) => Promise<void>;
   create:        (input: CreateVideoInput) => Promise<Video | null>;
+  update:        (id: string, input: UpdateVideoInput) => Promise<Video | null>;
   delete:        (id: string) => Promise<boolean>;
   setVisibility: (videoId: string, visible: boolean) => Promise<boolean>;
   setVisibilityFilter: (filter: VisibilityFilter) => void;
@@ -31,6 +34,7 @@ export const useVideoStore = create<VideoState>((set) => ({
   catalog:          [],
   isLoading:        false,
   isCreating:       false,
+  isUpdating:       false,
   error:            null,
   visibilityFilter: 'all',
 
@@ -55,6 +59,23 @@ export const useVideoStore = create<VideoState>((set) => ({
       return video;
     } catch (err) {
       set({ error: (err as any)?.message ?? Strings.errorFailedCreateVideo, isCreating: false });
+      return null;
+    }
+  },
+
+  update: async (id, input) => {
+    set({ isUpdating: true, error: null });
+    try {
+      const video = await updateVideoUseCase(id, input, repo);
+      set((state) => ({
+        catalog:    state.catalog
+          .map((v) => (v.id === id ? video : v))
+          .sort((a, b) => a.title.localeCompare(b.title, 'es')),
+        isUpdating: false,
+      }));
+      return video;
+    } catch (err) {
+      set({ error: (err as any)?.message ?? Strings.errorFallback, isUpdating: false });
       return null;
     }
   },

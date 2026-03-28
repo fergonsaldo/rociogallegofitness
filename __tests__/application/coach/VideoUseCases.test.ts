@@ -1,6 +1,7 @@
 import {
   getAllVideosUseCase,
   createVideoUseCase,
+  updateVideoUseCase,
   deleteVideoUseCase,
   setVideoVisibilityUseCase,
   filterVideos,
@@ -39,6 +40,7 @@ const VALID_INPUT: CreateVideoInput = {
 const mockRepo: jest.Mocked<IVideoRepository> = {
   getAll:         jest.fn(),
   create:         jest.fn(),
+  update:         jest.fn(),
   delete:         jest.fn(),
   setVisibility:  jest.fn(),
 };
@@ -121,6 +123,53 @@ describe('createVideoUseCase', () => {
   it('propagates repository errors', async () => {
     mockRepo.create.mockRejectedValue(new Error('Insert failed'));
     await expect(createVideoUseCase(VALID_INPUT, mockRepo)).rejects.toThrow('Insert failed');
+  });
+});
+
+// ── updateVideoUseCase ────────────────────────────────────────────────────────
+
+describe('updateVideoUseCase', () => {
+  it('calls repo.update with id and input and returns updated video', async () => {
+    const updated = makeVideo({ title: 'Actualizado' });
+    mockRepo.update.mockResolvedValue(updated);
+    const result = await updateVideoUseCase(VIDEO_ID, { title: 'Actualizado' }, mockRepo);
+    expect(result).toEqual(updated);
+    expect(mockRepo.update).toHaveBeenCalledWith(VIDEO_ID, { title: 'Actualizado' });
+  });
+
+  it('throws when id is not a valid UUID', async () => {
+    await expect(updateVideoUseCase('not-a-uuid', { title: 'X' }, mockRepo))
+      .rejects.toThrow('Invalid video ID');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('throws when id is empty', async () => {
+    await expect(updateVideoUseCase('', { title: 'X' }, mockRepo))
+      .rejects.toThrow('Invalid video ID');
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('throws when title is provided but empty', async () => {
+    await expect(updateVideoUseCase(VIDEO_ID, { title: '' }, mockRepo)).rejects.toThrow();
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('throws when url is provided but not a YouTube URL', async () => {
+    await expect(updateVideoUseCase(VIDEO_ID, { url: 'https://vimeo.com/123' }, mockRepo))
+      .rejects.toThrow();
+    expect(mockRepo.update).not.toHaveBeenCalled();
+  });
+
+  it('succeeds with empty object (no changes)', async () => {
+    const original = makeVideo();
+    mockRepo.update.mockResolvedValue(original);
+    await expect(updateVideoUseCase(VIDEO_ID, {}, mockRepo)).resolves.not.toThrow();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.update.mockRejectedValue(new Error('Update failed'));
+    await expect(updateVideoUseCase(VIDEO_ID, { title: 'X' }, mockRepo))
+      .rejects.toThrow('Update failed');
   });
 });
 

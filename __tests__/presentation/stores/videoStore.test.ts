@@ -7,6 +7,7 @@ import { Video } from '../../../src/domain/entities/Video';
 jest.mock('../../../src/application/coach/VideoUseCases', () => ({
   getAllVideosUseCase:      jest.fn(),
   createVideoUseCase:      jest.fn(),
+  updateVideoUseCase:      jest.fn(),
   deleteVideoUseCase:      jest.fn(),
   setVideoVisibilityUseCase: jest.fn(),
   filterVideos:            jest.fn(),
@@ -19,13 +20,15 @@ jest.mock('../../../src/infrastructure/supabase/remote/VideoRemoteRepository', (
 import {
   getAllVideosUseCase,
   createVideoUseCase,
+  updateVideoUseCase,
   deleteVideoUseCase,
   setVideoVisibilityUseCase,
 } from '../../../src/application/coach/VideoUseCases';
 
-const mockGetAll       = getAllVideosUseCase      as jest.MockedFunction<typeof getAllVideosUseCase>;
-const mockCreate       = createVideoUseCase       as jest.MockedFunction<typeof createVideoUseCase>;
-const mockDelete       = deleteVideoUseCase       as jest.MockedFunction<typeof deleteVideoUseCase>;
+const mockGetAll        = getAllVideosUseCase       as jest.MockedFunction<typeof getAllVideosUseCase>;
+const mockCreate        = createVideoUseCase        as jest.MockedFunction<typeof createVideoUseCase>;
+const mockUpdate        = updateVideoUseCase        as jest.MockedFunction<typeof updateVideoUseCase>;
+const mockDelete        = deleteVideoUseCase        as jest.MockedFunction<typeof deleteVideoUseCase>;
 const mockSetVisibility = setVideoVisibilityUseCase as jest.MockedFunction<typeof setVideoVisibilityUseCase>;
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -60,7 +63,7 @@ const VALID_INPUT = {
 
 function resetStore() {
   useVideoStore.setState({
-    catalog: [], isLoading: false, isCreating: false,
+    catalog: [], isLoading: false, isCreating: false, isUpdating: false,
     error: null, visibilityFilter: 'all',
   });
 }
@@ -140,6 +143,72 @@ describe('useVideoStore — create', () => {
     mockCreate.mockRejectedValue('unexpected');
     await act(async () => { await useVideoStore.getState().create(VALID_INPUT); });
     expect(useVideoStore.getState().error).toBe('Error al crear el vídeo');
+  });
+});
+
+// ── update ────────────────────────────────────────────────────────────────────
+
+describe('useVideoStore — update', () => {
+  it('replaces video in catalog with updated version on success', async () => {
+    const original = makeVideo('id-a', 'Abdominales avanzados');
+    const updated  = { ...original, title: 'Abdominales pro' };
+    useVideoStore.setState({ catalog: [original, VIDEO_B] });
+    mockUpdate.mockResolvedValue(updated);
+    await act(async () => { await useVideoStore.getState().update('id-a', { title: 'Abdominales pro' }); });
+    const catalog = useVideoStore.getState().catalog;
+    expect(catalog.find((v) => v.id === 'id-a')?.title).toBe('Abdominales pro');
+    expect(useVideoStore.getState().isUpdating).toBe(false);
+    expect(useVideoStore.getState().error).toBeNull();
+  });
+
+  it('returns the updated video on success', async () => {
+    const updated = makeVideo('id-a', 'Actualizado');
+    useVideoStore.setState({ catalog: [makeVideo('id-a')] });
+    mockUpdate.mockResolvedValue(updated);
+    let result: Video | null = null;
+    await act(async () => { result = await useVideoStore.getState().update('id-a', { title: 'Actualizado' }); });
+    expect(result?.title).toBe('Actualizado');
+  });
+
+  it('keeps catalog sorted alphabetically after update', async () => {
+    useVideoStore.setState({ catalog: [VIDEO_A, VIDEO_B, VIDEO_C] });
+    const updatedC = { ...VIDEO_C, title: 'Zumba clásica' }; // would sort last
+    mockUpdate.mockResolvedValue(updatedC);
+    await act(async () => { await useVideoStore.getState().update('id-c', { title: 'Zumba clásica' }); });
+    const titles = useVideoStore.getState().catalog.map((v) => v.title);
+    expect(titles[titles.length - 1]).toBe('Zumba clásica');
+  });
+
+  it('sets isUpdating true during update then false after', async () => {
+    useVideoStore.setState({ catalog: [makeVideo('id-a')] });
+    let resolve!: (v: Video) => void;
+    mockUpdate.mockReturnValue(new Promise((res) => { resolve = res; }));
+    act(() => { useVideoStore.getState().update('id-a', {}); });
+    expect(useVideoStore.getState().isUpdating).toBe(true);
+    await act(async () => { resolve(makeVideo('id-a')); });
+    expect(useVideoStore.getState().isUpdating).toBe(false);
+  });
+
+  it('returns null and sets error on failure', async () => {
+    useVideoStore.setState({ catalog: [makeVideo('id-a')] });
+    mockUpdate.mockRejectedValue(new Error('Update failed'));
+    let result: Video | null = undefined as any;
+    await act(async () => { result = await useVideoStore.getState().update('id-a', {}); });
+    expect(result).toBeNull();
+    expect(useVideoStore.getState().error).toBe('Update failed');
+  });
+
+  it('does not modify catalog on failure', async () => {
+    useVideoStore.setState({ catalog: [VIDEO_A, VIDEO_B] });
+    mockUpdate.mockRejectedValue(new Error('Error'));
+    await act(async () => { await useVideoStore.getState().update('id-a', { title: 'X' }); });
+    expect(useVideoStore.getState().catalog[0].title).toBe(VIDEO_A.title);
+  });
+
+  it('sets fallback error string when thrown value has no message', async () => {
+    mockUpdate.mockRejectedValue('unexpected');
+    await act(async () => { await useVideoStore.getState().update('id-a', {}); });
+    expect(useVideoStore.getState().error).toBe('Ha ocurrido un error inesperado');
   });
 });
 

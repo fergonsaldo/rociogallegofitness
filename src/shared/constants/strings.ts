@@ -792,6 +792,12 @@ export const Strings = {
   videoVisibilitySuccess:   (title: string, visible: boolean) =>
     `"${title}" ahora es ${visible ? 'visible' : 'oculto'} para tus clientes`,
 
+  // ── Vídeos — edición (RF-E5-05) ──────────────────────────────────────────
+  videoEditTitle:           'Editar vídeo',
+  videoEditSubmit:          'Guardar cambios',
+  videoEditSuccess:         'Vídeo actualizado correctamente',
+  videoEditButtonLabel:     'Editar',
+
   // ── RF-E1-02: Accesos rápidos configurables ──────────────────────────────────
   quickAccessTitle:          'ACCESOS RÁPIDOS',
   quickAccessEditButton:     'Editar',

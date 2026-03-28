@@ -40,6 +40,10 @@ export default function CoachVideosScreen() {
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
 
+  const handleEdit = (video: Video) => {
+    router.push({ pathname: '/(coach)/videos/edit', params: { id: video.id } });
+  };
+
   const handleDelete = (video: Video) => {
     Alert.alert(
       Strings.videoDeleteConfirmTitle,
@@ -163,7 +167,7 @@ export default function CoachVideosScreen() {
             data={filtered}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <VideoCard video={item} onDelete={handleDelete} onToggleVisibility={handleToggleVisibility} />
+              <VideoCard video={item} onEdit={handleEdit} onDelete={handleDelete} onToggleVisibility={handleToggleVisibility} />
             )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
@@ -178,11 +182,12 @@ export default function CoachVideosScreen() {
 
 interface VideoCardProps {
   video:               Video;
+  onEdit:              (v: Video) => void;
   onDelete:            (v: Video) => void;
   onToggleVisibility:  (v: Video) => void;
 }
 
-function VideoCard({ video, onDelete, onToggleVisibility }: VideoCardProps) {
+function VideoCard({ video, onEdit, onDelete, onToggleVisibility }: VideoCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.cardAccent} />
@@ -195,6 +200,13 @@ function VideoCard({ video, onDelete, onToggleVisibility }: VideoCardProps) {
                 <Text style={styles.visibilityBadgeText}>{Strings.videoVisibilityBadge}</Text>
               </View>
             )}
+            <TouchableOpacity
+              style={styles.editButton}
+              onPress={() => onEdit(video)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.editIcon}>✏️</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={styles.visibilityToggle}
               onPress={() => onToggleVisibility(video)}
@@ -292,6 +304,8 @@ const styles = StyleSheet.create({
   cardUrl:         { fontSize: FontSize.xs, color: Colors.textSecondary },
   cardDescription: { fontSize: FontSize.xs, color: Colors.textMuted },
   cardActions:     { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  editButton:       { justifyContent: 'center' },
+  editIcon:         { fontSize: 18 },
   deleteButton:    { justifyContent: 'center', paddingLeft: Spacing.xs },
   deleteIcon:      { fontSize: 18 },
   visibilityToggle: { justifyContent: 'center' },

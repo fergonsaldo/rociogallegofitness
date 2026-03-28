@@ -1,5 +1,5 @@
 import { IVideoRepository } from '@/domain/repositories/IVideoRepository';
-import { Video, CreateVideoInput, CreateVideoSchema } from '@/domain/entities/Video';
+import { Video, CreateVideoInput, CreateVideoSchema, UpdateVideoInput, UpdateVideoSchema } from '@/domain/entities/Video';
 import { validateUUID } from '@/domain/validation/validateUUID';
 
 // ── Queries ───────────────────────────────────────────────────────────────────
@@ -20,6 +20,16 @@ export async function createVideoUseCase(
 ): Promise<Video> {
   CreateVideoSchema.parse(input);
   return repo.create(input);
+}
+
+export async function updateVideoUseCase(
+  id: string,
+  input: UpdateVideoInput,
+  repo: IVideoRepository,
+): Promise<Video> {
+  if (!validateUUID(id)) throw new Error('Invalid video ID');
+  UpdateVideoSchema.parse(input);
+  return repo.update(id, input);
 }
 
 export async function deleteVideoUseCase(

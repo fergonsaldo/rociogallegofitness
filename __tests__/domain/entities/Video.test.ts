@@ -2,7 +2,7 @@
  * Video entity schema tests — RF-E5
  */
 
-import { CreateVideoSchema, VideoSchema } from '../../../src/domain/entities/Video';
+import { CreateVideoSchema, VideoSchema, UpdateVideoSchema } from '../../../src/domain/entities/Video';
 
 const VALID_BASE = {
   coachId:     '00000000-0000-4000-b000-000000000001',
@@ -137,5 +137,57 @@ describe('VideoSchema — structure', () => {
   it('requires coachId field', () => {
     const { coachId: _, ...withoutCoach } = FULL_VIDEO;
     expect(() => VideoSchema.parse(withoutCoach)).toThrow();
+  });
+});
+
+// ── UpdateVideoSchema ─────────────────────────────────────────────────────────
+
+describe('UpdateVideoSchema — partial updates', () => {
+  it('accepts empty object (no fields required)', () => {
+    expect(() => UpdateVideoSchema.parse({})).not.toThrow();
+  });
+
+  it('accepts partial update with only title', () => {
+    expect(() => UpdateVideoSchema.parse({ title: 'Nuevo título' })).not.toThrow();
+  });
+
+  it('accepts partial update with only url', () => {
+    expect(() => UpdateVideoSchema.parse({
+      url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    })).not.toThrow();
+  });
+
+  it('accepts partial update with only tags', () => {
+    expect(() => UpdateVideoSchema.parse({ tags: ['fuerza'] })).not.toThrow();
+  });
+
+  it('accepts partial update with only visibleToClients', () => {
+    expect(() => UpdateVideoSchema.parse({ visibleToClients: true })).not.toThrow();
+  });
+
+  it('rejects empty title when title is provided', () => {
+    const result = UpdateVideoSchema.safeParse({ title: '' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.errors[0].message).toBe('El título es obligatorio');
+    }
+  });
+
+  it('rejects non-YouTube URL when url is provided', () => {
+    const result = UpdateVideoSchema.safeParse({ url: 'https://vimeo.com/123' });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.errors[0].message).toBe('La URL debe ser de YouTube');
+    }
+  });
+
+  it('accepts all fields simultaneously', () => {
+    expect(() => UpdateVideoSchema.parse({
+      title:            'Actualizado',
+      url:              'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      tags:             ['fuerza'],
+      description:      'Nueva descripción',
+      visibleToClients: true,
+    })).not.toThrow();
   });
 });

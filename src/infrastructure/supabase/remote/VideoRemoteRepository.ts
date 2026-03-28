@@ -1,6 +1,6 @@
 import { supabase } from '../client';
 import { IVideoRepository } from '@/domain/repositories/IVideoRepository';
-import { Video, CreateVideoInput } from '@/domain/entities/Video';
+import { Video, CreateVideoInput, UpdateVideoInput } from '@/domain/entities/Video';
 
 interface VideoRow {
   id:                 string;
@@ -55,6 +55,33 @@ export class VideoRemoteRepository implements IVideoRepository {
 
     if (error) throw new Error(error.message);
     if (!data) throw new Error('No data returned after insert');
+    return this.mapRow(data as VideoRow);
+  }
+
+  async update(id: string, input: UpdateVideoInput): Promise<Video> {
+    const patch: Partial<{
+      title:              string;
+      url:                string;
+      tags:               string[];
+      description:        string | null;
+      visible_to_clients: boolean;
+    }> = {};
+
+    if (input.title            !== undefined) patch.title              = input.title;
+    if (input.url              !== undefined) patch.url                = input.url;
+    if (input.tags             !== undefined) patch.tags               = input.tags;
+    if (input.description      !== undefined) patch.description        = input.description ?? null;
+    if (input.visibleToClients !== undefined) patch.visible_to_clients = input.visibleToClients;
+
+    const { data, error } = await supabase
+      .from('videos')
+      .update(patch)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw new Error(error.message);
+    if (!data) throw new Error('No data returned after update');
     return this.mapRow(data as VideoRow);
   }
 
