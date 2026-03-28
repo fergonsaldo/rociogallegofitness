@@ -1817,40 +1817,20 @@ Aplicar el mismo fix ya validado en ejercicios: `backgroundColor: Colors.surface
 
 ---
 
-#### DT-NAV-02 — Botón hardware "Atrás" de Android con comportamiento aleatorio
+#### ~~DT-NAV-02~~ — Botón hardware "Atrás" de Android con comportamiento aleatorio ✅ resuelto
 
-**Problema:**
-La flecha de sistema de Android (hardware back button) no retrocede consistentemente una sola pantalla. El comportamiento es impredecible: a veces salta varias pantallas, a veces no hace nada, a veces cierra la app.
+**Causa raíz:**
+El layout raíz del coach era un `Tabs` puro sin `Stack` propio por sección. Navegar de una pantalla de detalle (ej. `routines/[id]`) equivalía a un cambio de tab, no a un push de stack, por lo que el hardware back de Android navegaba al tab anterior en lugar de a la pantalla padre.
 
-**Alcance:**
-Revisar la configuración de Expo Router (stacks, tabs, modales) para garantizar que el back button de Android siempre retrocede exactamente una pantalla en el historial de navegación. Prestar especial atención a:
-- Pantallas dentro de tabs (el back no debe salir del tab sin motivo).
-- Modales (deben cerrarse, no navegar hacia atrás en el stack).
-- Pantallas de detalle anidadas dentro de tabs.
-
-**Criterios de cierre:**
-- Hardware back button retrocede una pantalla en todos los flujos verificados.
-- Comportamiento consistente entre sesiones y rutas.
-- Verificado en dispositivo físico Android y emulador.
-
-**Prioridad:** P1 (afecta directamente a la experiencia en Android)
+**Fix aplicado:**
+Añadido `_layout.tsx` con `<Stack screenOptions={{ headerShown: false }} />` en las 8 secciones que carecían de él: `clients`, `calendar`, `messages`, `routines`, `exercises`, `cardios`, `videos`, `nutrition`. El layout raíz `(coach)/_layout.tsx` pasó de registrar ~35 rutas individuales a 10 entradas de directorio, igual que ya funcionaba `recipes` y `foods`.
 
 ---
 
-#### DT-NAV-01 — Revisión global del botón "Volver"
+#### ~~DT-NAV-01~~ — Revisión global del botón "Volver" ✅ resuelto
 
-**Problema:**
-El botón volver no regresa a la pantalla anterior en todos los casos de la app. No se ha identificado exactamente qué pantallas fallan — requiere revisión exhaustiva.
-
-**Alcance:**
-Revisar todas las pantallas de ambos roles (coach y atleta) que tengan botón volver o dependan de la navegación hacia atrás (hardware back button en Android, gesto swipe en iOS, botón explícito en header).
-
-**Criterios de cierre:**
-- Inventario completo de pantallas con botón volver.
-- Cada pantalla verificada en iOS y Android.
-- Todos los botones volver llevan a la pantalla inmediatamente anterior en el stack de navegación.
-
-**Prioridad:** P2 (no bloquea funcionalidad, pero afecta a UX)
+**Fix aplicado:**
+Mismo fix que DT-NAV-02. Con Stack por sección, `router.back()` siempre tiene un frame al que volver dentro del Stack. La causa raíz era la misma: ausencia de Stack navigator en la mayoría de secciones.
 
 ---
 

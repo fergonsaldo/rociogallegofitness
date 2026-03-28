@@ -42,24 +42,25 @@ export default function CoachLayout() {
         tabBarInactiveTintColor: Colors.tabInactive,
       }}
     >
+      {/* ── Tabs visibles ───────────────────────────────────────────────────── */}
       <Tabs.Screen
         name="dashboard"
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📊" label="Inicio" focused={focused} /> }}
       />
       <Tabs.Screen
-        name="clients/index"
-        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="👥" label="Clientes" focused={focused} /> }}
+        name="clients"
+        options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="👥" label={Strings.tabClients} focused={focused} /> }}
       />
       <Tabs.Screen
-        name="library/index"
+        name="library"
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📚" label={Strings.tabLibrary} focused={focused} /> }}
       />
       <Tabs.Screen
-        name="calendar/index"
+        name="calendar"
         options={{ tabBarIcon: ({ focused }) => <TabIcon emoji="📅" label={Strings.tabAgenda} focused={focused} /> }}
       />
       <Tabs.Screen
-        name="messages/index"
+        name="messages"
         options={{
           tabBarIcon: ({ focused }) => (
             <BadgeTabIcon
@@ -73,38 +74,17 @@ export default function CoachLayout() {
         }}
       />
 
-      {/* Rutas sin tab */}
-      <Tabs.Screen name="clients/[id]"      options={{ href: null }} />
-      <Tabs.Screen name="routines/index"    options={{ href: null }} />
-      <Tabs.Screen name="routines/[id]"     options={{ href: null }} />
-      <Tabs.Screen name="routines/create"   options={{ href: null }} />
-      <Tabs.Screen name="exercises/index"   options={{ href: null }} />
-      <Tabs.Screen name="exercises/create"  options={{ href: null }} />
-      <Tabs.Screen name="exercises/[id]"    options={{ href: null }} />
-      <Tabs.Screen name="cardios/index"     options={{ href: null }} />
-      <Tabs.Screen name="cardios/create"    options={{ href: null }} />
-      <Tabs.Screen name="videos/index"      options={{ href: null }} />
-      <Tabs.Screen name="videos/create"     options={{ href: null }} />
-      <Tabs.Screen name="nutrition/index"   options={{ href: null }} />
-      <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
-      <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
-      <Tabs.Screen name="messages/[id]"     options={{ href: null }} />
-      <Tabs.Screen name="clients/tags"           options={{ href: null }} />
-      <Tabs.Screen name="clients/groups"         options={{ href: null }} />
-      <Tabs.Screen name="clients/group-detail"   options={{ href: null }} />
-      <Tabs.Screen name="clients/tag-automation" options={{ href: null }} />
-      <Tabs.Screen name="calendar/create"        options={{ href: null }} />
-      <Tabs.Screen name="calendar/edit"          options={{ href: null }} />
-      <Tabs.Screen name="videos/edit"            options={{ href: null }} />
-      <Tabs.Screen name="foods"                          options={{ href: null }} />
-      <Tabs.Screen name="recipes"                        options={{ href: null }} />
-      <Tabs.Screen name="clients/documents"              options={{ href: null }} />
-      <Tabs.Screen name="nutrition/groups/index"         options={{ href: null }} />
-      <Tabs.Screen name="nutrition/groups/[id]"          options={{ href: null }} />
-      <Tabs.Screen name="session-types/index"            options={{ href: null }} />
-      <Tabs.Screen name="schedules/index"               options={{ href: null }} />
-      <Tabs.Screen name="schedules/create"              options={{ href: null }} />
-      <Tabs.Screen name="session-activity/index"        options={{ href: null }} />
+      {/* ── Rutas sin tab (cada sección tiene su propio Stack en _layout.tsx) ── */}
+      <Tabs.Screen name="routines"  options={{ href: null }} />
+      <Tabs.Screen name="exercises" options={{ href: null }} />
+      <Tabs.Screen name="cardios"   options={{ href: null }} />
+      <Tabs.Screen name="videos"    options={{ href: null }} />
+      <Tabs.Screen name="nutrition" options={{ href: null }} />
+      <Tabs.Screen name="foods"     options={{ href: null }} />
+      <Tabs.Screen name="recipes"   options={{ href: null }} />
+      <Tabs.Screen name="session-types"     options={{ href: null }} />
+      <Tabs.Screen name="schedules"         options={{ href: null }} />
+      <Tabs.Screen name="session-activity"  options={{ href: null }} />
     </Tabs>
   );
 }
