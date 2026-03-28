@@ -200,9 +200,6 @@ export default function ClientDetailScreen() {
           >
             <Text style={styles.docsBtnText}>{Strings.docClientButton}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.pwdBtn} onPress={openPasswordModal}>
-            <Text style={styles.pwdBtnText}>🔑</Text>
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -279,6 +276,9 @@ export default function ClientDetailScreen() {
                   : '—'}
               />
             </View>
+            <TouchableOpacity style={styles.pwdBtn} onPress={openPasswordModal}>
+              <Text style={styles.pwdBtnText}>🔑 {Strings.changePasswordButton}</Text>
+            </TouchableOpacity>
           </View>
 
           <View style={styles.section}>
@@ -429,8 +429,8 @@ const styles = StyleSheet.create({
   assignBtnText: { color: '#fff', fontSize: FontSize.sm, fontWeight: '700' },
   docsBtn: { backgroundColor: Colors.surface, borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, borderWidth: 1, borderColor: Colors.border },
   docsBtnText: { color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: '600' },
-  pwdBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
-  pwdBtnText: { fontSize: 16 },
+  pwdBtn: { borderRadius: BorderRadius.md, paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm, backgroundColor: Colors.surfaceMuted, borderWidth: 1, borderColor: Colors.border },
+  pwdBtnText: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textSecondary },
   errorText: { color: Colors.error, fontSize: FontSize.sm, textAlign: 'center' },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.lg, paddingVertical: Spacing.md, backgroundColor: Colors.surface, borderBottomWidth: 1, borderBottomColor: Colors.border },
   modalCancel: { color: Colors.textSecondary, fontSize: FontSize.sm, width: 70 },
