@@ -256,3 +256,21 @@ export interface TagAutomationRow {
 }
 export type TagAutomationInsert = Omit<TagAutomationRow, 'id' | 'created_at'>;
 export type TagAutomationUpdate = Partial<TagAutomationInsert>;
+
+// ── coach_groups ──────────────────────────────────────────────────────────────
+export interface CoachGroupRow {
+  id:          string;
+  coach_id:    string;
+  name:        string;
+  description: string | null;
+  created_at:  string;
+}
+export type CoachGroupInsert = Omit<CoachGroupRow, 'id' | 'created_at'>;
+export type CoachGroupUpdate = Partial<Pick<CoachGroupRow, 'name' | 'description'>>;
+
+// ── group_members ─────────────────────────────────────────────────────────────
+export interface GroupMemberRow {
+  group_id:   string;
+  athlete_id: string;
+  added_at:   string;
+}

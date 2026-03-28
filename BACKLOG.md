@@ -2,6 +2,34 @@
 
 ## ✅ Completado
 
+#### RF-E2-04a — Grupos de atletas: CRUD y gestión de miembros
+
+**¿Qué hace?**
+El coach puede crear grupos de atletas (ej. "Principiantes enero"), añadir y quitar atletas de cada grupo, y editarlos o eliminarlos. Desde la pantalla de clientes hay un botón 👥 que abre la lista de grupos. Pulsando un grupo se accede a su detalle con la lista de miembros.
+
+**Pantallas / flujo:**
+- `app/(coach)/clients/index.tsx` — modificada: botón 👥 añadido junto al 🏷️
+- `app/(coach)/clients/groups.tsx` — nueva pantalla: lista de grupos + modal de creación/edición
+- `app/(coach)/clients/group-detail.tsx` — nueva pantalla: lista de miembros + modal para añadir atletas + quitar con confirmación
+
+**Decisiones de diseño:**
+- `memberCount` se calcula en el repositorio al listar (batch query sobre `group_members`), no se persiste como columna.
+- El modal de "Añadir atletas" filtra los atletas ya miembros para no mostrar duplicados.
+- `addMember` en el store es idempotente: si el atleta ya está en la lista local, no duplica ni incrementa el contador.
+
+**Implementación técnica:**
+- Migración: `coach_groups` + `group_members` + RLS via coach ownership
+- `domain/entities/AthleteGroup.ts` — 3 schemas (Create, Update, AthleteGroup)
+- `domain/repositories/IAthleteGroupRepository.ts` — 7 métodos
+- `infrastructure/.../AthleteGroupRemoteRepository.ts` — implementación Supabase
+- `application/coach/AthleteGroupUseCases.ts` — 7 use cases
+- `presentation/stores/athleteGroupStore.ts` — CRUD + miembros con caché por groupId
+
+**Métricas finales:**
+- Test Suites: 79/79 ✅ | Tests: 1570/1570 ✅ (+58: 15 entity + 21 use cases + 22 store)
+
+---
+
 #### RF-E2-06b — Automatizaciones por etiqueta: UI de configuración y trigger
 
 **¿Qué hace?**

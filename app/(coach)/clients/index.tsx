@@ -364,6 +364,9 @@ export default function ClientsScreen() {
           </View>
         </View>
         <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.tagsBtn} onPress={() => router.push('/(coach)/clients/groups')} activeOpacity={0.8}>
+            <Text style={styles.tagsBtnText}>👥</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.tagsBtn} onPress={() => router.push('/(coach)/clients/tags')} activeOpacity={0.8}>
             <Text style={styles.tagsBtnText}>🏷️</Text>
           </TouchableOpacity>
