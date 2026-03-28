@@ -89,9 +89,13 @@ export default function CoachLayout() {
       <Tabs.Screen name="nutrition/[id]"    options={{ href: null }} />
       <Tabs.Screen name="nutrition/create"  options={{ href: null }} />
       <Tabs.Screen name="messages/[id]"     options={{ href: null }} />
-      <Tabs.Screen name="clients/tags"      options={{ href: null }} />
-      <Tabs.Screen name="calendar/create"   options={{ href: null }} />
-      <Tabs.Screen name="calendar/edit"     options={{ href: null }} />
+      <Tabs.Screen name="clients/tags"           options={{ href: null }} />
+      <Tabs.Screen name="clients/groups"         options={{ href: null }} />
+      <Tabs.Screen name="clients/group-detail"   options={{ href: null }} />
+      <Tabs.Screen name="clients/tag-automation" options={{ href: null }} />
+      <Tabs.Screen name="calendar/create"        options={{ href: null }} />
+      <Tabs.Screen name="calendar/edit"          options={{ href: null }} />
+      <Tabs.Screen name="videos/edit"            options={{ href: null }} />
       <Tabs.Screen name="foods"                          options={{ href: null }} />
       <Tabs.Screen name="recipes"                        options={{ href: null }} />
       <Tabs.Screen name="clients/documents"              options={{ href: null }} />
