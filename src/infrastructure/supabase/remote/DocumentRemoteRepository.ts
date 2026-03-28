@@ -1,3 +1,4 @@
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../client';
 import { IDocumentRepository } from '@/domain/repositories/IDocumentRepository';
 import { Document, CreateDocumentInput } from '@/domain/entities/Document';
@@ -82,16 +83,23 @@ export class DocumentRemoteRepository implements IDocumentRepository {
     localUri: string,
     mimeType: string,
   ): Promise<{ filePath: string; fileSize: number }> {
-    const response = await fetch(localUri);
-    const blob     = await response.blob();
-    const ext      = localUri.split('.').pop()?.toLowerCase() ?? 'bin';
+    // React Native Blobs from fetch() are not compatible with Supabase Storage SDK.
+    // Read as base64 via expo-file-system and convert to Uint8Array instead.
+    const ext      = localUri.split('?')[0].split('.').pop()?.toLowerCase() ?? 'bin';
     const filePath = `${coachId}/${athleteId}/${Date.now()}.${ext}`;
+
+    const base64    = await FileSystem.readAsStringAsync(localUri, { encoding: 'base64' as any });
+    const binaryStr = atob(base64);
+    const bytes     = new Uint8Array(binaryStr.length);
+    for (let i = 0; i < binaryStr.length; i++) {
+      bytes[i] = binaryStr.charCodeAt(i);
+    }
 
     const { error } = await supabase.storage
       .from(BUCKET)
-      .upload(filePath, blob, { contentType: mimeType, upsert: false });
+      .upload(filePath, bytes, { contentType: mimeType, upsert: false });
 
     if (error) throw new Error(error.message);
-    return { filePath, fileSize: blob.size };
+    return { filePath, fileSize: bytes.length };
   }
 }

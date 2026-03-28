@@ -129,6 +129,7 @@ export const Strings = {
   // ── Errores de autenticación ──────────────────────────────────────────────
   errorInvalidCredentials: 'Email o contraseña incorrectos.',
   errorEmailInUse: 'Ya existe una cuenta con este email.',
+  errorEmailNotConfirmed: 'Debes confirmar tu email antes de iniciar sesión. Revisa tu bandeja de entrada y haz clic en el enlace de confirmación.',
   errorNetwork: 'Sin conexión a internet. Inténtalo de nuevo.',
   errorUnknown: 'Ha ocurrido un error inesperado. Inténtalo de nuevo.',
   errorLoginFailed: 'Error al iniciar sesión',
