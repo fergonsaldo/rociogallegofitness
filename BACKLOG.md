@@ -1671,4 +1671,25 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
+---
+
+### DEUDA TÉCNICA — Navegación
+
+#### DT-NAV-01 — Revisión global del botón "Volver"
+
+**Problema:**
+El botón volver no regresa a la pantalla anterior en todos los casos de la app. No se ha identificado exactamente qué pantallas fallan — requiere revisión exhaustiva.
+
+**Alcance:**
+Revisar todas las pantallas de ambos roles (coach y atleta) que tengan botón volver o dependan de la navegación hacia atrás (hardware back button en Android, gesto swipe en iOS, botón explícito en header).
+
+**Criterios de cierre:**
+- Inventario completo de pantallas con botón volver.
+- Cada pantalla verificada en iOS y Android.
+- Todos los botones volver llevan a la pantalla inmediatamente anterior en el stack de navegación.
+
+**Prioridad:** P2 (no bloquea funcionalidad, pero afecta a UX)
+
+---
+
 _Última actualización: 2026-03-28_
