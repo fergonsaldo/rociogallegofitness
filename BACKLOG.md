@@ -1237,6 +1237,73 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### ÉPICA E2 — Gestión de clientes
 
+#### RF-E2-07 (P0) Eliminar flujo "vincular atleta existente"
+**Requisito:** Dado que los clientes no pueden registrarse por su cuenta y solo hay un entrenador, el flujo de búsqueda y vinculación de atletas ya existentes no tiene utilidad. Debe eliminarse del código.
+
+**Criterios de aceptación:**
+- Desaparece la opción "Vincular atleta existente" de la pantalla de clientes.
+- El botón "+" abre directamente el formulario de creación, sin menú intermedio de selección.
+- Se eliminan: `searchAthletes`, `linkAthlete`, `AvailableAthlete`, el modo `'link'` del `ModalMode`, el modal de búsqueda y el menú con dos opciones.
+- El resto del flujo (crear, archivar, restaurar, eliminar) permanece intacto.
+- Los tests existentes siguen pasando.
+
+**Fuera de scope:**
+- Cambios en el formulario de creación de atleta (eso es RF-E2-08).
+
+---
+
+#### RF-E2-08 (P0) Creación de atleta mediante Edge Function (seguridad)
+**Requisito:** La función `createAthlete` actual llama a `supabase.auth.admin.createUser` desde el cliente móvil, lo que requeriría exponer la service role key en la app — un riesgo de seguridad inaceptable. La alternativa de fallback (`signUp`) invalida la sesión del entrenador. Hay que mover la creación a una Supabase Edge Function invocada desde el cliente con la anon key.
+
+**Criterios de aceptación:**
+- Existe una Edge Function `create-athlete` protegida (solo accesible con JWT de usuario autenticado con rol `coach`) que recibe `{ name, email, password }` y ejecuta `supabase.auth.admin.createUser` con la service role key en el servidor.
+- La Edge Function crea el perfil en `users` y la relación en `coach_athletes` en la misma operación.
+- Si el email ya existe, devuelve un error descriptivo.
+- El cliente móvil invoca la Edge Function con `supabase.functions.invoke('create-athlete', ...)` y gestiona los errores de la misma forma que hoy.
+- La sesión del entrenador no se ve afectada en ningún momento.
+- La service role key no aparece en ningún fichero del cliente móvil.
+
+**Fuera de scope:**
+- Envío de email de bienvenida al atleta (historia separada).
+- Edición posterior del perfil del atleta.
+
+**Dependencias:**
+- RF-E2-07 (el menú intermedio debe estar eliminado antes de ajustar el formulario).
+
+---
+
+#### RF-E2-09 (P0) Eliminar enlace de auto-registro en la pantalla de login
+**Requisito:** El pie de la pantalla de login muestra "¿No tienes cuenta? Crear una" y navega a `/(auth)/register`. Dado que los clientes no pueden registrarse por su cuenta, este enlace es incorrecto y debe eliminarse.
+
+**Criterios de aceptación:**
+- Desaparece el footer "¿No tienes cuenta? Crear una" de `app/(auth)/login.tsx`.
+- La pantalla de login muestra solo el formulario de email/contraseña sin opciones de registro.
+- `app/(auth)/register.tsx` puede mantenerse como redirect de seguridad (ya lo es) o eliminarse; cualquiera de las dos opciones es válida.
+
+**Fuera de scope:**
+- Cambios en la lógica de autenticación o en el store de auth.
+
+---
+
+#### RF-E2-10 (P1) Email de bienvenida al atleta al dar de alta
+**Requisito:** Cuando el entrenador crea un nuevo cliente, la app debe enviar automáticamente un email al atleta con sus credenciales de acceso (email y contraseña inicial), sin que el entrenador tenga que comunicárselas manualmente.
+
+**Criterios de aceptación:**
+- Al completarse el alta del atleta, se envía un email a la dirección registrada.
+- El email incluye: nombre del atleta, email de acceso, contraseña inicial y nombre del entrenador.
+- El envío lo realiza la Edge Function `create-athlete` (RF-E2-08) tras crear el usuario, usando el SMTP configurado en Supabase o un proveedor externo (Resend, SendGrid…).
+- Si el envío del email falla, el alta no se revierte — el atleta ya existe y puede acceder. Se registra el error en los logs de la Edge Function.
+- El entrenador ve confirmación de que el email fue enviado (o advertencia si falló).
+
+**Fuera de scope:**
+- Personalización de la plantilla del email desde la app.
+- Reenvío manual del email de bienvenida desde la app.
+- Notificaciones push al atleta.
+
+**Dependencias:**
+- RF-E2-08 (la Edge Function debe existir antes de añadir el envío de email).
+
+---
 
 #### RF-E2-03b (P1) Métricas avanzadas en tarjeta de cliente
 **Requisito:** Exponer columnas de estado operativo adicionales (plan, cumplimiento, pagos, etiquetas).
@@ -1285,6 +1352,27 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 > RF-E5-01, RF-E5-02 y RF-E5-03 completados — ver sección Completado.
 
 **Dependencia de plan:** No observada.
+
+---
+
+#### RF-E5-05 (P1) Edición de vídeo existente
+**Requisito:** El entrenador puede editar los metadatos de un vídeo ya subido: nombre, etiquetas y el propio fichero de vídeo.
+
+**Criterios de aceptación:**
+- Desde el detalle o listado de un vídeo existe una acción "Editar" que abre el formulario relleno con los datos actuales.
+- Campos editables: nombre, etiquetas (añadir/quitar) y fichero de vídeo (reemplazar por uno nuevo).
+- Si se reemplaza el fichero, el anterior se elimina de Storage para no acumular huérfanos.
+- Nombre obligatorio; al menos una etiqueta requerida si el modelo lo exige (consistente con RF-E5-01).
+- Tras guardar, la biblioteca refleja los cambios de inmediato sin recargar.
+- Si solo se editan metadatos (sin cambiar fichero), no se realiza ninguna operación sobre Storage.
+
+**Fuera de scope:**
+- Edición masiva de varios vídeos a la vez.
+- Transcodificación o procesado del vídeo tras la sustitución.
+- Cambiar la visibilidad del vídeo (cubierto por RF-E5-02/03).
+
+**Dependencias:**
+- RF-E5-01 (los vídeos deben existir con su modelo de datos).
 
 ---
 
@@ -1406,4 +1494,27 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-_Última actualización: 2026-03-23 — RF-E5-01 cerrado._
+#### RF-E8-08 (P1) Edición de sesiones planificadas con asignación de atleta
+**Requisito:** El entrenador puede editar cualquier campo de una sesión ya planificada, incluido asignar o cambiar el atleta vinculado.
+
+**Criterios de aceptación:**
+- Desde el detalle de la sesión existe un botón/acción "Editar" que abre el formulario relleno con los datos actuales.
+- Todos los campos editables: título, tipo de sesión, modalidad, fecha/hora, duración, notas y atleta asignado.
+- El atleta puede asignarse por primera vez o cambiarse a otro; también puede desvincularse (dejar sin atleta).
+- Al guardar, se valida que la nueva fecha/hora no colisione con otra sesión existente del mismo entrenador (misma validación que al crear).
+- Si la sesión editada tiene fecha en el pasado, se permite editar igualmente (el entrenador puede corregir registros históricos).
+- Tras guardar, el historial de actividad (`session_activity_log`) registra una entrada con acción `'updated'`.
+- Los cambios se reflejan de inmediato en el calendario sin necesidad de recargar.
+
+**Fuera de scope:**
+- Edición masiva de múltiples sesiones a la vez.
+- Sesiones recurrentes (aún no existen en el modelo).
+- Notificación al atleta cuando se le asigna/cambia la sesión.
+
+**Dependencias:**
+- RF-E8-01 (las sesiones deben existir en BD).
+- RF-E8-06 (tabla `session_activity_log` y use case de log deben existir).
+
+---
+
+_Última actualización: 2026-03-28 — RF-E8-08 añadido al backlog._
