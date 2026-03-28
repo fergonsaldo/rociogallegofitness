@@ -1675,6 +1675,23 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ### DEUDA TÉCNICA — Navegación
 
+#### DT-DOM-02 — Catálogo de cardio: tipo único, sin distinción predeterminado/propio
+
+**Problema:**
+Mismo problema que DT-DOM-01 pero en el catálogo de cardio: no debe existir distinción entre cardios "predeterminados" y cardios "creados por el entrenador". Son un tipo único.
+
+**Alcance:**
+Revisar dominio, use cases, repositorio y UI del módulo de cardio para eliminar cualquier lógica, campo o filtro que diferencie el origen del ejercicio de cardio.
+
+**Criterios de cierre:**
+- Un único tipo de cardio en todo el stack.
+- Sin bifurcaciones de lógica basadas en el origen.
+- Tests actualizados si la refactorización afecta a contratos existentes.
+
+**Prioridad:** P2
+
+---
+
 #### DT-DOM-01 — Catálogo de ejercicios: tipo único, sin distinción predeterminado/propio
 
 **Problema:**
