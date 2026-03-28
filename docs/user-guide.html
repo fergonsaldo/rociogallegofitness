@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocío Gallego Fitness — Guía de uso</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    font-size: 11pt;
+    color: #1a1a2e;
+    background: #fff;
+    line-height: 1.6;
+  }
+
+  /* ── Portada ── */
+  .cover {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0f3460 0%, #16213e 50%, #533483 100%);
+    color: white;
+    text-align: center;
+    page-break-after: always;
+    padding: 60px;
+  }
+  .cover .logo-circle {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 48px;
+    margin-bottom: 32px;
+    border: 2px solid rgba(255,255,255,0.3);
+  }
+  .cover h1 {
+    font-size: 36pt;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .cover .subtitle {
+    font-size: 14pt;
+    opacity: 0.75;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+  .cover .divider {
+    width: 60px; height: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin: 0 auto 48px;
+  }
+  .cover .doc-meta {
+    font-size: 10pt;
+    opacity: 0.6;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* ── Índice ── */
+  .toc-page {
+    padding: 60px 80px;
+    page-break-after: always;
+  }
+  .toc-page h2 { font-size: 22pt; color: #0f3460; margin-bottom: 32px; }
+  .toc-section { margin-bottom: 20px; }
+  .toc-section-title {
+    font-size: 11pt; font-weight: 700; color: #533483;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #e8e8f0;
+    padding-bottom: 6px; margin-bottom: 10px;
+  }
+  .toc-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 10.5pt;
+    color: #333;
+  }
+  .toc-item .toc-dot {
+    flex: 1;
+    border-bottom: 1px dotted #ccc;
+    margin: 0 8px;
+    position: relative;
+    top: -4px;
+  }
+  .toc-item .page-num { color: #888; font-size: 10pt; }
+
+  /* ── Layout general ── */
+  .page {
+    padding: 50px 70px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  /* ── Cabeceras de sección ── */
+  .section-header {
+    page-break-before: always;
+    padding: 40px 70px 0;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .section-badge {
+    display: inline-block;
+    background: #0f3460;
+    color: white;
+    font-size: 8pt;
+    padding: 3px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  .section-badge.athlete { background: #533483; }
+  .section-badge.system  { background: #1a6b4a; }
+
+  h1.section-title {
+    font-size: 26pt;
+    font-weight: 700;
+    color: #0f3460;
+    margin-bottom: 8px;
+  }
+  .section-intro {
+    font-size: 11pt;
+    color: #555;
+    margin-bottom: 32px;
+    border-left: 3px solid #0f3460;
+    padding-left: 16px;
+    line-height: 1.7;
+  }
+
+  /* ── Feature cards ── */
+  h2.feature-title {
+    font-size: 14pt;
+    font-weight: 700;
+    color: #16213e;
+    margin: 28px 0 6px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e8e8f0;
+  }
+  h2.feature-title .icon { margin-right: 8px; }
+
+  h3.subsection {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #533483;
+    margin: 16px 0 6px;
+  }
+
+  p { margin-bottom: 10px; color: #333; }
+
+  ul {
+    margin: 8px 0 12px 20px;
+    color: #333;
+  }
+  ul li { margin-bottom: 5px; line-height: 1.5; }
+
+  /* ── Info boxes ── */
+  .info-box {
+    background: #f0f4ff;
+    border-left: 4px solid #0f3460;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin: 14px 0;
+    font-size: 10.5pt;
+  }
+  .info-box.tip   { background: #f0fff4; border-color: #1a6b4a; }
+  .info-box.warn  { background: #fff8f0; border-color: #c05a00; }
+  .info-box strong { display: block; margin-bottom: 4px; font-size: 10pt; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* ── Step list ── */
+  .steps { margin: 12px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 12px;
+    align-items: flex-start;
+  }
+  .step-num {
+    min-width: 26px; height: 26px;
+    background: #0f3460;
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10pt; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .step-num.purple { background: #533483; }
+  .step-body { padding-top: 2px; font-size: 10.5pt; color: #333; }
+
+  /* ── Role intro cards ── */
+  .roles-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 24px 0;
+  }
+  .role-card {
+    padding: 24px;
+    border-radius: 12px;
+    border: 1px solid #e0e0f0;
+  }
+  .role-card.coach   { background: #f5f8ff; border-color: #b0c4f0; }
+  .role-card.athlete { background: #faf5ff; border-color: #d0b0f0; }
+  .role-card .role-icon { font-size: 32px; margin-bottom: 12px; }
+  .role-card h3 { font-size: 13pt; margin-bottom: 8px; }
+  .role-card.coach   h3 { color: #0f3460; }
+  .role-card.athlete h3 { color: #533483; }
+  .role-card p { font-size: 10pt; color: #555; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 10pt; }
+  th { background: #0f3460; color: white; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 7px 12px; border-bottom: 1px solid #e8e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8f9ff; }
+
+  /* ── Footer pages ── */
+  @media print {
+    .cover { height: 100vh; }
+    .page, .section-header { page-break-inside: avoid; }
+    h2.feature-title { page-break-after: avoid; }
+    .info-box { page-break-inside: avoid; }
+  }
+
+  .footer-note {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid #e8e8f0;
+    font-size: 9pt;
+    color: #999;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     PORTADA
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo-circle">🏋️</div>
+  <h1>Rocío Gallego Fitness</h1>
+  <div class="subtitle">Guía de uso de la aplicación</div>
+  <div class="divider"></div>
+  <div class="doc-meta">Versión 1.0 · Marzo 2026</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     ÍNDICE
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="toc-page">
+  <h2>Índice de contenidos</h2>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Introducción</div>
+    <div class="toc-item"><span>¿Qué es Rocío Gallego Fitness?</span><span class="toc-dot"></span><span class="page-num">3</span></div>
+    <div class="toc-item"><span>Roles: Entrenador y Atleta</span><span class="toc-dot"></span><span class="page-num">3</span></div>
+    <div class="toc-item"><span>Acceso y registro</span><span class="toc-dot"></span><span class="page-num">3</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Módulo Entrenador</div>
+    <div class="toc-item"><span>Dashboard del entrenador</span><span class="toc-dot"></span><span class="page-num">4</span></div>
+    <div class="toc-item"><span>Gestión de clientes</span><span class="toc-dot"></span><span class="page-num">5</span></div>
+    <div class="toc-item"><span>Etiquetas y automatizaciones</span><span class="toc-dot"></span><span class="page-num">6</span></div>
+    <div class="toc-item"><span>Grupos de atletas</span><span class="toc-dot"></span><span class="page-num">7</span></div>
+    <div class="toc-item"><span>Biblioteca de ejercicios</span><span class="toc-dot"></span><span class="page-num">8</span></div>
+    <div class="toc-item"><span>Rutinas y workouts</span><span class="toc-dot"></span><span class="page-num">8</span></div>
+    <div class="toc-item"><span>Cardios</span><span class="toc-dot"></span><span class="page-num">9</span></div>
+    <div class="toc-item"><span>Biblioteca de vídeos</span><span class="toc-dot"></span><span class="page-num">9</span></div>
+    <div class="toc-item"><span>Nutrición</span><span class="toc-dot"></span><span class="page-num">10</span></div>
+    <div class="toc-item"><span>Documentos compartidos</span><span class="toc-dot"></span><span class="page-num">12</span></div>
+    <div class="toc-item"><span>Agenda y calendario</span><span class="toc-dot"></span><span class="page-num">13</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Módulo Atleta</div>
+    <div class="toc-item"><span>Dashboard del atleta</span><span class="toc-dot"></span><span class="page-num">16</span></div>
+    <div class="toc-item"><span>Entrenamiento</span><span class="toc-dot"></span><span class="page-num">16</span></div>
+    <div class="toc-item"><span>Progreso y métricas</span><span class="toc-dot"></span><span class="page-num">17</span></div>
+    <div class="toc-item"><span>Nutrición del atleta</span><span class="toc-dot"></span><span class="page-num">17</span></div>
+    <div class="toc-item"><span>Documentos y recursos</span><span class="toc-dot"></span><span class="page-num">18</span></div>
+    <div class="toc-item"><span>Mensajería</span><span class="toc-dot"></span><span class="page-num">18</span></div>
+  </div>
+
+  <div class="toc-section">
+    <div class="toc-section-title">Referencia rápida</div>
+    <div class="toc-item"><span>Formatos de archivo permitidos</span><span class="toc-dot"></span><span class="page-num">19</span></div>
+    <div class="toc-item"><span>Preguntas frecuentes</span><span class="toc-dot"></span><span class="page-num">19</span></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     INTRODUCCIÓN
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge system">Introducción</div>
+  <h1 class="section-title">¿Qué es Rocío Gallego Fitness?</h1>
+  <p class="section-intro">
+    Rocío Gallego Fitness es una aplicación móvil de entrenamiento online que conecta a entrenadores y atletas en una única plataforma. El entrenador gestiona su cartera de clientes, crea y asigna contenido de entrenamiento y nutrición, y hace seguimiento del progreso. El atleta ejecuta sus sesiones, registra su evolución y se comunica con su entrenador.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title">Roles en la aplicación</h2>
+  <div class="roles-grid">
+    <div class="role-card coach">
+      <div class="role-icon">👨‍💼</div>
+      <h3>Entrenador</h3>
+      <p>Gestiona clientes, crea contenido (rutinas, cardios, planes de nutrición, vídeos), organiza la agenda y hace seguimiento del progreso de sus atletas.</p>
+    </div>
+    <div class="role-card athlete">
+      <div class="role-icon">🏃</div>
+      <h3>Atleta</h3>
+      <p>Ejecuta las sesiones asignadas, registra series y pesos, consulta su plan nutricional, sube fotos de progreso y se comunica con su entrenador.</p>
+    </div>
+  </div>
+
+  <h2 class="feature-title">Acceso y registro</h2>
+
+  <h3 class="subsection">Para entrenadores</h3>
+  <p>El acceso de entrenador es gestionado directamente por el administrador de la plataforma. Recibirás tus credenciales de acceso por email.</p>
+
+  <h3 class="subsection">Para atletas</h3>
+  <p>Los atletas <strong>no se registran por su cuenta</strong>. El entrenador da de alta a cada nuevo cliente desde la app. El sistema envía automáticamente un email de invitación a la dirección del atleta con un enlace para que establezca su propia contraseña.</p>
+
+  <div class="info-box tip">
+    <strong>💡 Invitación por email</strong>
+    Cuando el entrenador te crea como atleta, recibirás un email de bienvenida con un enlace de activación. Haz clic en ese enlace para definir tu contraseña y acceder a la app.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Dashboard
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Dashboard del entrenador</h1>
+  <p class="section-intro">
+    La pantalla principal del entrenador ofrece una vista consolidada de la actividad del día y accesos rápidos a las secciones más usadas.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">📊</span>Resumen de actividad</h2>
+  <p>El dashboard muestra las sesiones activas del día, el estado de los atletas y las últimas acciones registradas. El widget <strong>Actividad Reciente</strong> incluye tres chips de filtro:</p>
+  <ul>
+    <li><strong>Todos</strong> — muestra todas las sesiones sin filtrar.</li>
+    <li><strong>Completada</strong> — solo sesiones finalizadas correctamente.</li>
+    <li><strong>En curso</strong> — sesiones activas o en progreso.</li>
+  </ul>
+  <p>El filtro es instantáneo y no requiere recarga de datos.</p>
+
+  <h2 class="feature-title"><span class="icon">⚡</span>Accesos rápidos configurables</h2>
+  <p>La sección <em>Accesos Rápidos</em> del dashboard permite llegar en un toque a las secciones más utilizadas. Puedes personalizarlos a tu gusto.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">Pulsa <strong>Editar</strong> junto al título "ACCESOS RÁPIDOS".</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">Marca o desmarca los destinos que deseas mostrar: Clientes, Rutinas, Nutrición, Agenda, Vídeos y Mensajes.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">Pulsa <strong>Guardar</strong>. La configuración se guarda en la nube y persiste entre sesiones.</div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>ℹ️ Mínimo requerido</strong>
+    Debes tener al menos un acceso rápido activo. Si intentas guardar con todos desmarcados, la app mostrará un aviso.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Clientes
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Gestión de clientes</h1>
+  <p class="section-intro">
+    Desde la sección <em>Clientes</em> puedes dar de alta nuevos atletas, consultar su estado, ver su contenido asignado y organizar la comunicación con cada uno.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">👥</span>Listado de clientes</h2>
+  <p>La pantalla principal de clientes muestra todos tus atletas con su estado de actividad:</p>
+  <ul>
+    <li><strong>Activo</strong> — el atleta tiene sesiones en marcha.</li>
+    <li><strong>Inactivo</strong> — sin actividad reciente.</li>
+    <li><strong>Pendiente</strong> — atleta creado pero que aún no ha completado el onboarding.</li>
+  </ul>
+  <p>Puedes buscar por nombre o email usando la barra de búsqueda en la parte superior.</p>
+
+  <h2 class="feature-title"><span class="icon">➕</span>Dar de alta un nuevo atleta</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">Pulsa el botón <strong>"+ Añadir"</strong> en la parte superior de la lista.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">Introduce el <strong>nombre completo</strong> y el <strong>email</strong> del atleta.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">Pulsa <strong>"Crear atleta"</strong>. El sistema enviará automáticamente un email de invitación.</div>
+    </div>
+  </div>
+
+  <h2 class="feature-title"><span class="icon">📋</span>Perfil del cliente</h2>
+  <p>Al pulsar sobre un atleta accedes a su perfil completo con toda la información agrupada:</p>
+  <ul>
+    <li><strong>Métricas</strong> — peso actual, índice de cumplimiento y última actividad.</li>
+    <li><strong>Rutinas asignadas</strong> — con nombre y fecha de asignación.</li>
+    <li><strong>Cardios asignados</strong> — lista de planes de cardio activos.</li>
+    <li><strong>Plan nutricional</strong> — el plan más reciente asignado.</li>
+  </ul>
+  <p>Pulsar sobre cualquier ítem asignado te lleva directamente a su pantalla de detalle.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Etiquetas y Automatizaciones
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Etiquetas y automatizaciones</h1>
+  <p class="section-intro">
+    Las etiquetas te permiten clasificar a tus atletas y, opcionalmente, configurar que al aplicar una etiqueta se asigne contenido de forma automática.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">🏷️</span>Etiquetas de clientes</h2>
+  <p>Desde el icono 🏷️ en la cabecera de la lista de clientes puedes gestionar tus etiquetas. Las etiquetas son personalizables con nombre y color.</p>
+  <ul>
+    <li>Crea etiquetas como "Principiante", "Avanzado", "VIP" o "Rehabilitación".</li>
+    <li>Asigna una o varias etiquetas a cada atleta desde su perfil.</li>
+    <li>Filtra la lista de clientes por etiqueta para ver segmentos concretos.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">⚙️</span>Automatizaciones por etiqueta</h2>
+  <p>Cada etiqueta puede tener configurada una automatización: cuando se aplica la etiqueta a un atleta, el sistema asigna automáticamente el contenido que hayas configurado.</p>
+
+  <h3 class="subsection">Configurar una automatización</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">Abre la gestión de etiquetas y pulsa el botón <strong>⚙</strong> junto a la etiqueta que deseas configurar.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">Elige qué contenido asignar automáticamente: <strong>Rutina</strong>, <strong>Cardio</strong> y/o <strong>Plan de nutrición</strong>.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">Pulsa <strong>"Guardar automatización"</strong>. A partir de ese momento, al etiquetar a un atleta, el contenido se asignará de forma silenciosa.</div>
+    </div>
+  </div>
+
+  <div class="info-box tip">
+    <strong>💡 Comportamiento de la automatización</strong>
+    La asignación es automática y no bloquea el flujo de etiquetado. Si alguna asignación falla (por ejemplo, por un error de red), la app te avisará con una notificación pero la etiqueta seguirá asignada.
+  </div>
+
+  <div class="info-box">
+    <strong>ℹ️ Una automatización por etiqueta</strong>
+    Cada etiqueta puede tener como máximo una configuración de automatización. Puedes editarla o eliminarla desde la misma pantalla. Si eliminas la automatización, el contenido ya asignado no se retira.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Grupos de atletas
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Grupos de atletas</h1>
+  <p class="section-intro">
+    Los grupos te permiten organizar atletas en colecciones y asignar contenido a todos los miembros a la vez con un solo gesto.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">👥</span>Gestionar grupos</h2>
+  <p>Accede a los grupos desde el icono 👥 en la cabecera de la lista de clientes.</p>
+  <ul>
+    <li>Crea grupos con un <strong>nombre</strong> (obligatorio, máx. 100 caracteres) y una <strong>descripción</strong> opcional.</li>
+    <li>Edita o elimina grupos existentes usando los botones ✏️ y 🗑 de cada fila.</li>
+    <li>Al eliminar un grupo, los atletas miembros no son eliminados de la app.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">➕</span>Añadir y quitar miembros</h2>
+  <p>Entra en el detalle de un grupo para gestionar sus miembros:</p>
+  <ul>
+    <li>Pulsa <strong>"Añadir atletas"</strong> para abrir la lista de atletas disponibles (ya filtrada para no mostrar los que ya son miembros).</li>
+    <li>Toca a cualquier atleta para añadirlo al instante.</li>
+    <li>Para quitar un miembro, usa el botón 🗑 junto a su nombre y confirma en el diálogo.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">📋</span>Asignación masiva de contenido</h2>
+  <p>Desde el detalle del grupo, pulsa el botón 📋 en la cabecera para abrir el modal de asignación masiva.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">Elige los contenidos a asignar: <strong>Rutina</strong>, <strong>Cardio</strong> y/o <strong>Plan de nutrición</strong>. Puedes seleccionar uno, dos o los tres.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">Pulsa <strong>"Asignar"</strong>. El sistema asignará el contenido a todos los miembros del grupo en paralelo.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">Recibirás una confirmación de éxito o un aviso si alguna asignación ha fallado.</div>
+    </div>
+  </div>
+
+  <div class="info-box warn">
+    <strong>⚠️ Grupo sin miembros</strong>
+    El botón 📋 estará deshabilitado si el grupo no tiene ningún miembro. Añade atletas primero.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Biblioteca de ejercicios
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Biblioteca de ejercicios</h1>
+  <p class="section-intro">
+    El catálogo de ejercicios es la base de las rutinas. Puedes usar ejercicios predefinidos o crear los tuyos propios.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">🏋️</span>Catálogo de ejercicios</h2>
+  <p>Accede a la biblioteca desde el menú principal. Los ejercicios están organizados por categoría muscular y equipamiento. Puedes filtrar por nombre para encontrar rápidamente lo que buscas.</p>
+
+  <h2 class="feature-title"><span class="icon">✏️</span>Ejercicios personalizados</h2>
+  <p>Si un ejercicio que necesitas no está en el catálogo base, puedes crearlo:</p>
+  <ul>
+    <li>Asigna un nombre, grupo muscular principal y descripción.</li>
+    <li>Opcionalmente añade instrucciones de ejecución o enlaza un vídeo demostrativo.</li>
+    <li>Los ejercicios personalizados son privados y solo tú los verás.</li>
+    <li>Puedes editarlos o eliminarlos en cualquier momento.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">🎬</span>Rutinas y workouts</h2>
+  <p>Las rutinas agrupan ejercicios en un plan de entrenamiento estructurado.</p>
+  <ul>
+    <li>Crea rutinas con nombre, descripción y objetivo.</li>
+    <li>Añade bloques de ejercicios especificando series, repeticiones, descanso y notas.</li>
+    <li>Asigna rutinas a atletas individuales desde el perfil del cliente.</li>
+    <li>El atleta verá la rutina asignada en su sección de entrenamiento.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">🏃</span>Cardios</h2>
+  <p>El catálogo de cardios funciona de forma análoga a las rutinas pero para actividad cardiovascular:</p>
+  <ul>
+    <li>Crea planes de cardio con duración, intensidad y tipo de actividad.</li>
+    <li>Asigna cardios a atletas individuales o a grupos completos.</li>
+    <li>El atleta puede registrar sus sesiones de cardio con los datos reales completados.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Vídeos
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Biblioteca de vídeos</h1>
+  <p class="section-intro">
+    Crea una biblioteca de contenido educativo enlazando vídeos de YouTube que podrás compartir selectivamente con tus atletas.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">▶️</span>Gestión de vídeos</h2>
+  <p>Los vídeos se añaden mediante su URL de YouTube. La app extrae automáticamente el título y la miniatura.</p>
+  <ul>
+    <li>Añade título, URL de YouTube, etiquetas y descripción.</li>
+    <li>Edita los metadatos de cualquier vídeo pulsando ✏️ en la tarjeta.</li>
+    <li>Elimina vídeos con el botón 🗑 y confirmación.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">👁️</span>Visibilidad de vídeos</h2>
+  <p>Cada vídeo tiene un toggle de visibilidad que controla si tus atletas pueden verlo:</p>
+  <ul>
+    <li><strong>Visible para clientes</strong> — el vídeo aparece en la sección de vídeos del atleta.</li>
+    <li><strong>Solo para el entrenador</strong> — el vídeo es privado; sirve como referencia personal.</li>
+  </ul>
+  <p>Puedes cambiar la visibilidad directamente desde el listado o desde el formulario de edición.</p>
+
+  <div class="info-box">
+    <strong>ℹ️ Solo YouTube</strong>
+    Actualmente solo se admiten URLs de YouTube. Los vídeos no se alojan en la plataforma; se reproducen directamente desde YouTube cuando el atleta los abre.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Nutrición
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Nutrición</h1>
+  <p class="section-intro">
+    El módulo de nutrición te permite crear planes nutricionales detallados, vincular recetas, organizar planes en agrupaciones y asignarlos a tus atletas.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">🥗</span>Catálogo de alimentos</h2>
+  <p>El catálogo de alimentos es la base de las recetas. Incluye alimentos predefinidos y te permite añadir los tuyos propios con información nutricional completa:</p>
+  <ul>
+    <li>Nombre, calorías, proteínas, carbohidratos y grasas por 100 g.</li>
+    <li>Puedes editar o eliminar alimentos personalizados en cualquier momento.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">🍳</span>Recetas</h2>
+  <p>Las recetas combinan alimentos con sus cantidades para calcular los macros automáticamente:</p>
+  <ul>
+    <li>Nombre, descripción, tiempo de preparación e instrucciones.</li>
+    <li>Añade ingredientes buscando en el catálogo de alimentos.</li>
+    <li>Los macros totales se calculan automáticamente al añadir o editar ingredientes.</li>
+    <li>Controla la <strong>visibilidad</strong>: una receta puede estar en borrador o publicada para los atletas.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">📋</span>Planes nutricionales</h2>
+  <p>Un plan nutricional organiza las comidas del día (o la semana) con sus recetas asignadas.</p>
+
+  <h3 class="subsection">Crear un plan</h3>
+  <ul>
+    <li>Define nombre, tipo de dieta, descripción y macros diarios objetivo.</li>
+    <li>Estructura el plan en comidas (desayuno, almuerzo, cena, etc.).</li>
+    <li>Vincula recetas de tu catálogo a cada comida.</li>
+  </ul>
+
+  <h3 class="subsection">Historial de versiones</h3>
+  <p>Cada vez que editas los metadatos de un plan, el sistema guarda automáticamente una instantánea de la versión anterior. Puedes:</p>
+  <ul>
+    <li>Consultar el historial de cambios con fecha y hora de cada versión.</li>
+    <li>Restaurar cualquier versión anterior con un solo toque.</li>
+  </ul>
+
+  <h3 class="subsection">Duplicar planes</h3>
+  <p>Usa la opción de duplicar para crear variantes de un plan existente sin partir desde cero. El plan duplicado se crea como borrador con el nombre original seguido de "(copia)".</p>
+
+  <h2 class="feature-title"><span class="icon">📁</span>Agrupaciones de planes</h2>
+  <p>Las agrupaciones (colecciones) organizan los planes en carpetas temáticas. Por ejemplo: "Definición verano", "Ganancia muscular", "Mantenimiento". Cada plan puede pertenecer a una agrupación o estar sin clasificar.</p>
+
+  <h2 class="feature-title"><span class="icon">👤</span>Asignar planes a atletas</h2>
+  <p>Desde el detalle de un plan nutricional, o desde el perfil del cliente, puedes asignarlo a uno o varios atletas. El atleta verá el plan activo en su sección de nutrición.</p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Documentos
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Documentos compartidos</h1>
+  <p class="section-intro">
+    El repositorio de documentos permite intercambiar archivos con cada atleta de forma segura: informes de analíticas, guías de entrenamiento, contratos o cualquier documento relevante.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">📁</span>Gestión de documentos</h2>
+  <p>Accede a los documentos de un atleta desde su perfil. Cada par entrenador-atleta tiene su propio espacio privado de documentos.</p>
+  <ul>
+    <li>Sube archivos desde tu dispositivo pulsando el botón de subida.</li>
+    <li>Los documentos se muestran con su nombre, extensión, tamaño y fecha de subida.</li>
+    <li>Pulsa <strong>"Abrir"</strong> para descargar o visualizar cualquier documento.</li>
+    <li>Elimina documentos con el botón 🗑 y confirmación.</li>
+  </ul>
+
+  <div class="info-box warn">
+    <strong>⚠️ Extensiones no permitidas</strong>
+    Por seguridad, no se pueden subir archivos ejecutables. Los formatos bloqueados son: .exe, .apk, .sh, .bat, .cmd, .ps1, .msi, .deb, .dmg, .bin.
+  </div>
+
+  <div class="info-box tip">
+    <strong>💡 Acceso bilateral</strong>
+    Tanto el entrenador como el atleta pueden subir documentos al espacio compartido. El atleta solo puede eliminar los documentos que él mismo haya subido; los del entrenador son de solo lectura para el atleta.
+  </div>
+
+  <table>
+    <tr>
+      <th>Acción</th>
+      <th>Entrenador</th>
+      <th>Atleta</th>
+    </tr>
+    <tr>
+      <td>Ver documentos</td>
+      <td>✅ Todos</td>
+      <td>✅ Todos</td>
+    </tr>
+    <tr>
+      <td>Subir documentos</td>
+      <td>✅ Sí</td>
+      <td>✅ Sí</td>
+    </tr>
+    <tr>
+      <td>Eliminar documentos propios</td>
+      <td>✅ Sí</td>
+      <td>✅ Sí</td>
+    </tr>
+    <tr>
+      <td>Eliminar documentos del otro</td>
+      <td>✅ Sí</td>
+      <td>❌ No</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ENTRENADOR — Agenda
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge">Entrenador</div>
+  <h1 class="section-title">Agenda y calendario</h1>
+  <p class="section-intro">
+    El módulo de agenda centraliza la planificación de sesiones, la gestión de horarios disponibles y el seguimiento histórico de toda la actividad.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">📅</span>Calendario operativo</h2>
+  <p>La vista de calendario muestra todas las sesiones programadas en el mes actual. Navega entre meses con las flechas de la cabecera.</p>
+
+  <h3 class="subsection">KPIs del mes</h3>
+  <p>En la parte superior del calendario verás cuatro métricas en tiempo real:</p>
+  <ul>
+    <li><strong>Sesiones</strong> — total de sesiones programadas en el mes.</li>
+    <li><strong>Horas</strong> — suma de horas totales (redondeado a 1 decimal).</li>
+    <li><strong>Presencial</strong> — número de sesiones en persona.</li>
+    <li><strong>Online</strong> — número de sesiones remotas.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">➕</span>Crear una sesión</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">Pulsa el botón <strong>"Nueva sesión"</strong> en el calendario.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">Rellena: título, tipo de sesión, modalidad (presencial/online), fecha y hora, duración y atleta asignado (opcional).</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">Guarda. Si la hora elegida se solapa con otra sesión, recibirás un aviso de conflicto.</div>
+    </div>
+  </div>
+
+  <h2 class="feature-title"><span class="icon">✏️</span>Editar una sesión</h2>
+  <p>Pulsa el botón ✏️ en la tarjeta de cualquier sesión para editar sus datos. Puedes modificar todos los campos incluyendo la fecha/hora. El sistema valida automáticamente que el nuevo horario no colisione con otras sesiones existentes (excluyendo la propia sesión que estás editando).</p>
+
+  <h2 class="feature-title"><span class="icon">📋</span>Vista de lista de sesiones</h2>
+  <p>Alterna entre la vista de calendario y la vista de lista desde el toggle en la cabecera. La vista de lista muestra las sesiones ordenadas por fecha y permite filtrar por rango de fechas.</p>
+
+  <h2 class="feature-title"><span class="icon">🔖</span>Tipos de sesión</h2>
+  <p>Los tipos de sesión son etiquetas de color para categorizar visualmente tus sesiones. Gestiónalos desde la opción <em>Tipos de sesión</em> en el menú de agenda:</p>
+  <ul>
+    <li>Crea tipos con nombre y color (paleta de 12 colores disponibles).</li>
+    <li>Edita o elimina tipos existentes. Los tipos en uso en sesiones activas no afectan a esas sesiones al eliminarse.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">🕐</span>Horarios disponibles</h2>
+  <p>Define ventanas de disponibilidad para que los atletas puedan reservar sesiones. Cada horario incluye:</p>
+  <ul>
+    <li>Rango de fechas (fecha de inicio y fin).</li>
+    <li>Franja horaria diaria (hora de inicio y hora de fin).</li>
+    <li>Duración de cada slot (15, 30, 45, 60, 90 o 120 minutos).</li>
+    <li>Modalidad (presencial u online).</li>
+    <li>Toggle de activación/desactivación instantánea.</li>
+  </ul>
+  <p>El total de slots disponibles se calcula automáticamente en función del rango de fechas y la duración del slot.</p>
+
+  <h2 class="feature-title"><span class="icon">📜</span>Historial de actividad</h2>
+  <p>El log de actividad registra cronológicamente todas las sesiones creadas, editadas y eliminadas. Accede desde el menú de agenda.</p>
+  <ul>
+    <li>Filtra por rango de fechas (por defecto muestra el mes actual).</li>
+    <li>Cada entrada muestra la acción (creada/actualizada/eliminada), título, tipo, modalidad y fecha de la sesión.</li>
+    <li>Las sesiones eliminadas aparecen con texto grisado y badge "eliminada".</li>
+    <li>Pulsa sobre una sesión activa para saltar directamente a esa fecha en el calendario.</li>
+  </ul>
+
+  <div class="info-box tip">
+    <strong>💡 Registro permanente</strong>
+    El historial conserva el registro aunque la sesión sea eliminada posteriormente. El log es un snapshot del momento del evento.
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     MÓDULO ATLETA
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge athlete">Atleta</div>
+  <h1 class="section-title">Dashboard del atleta</h1>
+  <p class="section-intro">
+    La pantalla principal del atleta centraliza el acceso a todas las secciones: entrenamiento activo, nutrición, progreso, recursos y mensajería.
+  </p>
+</div>
+<div class="page">
+
+  <p>Al abrir la app, el atleta ve un resumen de su estado actual:</p>
+  <ul>
+    <li>Sesión de entrenamiento activa (si hay una en curso).</li>
+    <li>Accesos directos a las secciones principales.</li>
+    <li>Sección <strong>Recursos</strong> con acceso a documentos compartidos con el entrenador.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">💪</span>Entrenamiento</h2>
+  <p>El atleta accede a las rutinas asignadas por su entrenador y puede iniciar una sesión de entrenamiento:</p>
+  <ul>
+    <li>Visualiza la rutina asignada con todos los ejercicios y sus parámetros.</li>
+    <li>Inicia una sesión y registra series completadas con peso y repeticiones reales.</li>
+    <li>El historial de sesiones queda guardado para el seguimiento de progreso.</li>
+    <li>También puede consultar y registrar sus sesiones de cardio.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">📈</span>Progreso y métricas</h2>
+  <p>El módulo de progreso permite al atleta llevar un seguimiento detallado de su evolución:</p>
+  <ul>
+    <li><strong>Métricas corporales</strong> — registra peso, grasa corporal, masa muscular y otras medidas con su fecha.</li>
+    <li><strong>Gráficas de progreso</strong> — visualiza la evolución de cualquier métrica en el tiempo.</li>
+    <li><strong>Fotos de progreso</strong> — sube fotografías periódicas para comparar visualmente la evolución física.</li>
+    <li><strong>Consistencia</strong> — gráfico de consistencia semanal y mensual de entrenos completados.</li>
+    <li><strong>Marcas personales</strong> — el sistema calcula automáticamente el 1RM (una repetición máxima) a partir de los registros de series.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">🥗</span>Nutrición del atleta</h2>
+  <p>El atleta ve el plan nutricional asignado por su entrenador:</p>
+  <ul>
+    <li>Consulta las comidas del día con las recetas asignadas y sus macros.</li>
+    <li>Accede al detalle de cada receta con ingredientes e instrucciones.</li>
+    <li>Visualiza el resumen de macros diarios (proteínas, carbohidratos, grasas y calorías).</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">📁</span>Documentos y recursos</h2>
+  <p>El atleta accede a su repositorio de documentos desde la sección <em>Recursos</em> del dashboard:</p>
+  <ul>
+    <li>Visualiza todos los documentos compartidos con su entrenador.</li>
+    <li>Puede subir sus propios documentos (analíticas, informes médicos, etc.).</li>
+    <li>Abre cualquier documento para descargarlo o visualizarlo.</li>
+    <li>Puede eliminar únicamente los documentos que él mismo ha subido.</li>
+  </ul>
+
+  <h2 class="feature-title"><span class="icon">💬</span>Mensajería</h2>
+  <p>La mensajería interna conecta al atleta directamente con su entrenador:</p>
+  <ul>
+    <li>Conversación privada y directa entre atleta y entrenador.</li>
+    <li>Mensajes en tiempo real con indicador de leído/no leído.</li>
+    <li>El entrenador recibe notificaciones de nuevos mensajes de sus atletas.</li>
+  </ul>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════════════
+     REFERENCIA RÁPIDA
+══════════════════════════════════════════════════════════════════════════ -->
+<div class="section-header">
+  <div class="section-badge system">Referencia</div>
+  <h1 class="section-title">Referencia rápida</h1>
+  <p class="section-intro">
+    Información de referencia útil sobre formatos soportados y respuestas a las preguntas más frecuentes.
+  </p>
+</div>
+<div class="page">
+
+  <h2 class="feature-title"><span class="icon">📎</span>Formatos de archivo permitidos</h2>
+  <p>La plataforma acepta cualquier tipo de archivo salvo los siguientes formatos ejecutables, que están bloqueados por seguridad:</p>
+
+  <table>
+    <tr>
+      <th>Extensión bloqueada</th>
+      <th>Descripción</th>
+    </tr>
+    <tr><td>.exe</td><td>Ejecutable Windows</td></tr>
+    <tr><td>.apk</td><td>Aplicación Android</td></tr>
+    <tr><td>.sh</td><td>Script shell Unix</td></tr>
+    <tr><td>.bat / .cmd</td><td>Scripts Windows</td></tr>
+    <tr><td>.ps1</td><td>Script PowerShell</td></tr>
+    <tr><td>.msi</td><td>Instalador Windows</td></tr>
+    <tr><td>.deb / .dmg</td><td>Paquetes Linux / macOS</td></tr>
+    <tr><td>.bin</td><td>Binario genérico</td></tr>
+  </table>
+
+  <p>Los formatos recomendados para documentos son: PDF, DOCX, XLSX, JPG, PNG y MP4.</p>
+
+  <h2 class="feature-title"><span class="icon">❓</span>Preguntas frecuentes</h2>
+
+  <h3 class="subsection">¿Cómo recupero mi contraseña?</h3>
+  <p>Desde la pantalla de inicio de sesión, pulsa <strong>"¿Olvidaste tu contraseña?"</strong> e introduce tu email. Recibirás un enlace de recuperación en tu correo.</p>
+
+  <h3 class="subsection">¿Puedo tener más de un entrenador?</h3>
+  <p>Actualmente cada atleta está vinculado a un único entrenador. Si necesitas cambiar de entrenador, contacta con el soporte de la plataforma.</p>
+
+  <h3 class="subsection">¿Se guarda mi historial si elimino una sesión?</h3>
+  <p>Sí. El historial de actividad de la agenda conserva un registro permanente de todas las sesiones creadas, editadas y eliminadas, incluso después de borrarlas.</p>
+
+  <h3 class="subsection">¿Qué ocurre si no tengo conexión a internet?</h3>
+  <p>La app requiere conexión a internet para sincronizar datos. Los entrenamientos completados sin conexión se guardan localmente y se sincronizan automáticamente cuando recuperas la conectividad.</p>
+
+  <h3 class="subsection">¿Los vídeos se descargan en el dispositivo?</h3>
+  <p>No. Los vídeos son enlaces a YouTube y se reproducen en streaming. Necesitas conexión a internet para visualizarlos.</p>
+
+  <h3 class="subsection">¿Cuántos atletas puede gestionar un entrenador?</h3>
+  <p>No hay un límite técnico en la app. La capacidad depende del plan de la plataforma contratado.</p>
+
+  <div class="footer-note">
+    Rocío Gallego Fitness · Guía de uso v1.0 · Marzo 2026 · Todos los derechos reservados.
+  </div>
+</div>
+
+</body>
+</html>
