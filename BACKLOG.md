@@ -1449,9 +1449,9 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 
 ---
 
-### ÉPICA NAV — Navegación y estructura de la app
+### ÉPICA E3 — Navegación y estructura de la app
 
-#### RF-NAV-01a (P1) — Hub de librería de contenido
+#### RF-E3-01a (P1) — Hub de librería de contenido
 
 **Requisito:** Crear una pantalla hub en `app/(coach)/library/index.tsx` que agrupe las cinco secciones de contenido del entrenador (Rutinas, Ejercicios, Cardio, Vídeos, Nutrición) en un grid de tarjetas de acceso rápido.
 
@@ -1471,14 +1471,14 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 
 ---
 
-#### RF-NAV-01b (P1) — Reorganización de la barra de tabs del entrenador
+#### RF-E3-01b (P1) — Reorganización de la barra de tabs del entrenador
 
 **Requisito:** Reducir la barra de navegación inferior del entrenador de 8 a 5 tabs, sustituyendo las 5 secciones de librería individuales por una única tab "Librería" y elevando "Agenda" a tab visible.
 
 **Criterios de aceptación:**
 - La barra muestra exactamente 5 tabs: Inicio · Clientes · Librería · Agenda · Mensajes.
 - Las tabs Rutinas, Ejercicios, Cardio, Vídeos y Nutrición desaparecen como tabs visibles; sus rutas permanecen registradas con `href: null` para que la navegación interna siga funcionando.
-- La tab "Librería" (📚) navega a `/(coach)/library` (RF-NAV-01a).
+- La tab "Librería" (📚) navega a `/(coach)/library` (RF-E3-01a).
 - La tab "Agenda" (📅) navega a `/(coach)/calendar` (antes tenía `href: null`).
 - El badge de mensajes no leídos sigue funcionando en la tab Mensajes.
 - Se registra `calendar/edit` como ruta oculta (`href: null`) — omisión detectada de RF-E8-08.
@@ -1488,7 +1488,7 @@ El entrenador puede marcar cada vídeo como visible o no visible para sus client
 - Cambios en la barra de tabs del atleta.
 - Animaciones de transición personalizadas.
 
-**Dependencia:** RF-NAV-01a debe estar completada antes de iniciar esta historia.
+**Dependencia:** RF-E3-01a debe estar completada antes de iniciar esta historia.
 
 ---
 
