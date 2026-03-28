@@ -191,3 +191,12 @@ qué puede hacer, qué problema resuelve.
 - `Pantallas / flujo` debe listar todas las pantallas nuevas o modificadas con sus acciones clave.
 - `Decisiones de diseño` solo incluye lo no obvio — omítela si no hay nada que documentar.
 - `Implementación técnica` es un resumen de 3-5 bullets, no una lista exhaustiva de ficheros.
+
+### Nomenclatura de épicas e historias
+
+La nomenclatura debe ser coherente en todo el backlog y en el tiempo:
+
+- **Épicas**: `ÉPICA E{n} — Nombre descriptivo` donde `{n}` es un número entero secuencial (E1, E2, E3…). No usar prefijos alternativos (NAV, UI, etc.).
+- **Historias**: `RF-E{n}-{nn}` donde `{n}` es el número de épica y `{nn}` es el número de historia dentro de la épica (01, 02, 03… o con sufijo alfabético si se divide: 01a, 01b).
+- **Antes de crear una épica nueva**, consulta el backlog completo para identificar el siguiente número libre. Los números no deben reutilizarse ni saltar sin justificación.
+- **Nunca** usar prefijos ad-hoc (`RF-NAV`, `RF-UI`, `RF-TECH`, etc.) — todo va bajo `RF-E{n}`.
