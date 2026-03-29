@@ -1699,6 +1699,23 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 > RF-E6-01, RF-E6-03, RF-E6-04, RF-E6-05, RF-E6-06, RF-E6-07, RF-E6-08, RF-E6-09, RF-E6-10 y RF-E6-11 completados — ver sección Completado.
 
+#### RF-E6-12 (P1) Desasignar planes nutricionales de un atleta
+
+**Requisito:** El entrenador puede quitar uno o varios planes nutricionales previamente asignados a un atleta.
+
+**Criterios de aceptación:**
+- En el perfil del atleta (o sección de nutrición asignada), el coach ve la lista de planes nutricionales actualmente asignados.
+- Puede seleccionar uno o varios planes y desasignarlos con una acción explícita (confirmación requerida).
+- Tras desasignar, la lista se actualiza y los planes eliminados ya no aparecen como asignados al atleta.
+- Si el atleta no tiene planes asignados, se muestra estado vacío informativo.
+
+**Fuera de scope:**
+- No elimina el plan del catálogo, solo rompe la asignación con ese atleta.
+- No afecta al historial nutricional ya registrado.
+- No desasigna cardios ni rutinas.
+
+**Dependencia:** RF-E6-08 (asignación de planes nutricionales) — completado.
+
 ---
 
 
