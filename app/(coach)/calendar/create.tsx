@@ -8,6 +8,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuthStore } from '../../../src/presentation/stores/authStore';
 import { useCoachCalendarStore } from '../../../src/presentation/stores/coachCalendarStore';
+import { useSessionTypeStore } from '../../../src/presentation/stores/sessionTypeStore';
 import { CoachRemoteRepository } from '../../../src/infrastructure/supabase/remote/CoachRemoteRepository';
 import { getCoachAthletesUseCase } from '../../../src/application/coach/ClientUseCases';
 import { CoachAthlete } from '../../../src/domain/repositories/ICoachRepository';
@@ -15,13 +16,6 @@ import { Colors, Spacing, FontSize, BorderRadius } from '../../../src/shared/con
 import { Strings } from '../../../src/shared/constants/strings';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const SESSION_TYPES = [
-  Strings.sessionTypeEntrenamiento,
-  Strings.sessionTypeEvaluacion,
-  Strings.sessionTypeSeguimiento,
-  Strings.sessionTypeNutricion,
-];
 
 const DURATION_OPTIONS = [30, 45, 60, 90, 120];
 
@@ -33,12 +27,13 @@ export default function CreateSessionScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { addSession, error, clearError } = useCoachCalendarStore();
+  const { sessionTypes, fetchSessionTypes }  = useSessionTypeStore();
   const { date: dateParam } = useLocalSearchParams<{ date?: string }>();
 
   const initialDate = dateParam ? new Date(dateParam) : new Date();
 
   const [title,           setTitle]           = useState('');
-  const [sessionType,     setSessionType]     = useState(SESSION_TYPES[0]);
+  const [sessionTypeId,   setSessionTypeId]   = useState<string | null>(null);
   const [modality,        setModality]        = useState<'online' | 'in_person'>('in_person');
   const [scheduledAt,     setScheduledAt]     = useState<Date>(initialDate);
   const [durationMinutes, setDurationMinutes] = useState(60);
@@ -57,6 +52,7 @@ export default function CreateSessionScreen() {
       getCoachAthletesUseCase(user.id, coachRepo)
         .then(setAthletes)
         .catch(() => {/* non-blocking */});
+      fetchSessionTypes(user.id);
     }
   }, [user?.id]);
 
@@ -77,11 +73,13 @@ export default function CreateSessionScreen() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const selectedType = sessionTypes.find((t) => t.id === sessionTypeId);
       await addSession({
         coachId:         user!.id,
         athleteId:       athleteId ?? null,
         title:           title.trim() || null,
-        sessionType,
+        sessionType:     selectedType?.name ?? 'Entrenamiento',
+        sessionTypeId:   sessionTypeId ?? null,
         modality,
         scheduledAt,
         durationMinutes,
@@ -133,20 +131,25 @@ export default function CreateSessionScreen() {
           {/* Session type */}
           <View style={styles.field}>
             <Text style={styles.label}>{Strings.sessionFormLabelType}</Text>
-            <View style={styles.chipsRow}>
-              {SESSION_TYPES.map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[styles.chip, sessionType === type && styles.chipSelected]}
-                  onPress={() => setSessionType(type)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.chipText, sessionType === type && styles.chipTextSelected]}>
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
+            {sessionTypes.length === 0 ? (
+              <Text style={styles.noTypesHint}>{Strings.sessionFormNoTypes}</Text>
+            ) : (
+              <View style={styles.chipsRow}>
+                {sessionTypes.map((type) => (
+                  <TouchableOpacity
+                    key={type.id}
+                    style={[styles.chip, sessionTypeId === type.id && styles.chipSelected]}
+                    onPress={() => setSessionTypeId(type.id === sessionTypeId ? null : type.id)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.chipColorDot, { backgroundColor: type.color }]} />
+                    <Text style={[styles.chipText, sessionTypeId === type.id && styles.chipTextSelected]}>
+                      {type.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* Modality */}
@@ -403,13 +406,16 @@ const styles = StyleSheet.create({
 
   chipsRow:         { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
   chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     borderRadius: BorderRadius.full, borderWidth: 1.5, borderColor: Colors.border,
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,
     backgroundColor: Colors.surface,
   },
-  chipSelected: { backgroundColor: Colors.primarySubtle, borderColor: Colors.primary },
+  chipSelected:     { backgroundColor: Colors.primarySubtle, borderColor: Colors.primary },
+  chipColorDot:     { width: 10, height: 10, borderRadius: 5 },
   chipText:         { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textSecondary },
   chipTextSelected: { color: Colors.primary },
+  noTypesHint:      { fontSize: FontSize.sm, color: Colors.textMuted, fontStyle: 'italic' },
 
   toggle: {
     flexDirection: 'row',

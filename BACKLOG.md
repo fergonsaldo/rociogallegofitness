@@ -1738,18 +1738,28 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E8-08 (P1) Integración calendario con tipos de sesión
-**Requisito:** El formulario de creación/edición de sesiones debe usar los tipos dinámicos creados por el coach (tabla `session_types`) en lugar de la lista hardcodeada actual.
+#### RF-E8-08 — Integración calendario con tipos de sesión
 
-**Contexto:**
-RF-E8-05 añadió la columna `coach_sessions.session_type_id uuid FK → session_types(id)`. El calendario todavía usa `session_type: text` con strings fijos. Esta historia conecta ambas partes.
+**¿Qué hace?**
+El selector de tipo en los formularios de crear y editar sesión muestra los tipos dinámicos configurados por el coach (con chip de color) en lugar de la lista estática anterior. Si no hay tipos creados, se muestra un aviso con enlace a la pantalla de gestión. Al guardar, se persiste `session_type_id` (FK) junto con el nombre del tipo como texto de compatibilidad. El flujo de sustitución de RF-E8-05 queda completamente activo.
 
-**Criterios de aceptación:**
-- El selector de tipo en `calendar/create.tsx` y `calendar/edit.tsx` carga los tipos desde el store, no desde strings hardcodeados.
-- Al crear/editar una sesión, se guarda `session_type_id` en lugar de (o además de) `session_type`.
-- El borrado con sustitución de RF-E8-05 se activa correctamente cuando hay sesiones asignadas.
+**Pantallas / flujo:**
+- `app/(coach)/calendar/create.tsx` — selector de tipo reemplazado con chips dinámicos + color
+- `app/(coach)/calendar/edit.tsx` — ídem, inicializado con el `session_type_id` de la sesión existente
 
-**Dependencia:** RF-E8-05 completado ✅
+**Decisiones de diseño:**
+- `session_type` (texto) se sigue escribiendo con el nombre del tipo para compatibilidad con sesiones antiguas.
+- El tipo es opcional — si no hay tipos o el coach no selecciona ninguno, `session_type_id = null`.
+- No se migran sesiones existentes con `session_type_id = null`.
+
+**Implementación técnica:**
+- `CoachSessionRow` + `CoachSession` domain entity: nuevo campo `session_type_id`
+- `CoachSessionRemoteRepository`: mapeo + escritura de `session_type_id` en create/update
+- `create.tsx` + `edit.tsx`: `useSessionTypeStore` sustituye al array hardcodeado
+- `strings.ts`: 1 clave nueva `sessionFormNoTypes`
+
+**Métricas finales:**
+- Test Suites: 6/6 ✅ | Tests: 157/157 ✅
 
 ---
 

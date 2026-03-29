@@ -5,6 +5,7 @@ export const CreateCoachSessionSchema = z.object({
   athleteId:       z.string().uuid().nullable().default(null),
   title:           z.string().max(100).nullable().default(null),
   sessionType:     z.string().min(1).max(50).default('Entrenamiento'),
+  sessionTypeId:   z.string().uuid().nullable().optional(),
   modality:        z.enum(['online', 'in_person']).default('in_person'),
   scheduledAt:     z.date(),
   durationMinutes: z.number().int().min(1, 'La duración mínima es 1 minuto').max(480).default(60),
@@ -12,15 +13,17 @@ export const CreateCoachSessionSchema = z.object({
 });
 
 export const CoachSessionSchema = CreateCoachSessionSchema.extend({
-  id:          z.string().uuid(),
-  athleteName: z.string().nullable().default(null),
-  createdAt:   z.date(),
+  id:            z.string().uuid(),
+  sessionTypeId: z.string().uuid().nullable().optional(),
+  athleteName:   z.string().nullable().default(null),
+  createdAt:     z.date(),
 });
 
 export const UpdateCoachSessionSchema = z.object({
   athleteId:       z.string().uuid().nullable().optional(),
   title:           z.string().max(100).nullable().optional(),
   sessionType:     z.string().min(1).max(50).optional(),
+  sessionTypeId:   z.string().uuid().nullable().optional(),
   modality:        z.enum(['online', 'in_person']).optional(),
   scheduledAt:     z.date().optional(),
   durationMinutes: z.number().int().min(1, 'La duración mínima es 1 minuto').max(480).optional(),
