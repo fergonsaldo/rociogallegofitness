@@ -413,6 +413,12 @@ export const Strings = {
   errorFailedCreateSessionType:     'Error al crear el tipo de sesión',
   errorFailedUpdateSessionType:     'Error al actualizar el tipo de sesión',
   errorFailedDeleteSessionType:     'Error al eliminar el tipo de sesión',
+  substituteSessionTypeTitle:       'Tipo en uso',
+  substituteSessionTypeMessage:     (name: string, count: number) =>
+    `"${name}" está asignado a ${count} ${count === 1 ? 'sesión' : 'sesiones'}. Elige un tipo sustituto antes de eliminarlo.`,
+  substituteSessionTypeCancel:      'Cancelar',
+  substituteSessionTypeConfirm:     'Sustituir y eliminar',
+  substituteSessionTypePlaceholder: 'Selecciona un tipo sustituto',
 
   // ── Horarios reservables (RF-E8-04) ───────────────────────────────────────
   schedulesTitle:                   'Horarios',

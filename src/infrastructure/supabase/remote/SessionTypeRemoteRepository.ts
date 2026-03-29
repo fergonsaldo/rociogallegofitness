@@ -67,4 +67,32 @@ export class SessionTypeRemoteRepository implements ISessionTypeRepository {
 
     if (error) throw new Error(error.message);
   }
+
+  async countUsages(typeId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from('coach_sessions')
+      .select('*', { count: 'exact', head: true })
+      .eq('session_type_id', typeId);
+
+    if (error) throw new Error(error.message);
+    return count ?? 0;
+  }
+
+  async deleteWithSubstitution(id: string, substitutionId?: string): Promise<void> {
+    if (substitutionId) {
+      const { error: updateError } = await supabase
+        .from('coach_sessions')
+        .update({ session_type_id: substitutionId })
+        .eq('session_type_id', id);
+
+      if (updateError) throw new Error(updateError.message);
+    }
+
+    const { error: deleteError } = await supabase
+      .from('session_types')
+      .delete()
+      .eq('id', id);
+
+    if (deleteError) throw new Error(deleteError.message);
+  }
 }

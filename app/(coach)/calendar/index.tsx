@@ -129,9 +129,18 @@ export default function CalendarScreen() {
           <View style={styles.accentBar} />
           <Text style={styles.title}>{Strings.calendarTitle}</Text>
         </View>
-        <TouchableOpacity style={styles.newBtn} onPress={navigateToCreate}>
-          <Text style={styles.newBtnText}>{Strings.calendarNewSession}</Text>
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            style={styles.settingsBtn}
+            onPress={() => router.push('/(coach)/session-types' as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.settingsBtnText}>⚙️</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.newBtn} onPress={navigateToCreate}>
+            <Text style={styles.newBtnText}>{Strings.calendarNewSession}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* View toggle */}
@@ -336,9 +345,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg, paddingVertical: Spacing.lg,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
-  accentBar:  { width: 4, height: 32, backgroundColor: Colors.primary, borderRadius: 2 },
-  title:      { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
+  headerLeft:       { flexDirection: 'row', alignItems: 'center', gap: Spacing.md },
+  headerActions:    { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  accentBar:        { width: 4, height: 32, backgroundColor: Colors.primary, borderRadius: 2 },
+  title:            { fontSize: FontSize.xl, fontWeight: '800', color: Colors.textPrimary },
+  settingsBtn:      { width: 36, height: 36, borderRadius: 18, backgroundColor: Colors.surfaceMuted, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.border },
+  settingsBtnText:  { fontSize: 18 },
   newBtn: {
     backgroundColor: Colors.primary, borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md, paddingVertical: Spacing.sm,

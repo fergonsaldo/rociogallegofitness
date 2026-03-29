@@ -7,6 +7,8 @@ import {
   createSessionTypeUseCase,
   updateSessionTypeUseCase,
   deleteSessionTypeUseCase,
+  getSessionTypeUsageCountUseCase,
+  deleteSessionTypeWithSubstitutionUseCase,
 } from '../../../src/application/coach/SessionTypeUseCases';
 import { ISessionTypeRepository } from '../../../src/domain/repositories/ISessionTypeRepository';
 import { SessionType } from '../../../src/domain/entities/SessionType';
@@ -24,10 +26,12 @@ const SESSION_TYPE: SessionType = {
 // ── Mock repo ─────────────────────────────────────────────────────────────────
 
 const mockRepo: jest.Mocked<ISessionTypeRepository> = {
-  getByCoachId: jest.fn(),
-  create:       jest.fn(),
-  update:       jest.fn(),
-  delete:       jest.fn(),
+  getByCoachId:            jest.fn(),
+  create:                  jest.fn(),
+  update:                  jest.fn(),
+  delete:                  jest.fn(),
+  countUsages:             jest.fn(),
+  deleteWithSubstitution:  jest.fn(),
 };
 
 beforeEach(() => jest.clearAllMocks());
@@ -170,5 +174,68 @@ describe('deleteSessionTypeUseCase', () => {
   it('propagates repository errors', async () => {
     mockRepo.delete.mockRejectedValue(new Error('Delete failed'));
     await expect(deleteSessionTypeUseCase(TYPE_ID, mockRepo)).rejects.toThrow('Delete failed');
+  });
+});
+
+// ── getSessionTypeUsageCountUseCase ──────────────────────────────────────────
+
+describe('getSessionTypeUsageCountUseCase', () => {
+  it('returns usage count for a valid typeId', async () => {
+    mockRepo.countUsages.mockResolvedValue(5);
+    const result = await getSessionTypeUsageCountUseCase(TYPE_ID, mockRepo);
+    expect(result).toBe(5);
+    expect(mockRepo.countUsages).toHaveBeenCalledWith(TYPE_ID);
+  });
+
+  it('returns 0 when type is not in use', async () => {
+    mockRepo.countUsages.mockResolvedValue(0);
+    const result = await getSessionTypeUsageCountUseCase(TYPE_ID, mockRepo);
+    expect(result).toBe(0);
+  });
+
+  it('throws when typeId is empty', async () => {
+    await expect(getSessionTypeUsageCountUseCase('', mockRepo)).rejects.toThrow('typeId is required');
+    expect(mockRepo.countUsages).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.countUsages.mockRejectedValue(new Error('Query failed'));
+    await expect(getSessionTypeUsageCountUseCase(TYPE_ID, mockRepo)).rejects.toThrow('Query failed');
+  });
+});
+
+// ── deleteSessionTypeWithSubstitutionUseCase ─────────────────────────────────
+
+const SUB_ID = 'type-uuid-0002-0000-000000000002';
+
+describe('deleteSessionTypeWithSubstitutionUseCase', () => {
+  it('calls deleteWithSubstitution with id and substitutionId', async () => {
+    mockRepo.deleteWithSubstitution.mockResolvedValue(undefined);
+    await deleteSessionTypeWithSubstitutionUseCase(TYPE_ID, SUB_ID, mockRepo);
+    expect(mockRepo.deleteWithSubstitution).toHaveBeenCalledWith(TYPE_ID, SUB_ID);
+  });
+
+  it('calls deleteWithSubstitution without substitutionId when undefined', async () => {
+    mockRepo.deleteWithSubstitution.mockResolvedValue(undefined);
+    await deleteSessionTypeWithSubstitutionUseCase(TYPE_ID, undefined, mockRepo);
+    expect(mockRepo.deleteWithSubstitution).toHaveBeenCalledWith(TYPE_ID, undefined);
+  });
+
+  it('throws when id is empty', async () => {
+    await expect(deleteSessionTypeWithSubstitutionUseCase('', SUB_ID, mockRepo))
+      .rejects.toThrow('id is required');
+    expect(mockRepo.deleteWithSubstitution).not.toHaveBeenCalled();
+  });
+
+  it('throws when substitutionId is explicitly empty string', async () => {
+    await expect(deleteSessionTypeWithSubstitutionUseCase(TYPE_ID, '', mockRepo))
+      .rejects.toThrow('substitutionId cannot be empty');
+    expect(mockRepo.deleteWithSubstitution).not.toHaveBeenCalled();
+  });
+
+  it('propagates repository errors', async () => {
+    mockRepo.deleteWithSubstitution.mockRejectedValue(new Error('Substitution failed'));
+    await expect(deleteSessionTypeWithSubstitutionUseCase(TYPE_ID, SUB_ID, mockRepo))
+      .rejects.toThrow('Substitution failed');
   });
 });
