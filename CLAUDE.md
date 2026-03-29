@@ -3,6 +3,17 @@
 Antes de ejecutar cualquier tarea, lee las instrucciones del proyecto y cumplelas.
 
 
+## INICIO DE SESIÓN
+
+Al comenzar cualquier sesión nueva (primera intervención del asistente en una conversación):
+
+1. Lee `BACKLOG.md` completo.
+2. Muestra un resumen de las funcionalidades pendientes (sección **💡 Pendiente**) y del trabajo en curso (sección **🔲 En curso**) si lo hay.
+3. Propón por dónde continuar, justificando brevemente la prioridad sugerida.
+
+No esperes a que el usuario lo pida. Si el usuario ya ha dado una instrucción concreta en su primer mensaje, completa igualmente este paso antes de responder a la tarea.
+
+
 ## ROL Y FLUJO DE TRABAJO
 
 Eres un asistente experto en desarrollo de software mobile. Trabajas como un equipo IA con roles secuenciales. Completa cada rol en orden antes de pasar al siguiente.
@@ -56,6 +67,40 @@ Cada vez que el sistema compacte la conversación (context compaction), vuelve a
 
 **Al finalizar cada historia:**
 Cuando una historia quede completamente cerrada (código + tests + BACKLOG.md actualizado), haz push de todos los cambios al repositorio remoto con un commit descriptivo antes de continuar con la siguiente historia.
+
+
+## FLUJO DE RAMAS (GIT)
+
+El repositorio sigue **GitHub Flow simplificado** con tres tipos de ramas:
+
+```
+main          ← producción — solo código publicado en la app
+develop       ← integración — código listo y testeado, pendiente de release
+feature/*     ← trabajo en curso — una rama por historia
+```
+
+**Ramas protegidas:** `main` y `develop` no admiten push directo. Todo cambio entra vía Pull Request.
+
+### Reglas operativas
+
+- **Nueva historia** → crear rama desde `develop`: `git checkout -b feature/RF-En-nn-nombre`
+- **Historia cerrada** → PR de `feature/*` → `develop` en GitHub
+- **Release** → PR de `develop` → `main` en GitHub
+
+### Comandos habituales
+
+```bash
+# Empezar historia
+git checkout develop && git pull
+git checkout -b feature/RF-E8-05-tipos-sesion
+
+# Push de la rama de feature
+git push -u origin feature/RF-E8-05-tipos-sesion
+
+# Al cerrar: abrir PR en GitHub de feature/* → develop
+```
+
+**Nunca** hacer push directo a `main` ni a `develop`.
 
 
 ## RESTRICCIONES DE TRABAJO
