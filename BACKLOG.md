@@ -1656,6 +1656,22 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 > RF-E4-01 (ejercicios), RF-E4-02 (rutinas/workouts) y RF-E4-04 (cardios) completados — ver sección Completado.
 
+#### RF-E4-05 (P1) Desasignar cardios de un atleta
+
+**Requisito:** El entrenador puede quitar uno o varios cardios que previamente asignó a un atleta.
+
+**Criterios de aceptación:**
+- En el perfil del atleta (o sección de cardios asignados), el coach ve la lista de cardios actualmente asignados.
+- Puede seleccionar uno o varios cardios y desasignarlos con una acción explícita (confirmación requerida).
+- Tras desasignar, la lista se actualiza y los cardios eliminados ya no aparecen como asignados.
+- Si el atleta no tiene cardios asignados, se muestra estado vacío informativo.
+
+**Fuera de scope:**
+- No afecta al historial de sesiones ya registradas por el atleta.
+- No desasigna rutinas ni planes nutricionales.
+
+**Dependencia:** RF-E4-04 (catálogo de cardios + asignación) — completado.
+
 ---
 
 ### ÉPICA E5 — Librería: vídeos
