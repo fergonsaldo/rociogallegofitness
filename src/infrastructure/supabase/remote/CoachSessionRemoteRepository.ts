@@ -13,6 +13,7 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
       athleteName,
       title:           row.title,
       sessionType:     row.session_type,
+      sessionTypeId:   row.session_type_id ?? null,
       modality:        row.modality,
       scheduledAt:     new Date(row.scheduled_at),
       durationMinutes: row.duration_minutes,
@@ -84,6 +85,7 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
         athlete_id:       input.athleteId ?? null,
         title:            input.title ?? null,
         session_type:     input.sessionType,
+        session_type_id:  input.sessionTypeId ?? null,
         modality:         input.modality,
         scheduled_at:     input.scheduledAt.toISOString(),
         duration_minutes: input.durationMinutes,
@@ -102,6 +104,7 @@ export class CoachSessionRemoteRepository implements ICoachSessionRepository {
     if (input.athleteId       !== undefined) patch.athlete_id       = input.athleteId;
     if (input.title           !== undefined) patch.title            = input.title;
     if (input.sessionType     !== undefined) patch.session_type     = input.sessionType;
+    if (input.sessionTypeId   !== undefined) patch.session_type_id  = input.sessionTypeId;
     if (input.modality        !== undefined) patch.modality         = input.modality;
     if (input.scheduledAt     !== undefined) patch.scheduled_at     = input.scheduledAt.toISOString();
     if (input.durationMinutes !== undefined) patch.duration_minutes = input.durationMinutes;

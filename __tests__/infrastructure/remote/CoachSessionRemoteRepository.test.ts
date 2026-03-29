@@ -11,12 +11,15 @@ const SESSION_ID  = 'sess-uuid-0001-0000-000000000001';
 const ATHLETE_ID  = 'athl-uuid-0001-0000-000000000001';
 const NOW_ISO     = '2026-03-22T10:00:00.000Z';
 
+const TYPE_ID = 'type-uuid-0001-0000-000000000001';
+
 const RAW_ROW = {
   id:               SESSION_ID,
   coach_id:         COACH_ID,
   athlete_id:       null,
   title:            'Sesión de fuerza',
   session_type:     'Entrenamiento',
+  session_type_id:  null,
   modality:         'in_person',
   scheduled_at:     NOW_ISO,
   duration_minutes: 60,
@@ -161,6 +164,26 @@ describe('CoachSessionRemoteRepository', () => {
       expect(result.id).toBe(SESSION_ID);
       expect(result.modality).toBe('in_person');
       expect(result.athleteName).toBeNull();
+      expect(result.sessionTypeId).toBeNull();
+    });
+
+    it('maps session_type_id when provided', async () => {
+      const rowWithType = { ...RAW_ROW, session_type_id: TYPE_ID };
+      supabase.from.mockReturnValue(mockChain({ data: rowWithType, error: null }));
+
+      const result = await repo.create({
+        coachId:         COACH_ID,
+        athleteId:       null,
+        title:           null,
+        sessionType:     'Fuerza',
+        sessionTypeId:   TYPE_ID,
+        modality:        'in_person',
+        scheduledAt:     new Date(NOW_ISO),
+        durationMinutes: 60,
+        notes:           null,
+      });
+
+      expect(result.sessionTypeId).toBe(TYPE_ID);
     });
 
     it('throws when supabase returns an error', async () => {

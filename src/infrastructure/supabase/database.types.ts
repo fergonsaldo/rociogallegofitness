@@ -169,6 +169,7 @@ export interface CoachSessionRow {
   athlete_id:       string | null;
   title:            string | null;
   session_type:     string;
+  session_type_id:  string | null;
   modality:         'online' | 'in_person';
   scheduled_at:     string;
   duration_minutes: number;
