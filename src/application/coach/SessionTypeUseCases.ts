@@ -41,3 +41,21 @@ export async function deleteSessionTypeUseCase(
   if (!id) throw new Error('id is required');
   return repo.delete(id);
 }
+
+export async function getSessionTypeUsageCountUseCase(
+  typeId: string,
+  repo: ISessionTypeRepository,
+): Promise<number> {
+  if (!typeId) throw new Error('typeId is required');
+  return repo.countUsages(typeId);
+}
+
+export async function deleteSessionTypeWithSubstitutionUseCase(
+  id: string,
+  substitutionId: string | undefined,
+  repo: ISessionTypeRepository,
+): Promise<void> {
+  if (!id) throw new Error('id is required');
+  if (substitutionId !== undefined && !substitutionId) throw new Error('substitutionId cannot be empty');
+  return repo.deleteWithSubstitution(id, substitutionId);
+}

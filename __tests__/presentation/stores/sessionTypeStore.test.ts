@@ -9,10 +9,12 @@ import { SessionType } from '../../../src/domain/entities/SessionType';
 // ── Mock use cases ─────────────────────────────────────────────────────────────
 
 jest.mock('../../../src/application/coach/SessionTypeUseCases', () => ({
-  getSessionTypesUseCase:    jest.fn(),
-  createSessionTypeUseCase:  jest.fn(),
-  updateSessionTypeUseCase:  jest.fn(),
-  deleteSessionTypeUseCase:  jest.fn(),
+  getSessionTypesUseCase:                     jest.fn(),
+  createSessionTypeUseCase:                   jest.fn(),
+  updateSessionTypeUseCase:                   jest.fn(),
+  deleteSessionTypeUseCase:                   jest.fn(),
+  getSessionTypeUsageCountUseCase:            jest.fn(),
+  deleteSessionTypeWithSubstitutionUseCase:   jest.fn(),
 }));
 
 import {
@@ -20,12 +22,16 @@ import {
   createSessionTypeUseCase,
   updateSessionTypeUseCase,
   deleteSessionTypeUseCase,
+  getSessionTypeUsageCountUseCase,
+  deleteSessionTypeWithSubstitutionUseCase,
 } from '../../../src/application/coach/SessionTypeUseCases';
 
-const mockGetAll  = getSessionTypesUseCase   as jest.MockedFunction<typeof getSessionTypesUseCase>;
-const mockCreate  = createSessionTypeUseCase as jest.MockedFunction<typeof createSessionTypeUseCase>;
-const mockUpdate  = updateSessionTypeUseCase as jest.MockedFunction<typeof updateSessionTypeUseCase>;
-const mockDelete  = deleteSessionTypeUseCase as jest.MockedFunction<typeof deleteSessionTypeUseCase>;
+const mockGetAll         = getSessionTypesUseCase                    as jest.MockedFunction<typeof getSessionTypesUseCase>;
+const mockCreate         = createSessionTypeUseCase                  as jest.MockedFunction<typeof createSessionTypeUseCase>;
+const mockUpdate         = updateSessionTypeUseCase                  as jest.MockedFunction<typeof updateSessionTypeUseCase>;
+const mockDelete         = deleteSessionTypeUseCase                  as jest.MockedFunction<typeof deleteSessionTypeUseCase>;
+const mockCountUsages    = getSessionTypeUsageCountUseCase           as jest.MockedFunction<typeof getSessionTypeUsageCountUseCase>;
+const mockDeleteWithSub  = deleteSessionTypeWithSubstitutionUseCase  as jest.MockedFunction<typeof deleteSessionTypeWithSubstitutionUseCase>;
 
 // ── Mock repo (store instantiates it internally) ──────────────────────────────
 
@@ -250,6 +256,96 @@ describe('useSessionTypeStore — deleteSessionType', () => {
 
     await act(async () => {
       await expect(useSessionTypeStore.getState().deleteSessionType('type-a'))
+        .rejects.toBeTruthy();
+    });
+
+    expect(useSessionTypeStore.getState().error).toBe('Error al eliminar el tipo de sesión');
+  });
+});
+
+// ── getSessionTypeUsageCount ──────────────────────────────────────────────────
+
+describe('useSessionTypeStore — getSessionTypeUsageCount', () => {
+  it('returns usage count from use case', async () => {
+    mockCountUsages.mockResolvedValue(3);
+
+    let result!: number;
+    await act(async () => {
+      result = await useSessionTypeStore.getState().getSessionTypeUsageCount('type-a');
+    });
+
+    expect(result).toBe(3);
+    expect(mockCountUsages).toHaveBeenCalled();
+  });
+
+  it('returns 0 when type is not in use', async () => {
+    mockCountUsages.mockResolvedValue(0);
+
+    let result!: number;
+    await act(async () => {
+      result = await useSessionTypeStore.getState().getSessionTypeUsageCount('type-a');
+    });
+
+    expect(result).toBe(0);
+  });
+
+  it('propagates errors from use case', async () => {
+    mockCountUsages.mockRejectedValue(new Error('Query failed'));
+
+    await act(async () => {
+      await expect(useSessionTypeStore.getState().getSessionTypeUsageCount('type-a'))
+        .rejects.toThrow('Query failed');
+    });
+  });
+});
+
+// ── deleteSessionTypeWithSubstitution ─────────────────────────────────────────
+
+const SUB_ID = 'type-uuid-0002-0000-000000000002';
+
+describe('useSessionTypeStore — deleteSessionTypeWithSubstitution', () => {
+  it('removes the type from list after substitution delete', async () => {
+    useSessionTypeStore.setState({ sessionTypes: [TYPE_A, TYPE_B] });
+    mockDeleteWithSub.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useSessionTypeStore.getState().deleteSessionTypeWithSubstitution('type-a', SUB_ID);
+    });
+
+    const { sessionTypes } = useSessionTypeStore.getState();
+    expect(sessionTypes).toHaveLength(1);
+    expect(sessionTypes[0].id).toBe('type-b');
+  });
+
+  it('removes the type when no substitutionId provided', async () => {
+    useSessionTypeStore.setState({ sessionTypes: [TYPE_A] });
+    mockDeleteWithSub.mockResolvedValue(undefined);
+
+    await act(async () => {
+      await useSessionTypeStore.getState().deleteSessionTypeWithSubstitution('type-a');
+    });
+
+    expect(useSessionTypeStore.getState().sessionTypes).toHaveLength(0);
+  });
+
+  it('sets error and rethrows on failure', async () => {
+    useSessionTypeStore.setState({ sessionTypes: [TYPE_A] });
+    mockDeleteWithSub.mockRejectedValue(new Error('Substitution failed'));
+
+    await act(async () => {
+      await expect(useSessionTypeStore.getState().deleteSessionTypeWithSubstitution('type-a', SUB_ID))
+        .rejects.toThrow('Substitution failed');
+    });
+
+    expect(useSessionTypeStore.getState().error).toBe('Substitution failed');
+  });
+
+  it('uses fallback error string when error has no message', async () => {
+    useSessionTypeStore.setState({ sessionTypes: [TYPE_A] });
+    mockDeleteWithSub.mockRejectedValue('oops');
+
+    await act(async () => {
+      await expect(useSessionTypeStore.getState().deleteSessionTypeWithSubstitution('type-a', SUB_ID))
         .rejects.toBeTruthy();
     });
 

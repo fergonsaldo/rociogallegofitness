@@ -487,29 +487,32 @@ El coach puede crear ventanas de disponibilidad (horarios) con rango de fechas, 
 #### RF-E8-05 — Tipos de sesión
 
 **¿Qué hace?**
-El coach puede crear, editar y eliminar tipos de sesión con nombre y color. Sirven para categorizar visualmente las sesiones de la agenda. La lista ordena los tipos alfabéticamente y muestra la fecha de creación de cada uno. Los colores se eligen de una paleta fija de 12 colores. Al eliminar, el sistema pide confirmación antes de borrar.
+El coach puede crear, editar y eliminar tipos de sesión con nombre y color libre (color picker). Sirven para categorizar visualmente las sesiones de la agenda. La lista ordena los tipos alfabéticamente y muestra la fecha de creación. Al eliminar un tipo en uso, el sistema muestra un modal para elegir un tipo sustituto antes de borrar; si no está en uso, pide confirmación directa. La pantalla es accesible desde el botón ⚙️ en el header del calendario.
 
 **Pantallas / flujo:**
-- `app/(coach)/session-types/index.tsx` — nueva pantalla (sin tab, accesible desde agenda)
+- `app/(coach)/session-types/index.tsx` — pantalla de gestión (sin tab, accesible desde agenda)
   - Lista de tipos con chip de color, nombre y fecha de creación
   - Botones ✏️ y 🗑 por fila
-  - Estado vacío con CTA implícito al botón "Nuevo tipo"
-  - Modal bottom-sheet para crear y editar (nombre + paleta de color)
-  - Alert de confirmación antes de eliminar
+  - Estado vacío con CTA "Nuevo tipo"
+  - Modal bottom-sheet para crear/editar: nombre + color picker libre (`react-native-color-picker`)
+  - Alert de confirmación si el tipo no está en uso
+  - Modal de sustitución si el tipo está en uso: lista de candidatos + "Sustituir y eliminar"
+- `app/(coach)/calendar/index.tsx` — añadido botón ⚙️ en header que navega a session-types
 
 **Decisiones de diseño:**
-- Sin FK a `coach_sessions` aún — esa conexión llega con RF-E8-04 para no mezclar responsabilidades.
-- Patrón idéntico a `ClientTag`: misma estructura de entidad, repositorio, use cases y store.
-- Ruta sin tab (`href: null`) para no saturar la barra de navegación.
+- FK `session_type_id uuid → session_types(id) ON DELETE SET NULL` añadida a `coach_sessions`. La sustitución se activa automáticamente cuando el calendario use esta FK (RF-E8-08). Mientras tanto, `countUsages` devuelve 0 y el borrado es directo.
+- Color picker libre mediante `react-native-color-picker` (usa SVG ya instalado, sin Reanimated).
+- `deleteWithSubstitution` hace update + delete secuencial (no transacción atómica) — aceptable dado que `coach_sessions` estaba vacía al migrar y el riesgo de inconsistencia es bajo.
 
 **Implementación técnica:**
-- `supabase/migrations/20260328000000_add_session_types.sql` — tabla + índice + RLS (`coach_id = auth.uid()`)
-- `SessionType.ts` / `ISessionTypeRepository.ts` / `SessionTypeUseCases.ts` — capas domain y application
-- `SessionTypeRemoteRepository.ts` / `sessionTypeStore.ts` — capas infrastructure y presentation
-- `strings.ts` — 16 nuevas claves en sección RF-E8-05
+- Migración `add_session_type_id_to_coach_sessions`: FK nullable + índice en `coach_sessions`
+- `ISessionTypeRepository` + `SessionTypeUseCases`: añadidos `countUsages` y `deleteWithSubstitution`
+- `SessionTypeRemoteRepository`: implementados los dos métodos nuevos
+- `sessionTypeStore`: nuevas acciones `getSessionTypeUsageCount` y `deleteSessionTypeWithSubstitution`
+- UI: color picker libre + modal de sustitución + navegación desde calendario
 
 **Métricas finales:**
-- Test Suites: 64/64 ✅ | Tests: 1285/1285 ✅ (+37 nuevos: 18 use case + 19 store)
+- Test Suites: 3/3 ✅ | Tests: 73/73 ✅
 
 ---
 
@@ -1735,15 +1738,18 @@ Todos los stores referenciaban `Strings.errorFallback` que no existía, dejando 
 
 ---
 
-#### RF-E8-05 (P1) Tipos de sesión
-**Requisito:** Configurar tipos de sesión con color y uso transversal.
+#### RF-E8-08 (P1) Integración calendario con tipos de sesión
+**Requisito:** El formulario de creación/edición de sesiones debe usar los tipos dinámicos creados por el coach (tabla `session_types`) en lugar de la lista hardcodeada actual.
+
+**Contexto:**
+RF-E8-05 añadió la columna `coach_sessions.session_type_id uuid FK → session_types(id)`. El calendario todavía usa `session_type: text` con strings fijos. Esta historia conecta ambas partes.
 
 **Criterios de aceptación:**
-- Alta de tipo de sesión con nombre y color.
-- Tabla con color y fecha de creación.
-- Permitir sustitución del tipo cuando no se pueda borrar por estar en uso.
+- El selector de tipo en `calendar/create.tsx` y `calendar/edit.tsx` carga los tipos desde el store, no desde strings hardcodeados.
+- Al crear/editar una sesión, se guarda `session_type_id` en lugar de (o además de) `session_type`.
+- El borrado con sustitución de RF-E8-05 se activa correctamente cuando hay sesiones asignadas.
 
-**Dependencia de plan:** No observada.
+**Dependencia:** RF-E8-05 completado ✅
 
 ---
 

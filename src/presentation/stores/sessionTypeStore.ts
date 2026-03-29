@@ -7,6 +7,8 @@ import {
   createSessionTypeUseCase,
   updateSessionTypeUseCase,
   deleteSessionTypeUseCase,
+  getSessionTypeUsageCountUseCase,
+  deleteSessionTypeWithSubstitutionUseCase,
 } from '@/application/coach/SessionTypeUseCases';
 import { Strings } from '@/shared/constants/strings';
 
@@ -17,11 +19,13 @@ interface SessionTypeState {
   isLoading:    boolean;
   error:        string | null;
 
-  fetchSessionTypes:   (coachId: string) => Promise<void>;
-  createSessionType:   (input: CreateSessionTypeInput) => Promise<SessionType>;
-  updateSessionType:   (id: string, input: UpdateSessionTypeInput) => Promise<SessionType>;
-  deleteSessionType:   (id: string) => Promise<void>;
-  clearError:          () => void;
+  fetchSessionTypes:                  (coachId: string) => Promise<void>;
+  createSessionType:                  (input: CreateSessionTypeInput) => Promise<SessionType>;
+  updateSessionType:                  (id: string, input: UpdateSessionTypeInput) => Promise<SessionType>;
+  deleteSessionType:                  (id: string) => Promise<void>;
+  getSessionTypeUsageCount:           (typeId: string) => Promise<number>;
+  deleteSessionTypeWithSubstitution:  (id: string, substitutionId?: string) => Promise<void>;
+  clearError:                         () => void;
 }
 
 export const useSessionTypeStore = create<SessionTypeState>((set, get) => ({
@@ -79,7 +83,22 @@ export const useSessionTypeStore = create<SessionTypeState>((set, get) => ({
       await deleteSessionTypeUseCase(id, repo);
       set({ sessionTypes: get().sessionTypes.filter((t) => t.id !== id) });
     } catch (err) {
-      const message = (err as any)?.message ?? Strings.errorFailedDeleteSessionType;
+      const message = err instanceof Error ? err.message : Strings.errorFailedDeleteSessionType;
+      set({ error: message });
+      throw err;
+    }
+  },
+
+  getSessionTypeUsageCount: async (typeId) => {
+    return getSessionTypeUsageCountUseCase(typeId, repo);
+  },
+
+  deleteSessionTypeWithSubstitution: async (id, substitutionId) => {
+    try {
+      await deleteSessionTypeWithSubstitutionUseCase(id, substitutionId, repo);
+      set({ sessionTypes: get().sessionTypes.filter((t) => t.id !== id) });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : Strings.errorFailedDeleteSessionType;
       set({ error: message });
       throw err;
     }
